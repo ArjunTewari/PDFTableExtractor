@@ -6,7 +6,7 @@ packages = ["bash", "freetype", "glibcLocales"]
 
 [deployment]
 deploymentTarget = "autoscale"
-run = ["streamlit", "run", "app.py", "--server.port", "5000"]
+run = ["sh", "-c", "python app.py"]
 
 [workflows]
 runButton = "Project"
