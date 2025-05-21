@@ -25,28 +25,28 @@ def process_text_with_llm(text):
         system_prompt = """
         You are a smart document analysis assistant.
 
-        You will receive raw text extracted from a PDF file. Analyze the text carefully to:
-        1. Detect and extract important entities and data points.
-        2. Automatically identify the correct category or label based on context.
-        3. Return the extracted information in a tabular format with the following columns:
+        Extract structured information from the text into a table.
 
-        | Category       | Extracted Text         | 
+        Each row should be a **category**, and the columns should contain **all related values** under that category. Use this format:
 
-        Guidelines:
-        - Use common NER categories like Person, Organization, Location, Date, Email, Designation, Document Type, Product Name, etc.
-        - If you find a data point that doesn't fit standard categories, create a new one based on its context (e.g., "Company Website", "Patent ID", "Case Number").
-        - Avoid duplicate rows. Group similar entries if possible.
+        | Category     | Value 1           | Value 2           | Value 3        | ... |
+
+        Only include rows where at least one value is found. Do not include empty categories.
         
         Your output must be a valid JSON object with this exact structure:
         {
           "data": [
-            { 
-              "Category": "category_name", 
-              "Extracted Text": "extracted_entity_or_data_point"
+            {
+              "Category": "category_name",
+              "Value 1": "first_related_value",
+              "Value 2": "second_related_value",
+              "Value 3": "third_related_value"
             },
             ...more rows...
           ]
         }
+
+        Note: Each row may have a different number of values. Include as many value columns as needed for each category, but maintain consistent column naming (Value 1, Value 2, etc.)
         """
         
         user_prompt = f"""
