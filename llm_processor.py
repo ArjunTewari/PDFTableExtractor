@@ -21,29 +21,40 @@ def process_text_with_llm(text):
         # Create OpenAI client
         client = OpenAI(api_key=api_key)
         
-        # Build the prompt
-        prompt = f"""
-        I have extracted text from a PDF document. I need you to analyze the text 
-        and extract structured information from it in a tabulated format.
+        # Build the prompt using the specific document analysis instructions
+        system_prompt = """
+        You are a smart document analysis assistant.
+
+        You will receive raw text extracted from a PDF file. Analyze the text carefully to:
+        1. Detect and extract important entities and data points.
+        2. Automatically identify the correct category or label based on context.
+        3. Return the extracted information in a tabular format.
+
+        Guidelines:
+        - Use common NER categories like Person, Organization, Location, Date, Email, Designation, Document Type, Product Name, etc.
+        - If you find a data point that doesn't fit standard categories, create a new one based on its context (e.g., "Company Website", "Patent ID", "Case Number").
+        - Provide the full sentence or a meaningful snippet from the original text as context for each entry.
+        - Avoid duplicate rows. Group similar entries if possible.
         
-        Please identify any relevant fields or categories of information in the text, and 
-        organize them into a structured JSON format that can be easily displayed in a table.
-        
-        Return a JSON object with a 'data' property containing an array of objects.
-        Each object in the array represents a row in the table, and each key in the object represents a column.
-        All objects should have the same set of keys.
-        
-        Here is the extracted text:
-        {text}
-        
-        Return a JSON object with this structure:
-        {{
+        Your output must be a valid JSON object with this exact structure:
+        {
           "data": [
-            {{ "column1": "value1", "column2": "value2", ... }},
-            {{ "column1": "value3", "column2": "value4", ... }},
-            ...
+            { 
+              "Category": "category_name", 
+              "Extracted Text": "extracted_entity_or_data_point", 
+              "Context / Sentence from Document": "original_context_sentence" 
+            },
+            ...more rows...
           ]
-        }}
+        }
+        """
+        
+        user_prompt = f"""
+        Here is the extracted text from a PDF document:
+
+        {text}
+
+        Analyze this text and extract information according to the guidelines.
         """
         
         # Send the prompt to the model
@@ -51,7 +62,10 @@ def process_text_with_llm(text):
         # do not change this unless explicitly requested by the user
         response = client.chat.completions.create(
             model="gpt-4o",
-            messages=[{"role": "user", "content": prompt}],
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
             temperature=0,
             response_format={"type": "json_object"}
         )
