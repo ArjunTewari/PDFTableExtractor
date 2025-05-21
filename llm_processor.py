@@ -28,12 +28,13 @@ def process_text_with_llm(text):
         You will receive raw text extracted from a PDF file. Analyze the text carefully to:
         1. Detect and extract important entities and data points.
         2. Automatically identify the correct category or label based on context.
-        3. Return the extracted information in a tabular format.
+        3. Return the extracted information in a tabular format with the following columns:
+
+        | Category       | Extracted Text         | 
 
         Guidelines:
         - Use common NER categories like Person, Organization, Location, Date, Email, Designation, Document Type, Product Name, etc.
         - If you find a data point that doesn't fit standard categories, create a new one based on its context (e.g., "Company Website", "Patent ID", "Case Number").
-        - Provide the full sentence or a meaningful snippet from the original text as context for each entry.
         - Avoid duplicate rows. Group similar entries if possible.
         
         Your output must be a valid JSON object with this exact structure:
@@ -41,8 +42,7 @@ def process_text_with_llm(text):
           "data": [
             { 
               "Category": "category_name", 
-              "Extracted Text": "extracted_entity_or_data_point", 
-              "Context / Sentence from Document": "original_context_sentence" 
+              "Extracted Text": "extracted_entity_or_data_point"
             },
             ...more rows...
           ]
