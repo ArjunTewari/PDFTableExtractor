@@ -19,8 +19,8 @@ def export_to_pdf(df):
     """
     buffer = BytesIO()
     
-    # Create the PDF document
-    doc = SimpleDocTemplate(buffer, pagesize=letter)
+    # Create the PDF document with landscape orientation for better table display
+    doc = SimpleDocTemplate(buffer, pagesize=letter, leftMargin=30, rightMargin=30, topMargin=30, bottomMargin=30)
     elements = []
     
     # Get the style for paragraphs
@@ -30,26 +30,63 @@ def export_to_pdf(df):
     # Add a title
     elements.append(Paragraph("Extracted Information", title_style))
     
-    # Convert DataFrame to list for table
-    data = [df.columns.tolist()] + df.values.tolist()
+    # Handle the new table format where column names might vary
+    # First, get all unique column names across all rows
+    all_columns = set()
+    for _, row in df.iterrows():
+        all_columns.update(row.keys())
     
-    # Create the table
-    table = Table(data)
+    # Ensure "Category" is the first column
+    column_order = ["Category"]
+    value_columns = sorted([col for col in all_columns if col != "Category" and col.startswith("Value")])
+    column_order.extend(value_columns)
+    
+    # Create a new DataFrame with the ordered columns
+    ordered_df = pd.DataFrame(columns=column_order)
+    for idx, row in df.iterrows():
+        ordered_row = {}
+        for col in column_order:
+            ordered_row[col] = row.get(col, "") if col in row else ""
+        ordered_df.loc[idx] = ordered_row
+    
+    # Convert DataFrame to list for table
+    data = [ordered_df.columns.tolist()] + ordered_df.values.tolist()
+    
+    # Create the table with column widths
+    col_widths = [120]  # Width for Category column
+    col_widths.extend([180] * (len(column_order) - 1))  # Width for Value columns
+    table = Table(data, colWidths=col_widths)
     
     # Add style to the table
     style = TableStyle([
+        # Header row
         ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
         ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
         ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
         ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        
+        # Category column
+        ('BACKGROUND', (0, 1), (0, -1), colors.lightgrey),
+        ('FONTNAME', (0, 1), (0, -1), 'Helvetica-Bold'),
+        
+        # Data cells
+        ('BACKGROUND', (1, 1), (-1, -1), colors.beige),
+        
+        # Grid and borders
         ('BOX', (0, 0), (-1, -1), 1, colors.black),
         ('GRID', (0, 0), (-1, -1), 0.5, colors.black),
+        
+        # Text alignment
         ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+        ('ALIGN', (0, 1), (0, -1), 'LEFT'),  # Left align category names
+        ('ALIGN', (1, 1), (-1, -1), 'LEFT'),  # Left align values
+        
+        # Padding
         ('TOPPADDING', (0, 0), (-1, -1), 8),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ('LEFTPADDING', (0, 0), (-1, -1), 6),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 6),
     ])
     table.setStyle(style)
     
