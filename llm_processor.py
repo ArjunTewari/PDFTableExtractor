@@ -1,10 +1,6 @@
 import os
 import json
-from langchain_community.llms import OpenAI
-from langchain_community.chat_models import ChatOpenAI
-from langchain.prompts import PromptTemplate
-from langchain.chains import LLMChain
-from langchain.schema import HumanMessage
+from openai import OpenAI
 
 def process_text_with_llm(text):
     """
@@ -22,14 +18,8 @@ def process_text_with_llm(text):
         raise ValueError("OpenAI API key not found in environment variables")
     
     try:
-        # Create a ChatOpenAI instance
-        # The newest OpenAI model is "gpt-4o" which was released May 13, 2024.
-        # Do not change this unless explicitly requested by the user
-        chat_model = ChatOpenAI(
-            model_name="gpt-4o",
-            openai_api_key=api_key,
-            temperature=0
-        )
+        # Create OpenAI client
+        client = OpenAI(api_key=api_key)
         
         # Build the prompt
         prompt = f"""
@@ -50,11 +40,17 @@ def process_text_with_llm(text):
         """
         
         # Send the prompt to the model
-        messages = [HumanMessage(content=prompt)]
-        response = chat_model.invoke(messages)
+        # The newest OpenAI model is "gpt-4o" which was released May 13, 2024.
+        # do not change this unless explicitly requested by the user
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0,
+            response_format={"type": "json_object"}
+        )
         
         # Extract JSON from the response
-        response_content = response.content
+        response_content = response.choices[0].message.content
         
         # Clean up the response to ensure it's valid JSON
         response_content = response_content.strip()
@@ -67,11 +63,20 @@ def process_text_with_llm(text):
         # Parse the JSON
         structured_data = json.loads(response_content)
         
+        # Ensure we have the data in the expected format
+        if "data" in structured_data:
+            data = structured_data["data"]
+        elif isinstance(structured_data, list):
+            data = structured_data
+        else:
+            # Try to use whatever we got as a fallback
+            data = structured_data
+            
         # Ensure the result is a list
-        if not isinstance(structured_data, list):
+        if not isinstance(data, list):
             raise ValueError("Expected a JSON array response, but got a different format")
         
-        return structured_data
+        return data
     
     except Exception as e:
         raise Exception(f"Error processing text with LLM: {str(e)}")
