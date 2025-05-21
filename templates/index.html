@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Text Extractor and Tabulator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+</head>
+<body>
+    <div class="container mt-4">
+        <header class="text-center mb-4">
+            <h1>PDF Text Extractor and Tabulator</h1>
+            <p class="lead">Upload a PDF, extract text, and analyze it with AI to create structured tables</p>
+        </header>
+
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="bi bi-file-earmark-pdf"></i> Upload PDF</h4>
+            </div>
+            <div class="card-body">
+                <div class="upload-area p-4 border rounded text-center mb-3" id="drop-area">
+                    <div class="mb-3">
+                        <i class="bi bi-cloud-arrow-up display-4"></i>
+                        <p>Drag and drop your PDF file here or click to browse</p>
+                    </div>
+                    <input type="file" id="file-input" accept=".pdf" class="d-none">
+                    <button class="btn btn-outline-primary" id="browse-btn">Browse Files</button>
+                </div>
+                <div id="file-info" class="alert alert-info d-none"></div>
+                <div class="progress d-none" id="upload-progress">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4 shadow-sm d-none" id="extracted-text-section">
+            <div class="card-header bg-secondary text-white">
+                <h4 class="mb-0"><i class="bi bi-file-text"></i> Extracted Text</h4>
+            </div>
+            <div class="card-body">
+                <div id="text-controls" class="mb-3">
+                    <button class="btn btn-primary" id="process-btn">Process with AI</button>
+                </div>
+                <div class="extracted-text p-3 border rounded bg-light">
+                    <pre id="extracted-text-content" class="mb-0" style="white-space: pre-wrap;"></pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4 shadow-sm d-none" id="results-section">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0"><i class="bi bi-table"></i> Extracted Information</h4>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-bordered" id="results-table">
+                        <thead class="table-dark">
+                            <tr id="table-header"></tr>
+                        </thead>
+                        <tbody id="table-body"></tbody>
+                    </table>
+                </div>
+
+                <div class="export-options mt-4">
+                    <h5 class="mb-3">Export Options</h5>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-primary" id="export-json-btn">Export as JSON</button>
+                        <button class="btn btn-outline-success" id="export-csv-btn">Export as CSV</button>
+                        <button class="btn btn-outline-danger" id="export-pdf-btn">Export as PDF</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="loading-overlay" class="position-fixed top-0 start-0 w-100 h-100 d-none" 
+             style="background-color: rgba(0,0,0,0.7); z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column;">
+            <div class="spinner-border text-light" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p id="loading-message" class="text-light mt-2">Processing...</p>
+        </div>
+
+        <div class="alert alert-danger d-none" id="error-message"></div>
+    </div>
+
+    <footer class="bg-light py-3 mt-5">
+        <div class="container text-center">
+            <p class="text-muted mb-0">PDF Text Extractor and Tabulator © 2025 • Powered by OpenAI</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

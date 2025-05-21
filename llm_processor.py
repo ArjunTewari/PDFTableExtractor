@@ -29,14 +29,21 @@ def process_text_with_llm(text):
         Please identify any relevant fields or categories of information in the text, and 
         organize them into a structured JSON format that can be easily displayed in a table.
         
-        The JSON should be an array of objects, where each object represents a row in the table, 
-        and each key represents a column. All objects should have the same set of keys.
+        Return a JSON object with a 'data' property containing an array of objects.
+        Each object in the array represents a row in the table, and each key in the object represents a column.
+        All objects should have the same set of keys.
         
         Here is the extracted text:
         {text}
         
-        Based on this text, provide a structured JSON array with the appropriate keys and values.
-        Return only the JSON array with no additional text.
+        Return a JSON object with this structure:
+        {{
+          "data": [
+            {{ "column1": "value1", "column2": "value2", ... }},
+            {{ "column1": "value3", "column2": "value4", ... }},
+            ...
+          ]
+        }}
         """
         
         # Send the prompt to the model
@@ -50,33 +57,30 @@ def process_text_with_llm(text):
         )
         
         # Extract JSON from the response
-        response_content = response.choices[0].message.content
-        
-        # Clean up the response to ensure it's valid JSON
-        response_content = response_content.strip()
-        if response_content.startswith("```json"):
-            response_content = response_content.replace("```json", "", 1)
-        if response_content.endswith("```"):
-            response_content = response_content[:-3]
-        response_content = response_content.strip()
-        
-        # Parse the JSON
-        structured_data = json.loads(response_content)
-        
-        # Ensure we have the data in the expected format
-        if "data" in structured_data:
-            data = structured_data["data"]
-        elif isinstance(structured_data, list):
-            data = structured_data
-        else:
-            # Try to use whatever we got as a fallback
-            data = structured_data
+        if response and response.choices and len(response.choices) > 0:
+            response_content = response.choices[0].message.content
             
-        # Ensure the result is a list
-        if not isinstance(data, list):
-            raise ValueError("Expected a JSON array response, but got a different format")
-        
-        return data
+            # Parse the JSON
+            if response_content:
+                structured_data = json.loads(response_content)
+                
+                # Ensure we have the data in the expected format
+                if "data" in structured_data and isinstance(structured_data["data"], list):
+                    return structured_data["data"]
+                elif isinstance(structured_data, list):
+                    return structured_data
+                else:
+                    # If we got a JSON object but not in the expected format, try to extract data
+                    for key, value in structured_data.items():
+                        if isinstance(value, list) and len(value) > 0:
+                            return value
+                    
+                    # If we couldn't find a suitable list, wrap the whole object in a list
+                    return [structured_data]
+            else:
+                raise ValueError("Empty response from OpenAI API")
+        else:
+            raise ValueError("Invalid response from OpenAI API")
     
     except Exception as e:
         raise Exception(f"Error processing text with LLM: {str(e)}")
