@@ -22,44 +22,55 @@ def process_text_with_llm(text):
         # Create OpenAI client
         client = OpenAI(api_key=api_key)
 
-        # Build the optimized prompt for LlamaParse output analysis
+        # Build the comprehensive prompt for maximum data extraction
         system_prompt = """
-        You are an expert data extraction specialist working with high-quality text extracted using LlamaParse technology. The input text preserves excellent structure and formatting from the original PDF.
+        You are an elite data extraction specialist. Your mission is to extract EVERY SINGLE piece of information from the provided document text and organize it into the most comprehensive table possible.
 
-        Your task:
-        1. Thoroughly analyze ALL the provided text content
-        2. Extract every piece of meaningful information
-        3. Organize it into a comprehensive structured table
-        4. Create logical categories that capture all important data points
-        5. Ensure no valuable information is lost
+        CRITICAL REQUIREMENTS:
+        1. Extract 100% of ALL information - leave nothing out
+        2. Create separate rows for EVERY distinct data point, fact, number, name, date, or detail
+        3. Break down complex information into granular components
+        4. Include ALL numbers, percentages, financial figures, dates, names, locations, descriptions
+        5. Process ALL sections, headers, footnotes, tables, lists, and annotations
+        6. Extract metadata like document types, sections, subsections, and structural elements
+        7. Capture ALL relationships, comparisons, and contextual information
 
-        Table Structure:
-        - Use "Category" as the first column for descriptive labels
-        - Use "Value 1", "Value 2", "Value 3", etc. for additional columns as needed
-        - Each row represents a distinct piece of information or data point
-        - Group related information logically under appropriate categories
+        COMPREHENSIVE EXTRACTION APPROACH:
+        - Company/Organization Information: Names, addresses, contact details, registration numbers, etc.
+        - Financial Data: All revenues, costs, profits, ratios, growth rates, projections, etc.
+        - Personnel: All names, titles, roles, departments, contact information
+        - Dates & Time: All dates, periods, quarters, years, deadlines, timelines
+        - Legal/Regulatory: Compliance items, regulations, legal entities, jurisdictions
+        - Operational: Business units, products, services, markets, segments
+        - Performance Metrics: All KPIs, statistics, measurements, benchmarks
+        - Strategic Information: Goals, initiatives, plans, forecasts, risks
+        - Technical Details: Specifications, processes, methodologies, systems
+        - Geographic: All locations, regions, markets, addresses, jurisdictions
 
-        Extraction Guidelines:
-        - Be exhaustive - extract ALL relevant information including names, dates, numbers, addresses, descriptions, titles, amounts, etc.
-        - Preserve exact values, numbers, and proper nouns with complete accuracy
-        - Create meaningful category names that clearly describe the information type
-        - Handle multiple values per category by using separate Value columns
-        - Include structural information like sections, headers, or document metadata when relevant
-        - Process tables, lists, and structured data with careful attention to detail
+        TABLE STRUCTURE:
+        - "Category": Descriptive label for the type of information
+        - "Value 1", "Value 2", "Value 3", etc.: Use as many columns as needed
+        - Create separate rows for each distinct piece of information
+        - Be granular - break down complex items into individual components
 
-        Your output must be a valid JSON object with this exact structure:
+        EXAMPLES OF GRANULAR EXTRACTION:
+        - If document mentions "Q4 2024 revenue of $115.5 million", create separate rows for:
+          * Quarter Period: Q4 2024
+          * Revenue Amount: $115.5 million
+          * Revenue Period: Q4 2024
+          * Currency Type: USD
+        - For addresses, separate into: Street, City, State, Country, Postal Code
+        - For names, consider: Full Name, First Name, Last Name, Title
+
+        Your output must be a valid JSON object:
         {
           "data": [
-            {
-              "Category": "category_name",
-              "Value 1": "first_value",
-              "Value 2": "second_value",
-              "Value 3": "third_value"
-            }
+            {"Category": "category_name", "Value 1": "value1", "Value 2": "value2", ...},
+            {"Category": "another_category", "Value 1": "value1", ...}
           ]
         }
 
-        Important: Return ONLY the JSON object, no additional text or explanations.
+        ABSOLUTE MANDATE: Extract EVERYTHING. Be exhaustive. Create as many rows as needed to capture ALL information.
         """
 
         user_prompt = f"""
