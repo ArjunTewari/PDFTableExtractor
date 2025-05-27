@@ -71,7 +71,7 @@ def extract_text_with_gpt4o(page_image_base64):
 
 def extract_text_from_pdf(pdf_path):
     """
-    Extract text from a PDF file using both pdfplumber and GPT-4o for enhanced accuracy.
+    Extract text from a PDF file using GPT-4o exclusively for maximum accuracy.
     
     Args:
         pdf_path (str): Path to the PDF file
@@ -83,39 +83,21 @@ def extract_text_from_pdf(pdf_path):
     try:
         # Open the PDF file with pdfplumber
         with pdfplumber.open(pdf_path) as pdf:
-            # Iterate through each page and extract text
+            # Iterate through each page and extract text using GPT-4o only
             for page_num, page in enumerate(pdf.pages):
                 text += f"\n--- Page {page_num + 1} ---\n"
                 
-                # First try pdfplumber extraction
-                page_text = page.extract_text()
-                
-                # If pdfplumber extraction is poor or empty, use GPT-4o
-                if not page_text or len(page_text.strip()) < 50:
-                    print(f"Using GPT-4o for page {page_num + 1} due to poor pdfplumber extraction")
-                    page_image = convert_pdf_page_to_image_base64(page)
-                    if page_image:
-                        gpt_text = extract_text_with_gpt4o(page_image)
-                        if gpt_text:
-                            text += gpt_text + "\n"
-                        else:
-                            text += page_text + "\n" if page_text else ""
+                # Use GPT-4o exclusively for text extraction
+                print(f"Using GPT-4o for text extraction on page {page_num + 1}")
+                page_image = convert_pdf_page_to_image_base64(page)
+                if page_image:
+                    gpt_text = extract_text_with_gpt4o(page_image)
+                    if gpt_text:
+                        text += gpt_text + "\n"
                     else:
-                        text += page_text + "\n" if page_text else ""
+                        text += "Error: Could not extract text with GPT-4o\n"
                 else:
-                    text += page_text + "\n"
-                
-                # Also try to extract table data if present
-                tables = page.extract_tables()
-                if tables:
-                    text += "\n--- Tables ---\n"
-                    for table in tables:
-                        for row in table:
-                            if row:
-                                # Join non-empty cells
-                                row_text = " | ".join([cell for cell in row if cell])
-                                text += row_text + "\n"
-                    text += "\n"
+                    text += "Error: Could not convert page to image\n"
             
     except Exception as e:
         raise Exception(f"Error extracting text from PDF: {str(e)}")
@@ -124,7 +106,7 @@ def extract_text_from_pdf(pdf_path):
 
 def extract_text_from_pdf_bytes(pdf_bytes):
     """
-    Extract text from PDF bytes using both pdfplumber and GPT-4o for enhanced accuracy.
+    Extract text from PDF bytes using GPT-4o exclusively for maximum accuracy.
     
     Args:
         pdf_bytes (bytes): PDF file as bytes
@@ -139,39 +121,21 @@ def extract_text_from_pdf_bytes(pdf_bytes):
         
         # Open the PDF with pdfplumber
         with pdfplumber.open(file_stream) as pdf:
-            # Iterate through each page and extract text
+            # Iterate through each page and extract text using GPT-4o only
             for page_num, page in enumerate(pdf.pages):
                 text += f"\n--- Page {page_num + 1} ---\n"
                 
-                # First try pdfplumber extraction
-                page_text = page.extract_text()
-                
-                # If pdfplumber extraction is poor or empty, use GPT-4o
-                if not page_text or len(page_text.strip()) < 50:
-                    print(f"Using GPT-4o for page {page_num + 1} due to poor pdfplumber extraction")
-                    page_image = convert_pdf_page_to_image_base64(page)
-                    if page_image:
-                        gpt_text = extract_text_with_gpt4o(page_image)
-                        if gpt_text:
-                            text += gpt_text + "\n"
-                        else:
-                            text += page_text + "\n" if page_text else ""
+                # Use GPT-4o exclusively for text extraction
+                print(f"Using GPT-4o for text extraction on page {page_num + 1}")
+                page_image = convert_pdf_page_to_image_base64(page)
+                if page_image:
+                    gpt_text = extract_text_with_gpt4o(page_image)
+                    if gpt_text:
+                        text += gpt_text + "\n"
                     else:
-                        text += page_text + "\n" if page_text else ""
+                        text += "Error: Could not extract text with GPT-4o\n"
                 else:
-                    text += page_text + "\n"
-                
-                # Also try to extract table data if present
-                tables = page.extract_tables()
-                if tables:
-                    text += "\n--- Tables ---\n"
-                    for table in tables:
-                        for row in table:
-                            if row:
-                                # Join non-empty cells
-                                row_text = " | ".join([cell for cell in row if cell])
-                                text += row_text + "\n"
-                    text += "\n"
+                    text += "Error: Could not convert page to image\n"
         
     except Exception as e:
         raise Exception(f"Error extracting text from PDF bytes: {str(e)}")
