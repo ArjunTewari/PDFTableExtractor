@@ -74,11 +74,43 @@ def process_text_with_llm(text):
         """
 
         user_prompt = f"""
-        Here is the extracted text from a PDF document:
+        Here is the extracted text from a PDF document using LlamaParse:
 
         {text}
 
-        Analyze this text and extract information according to the guidelines.
+        EXTRACTION INSTRUCTIONS:
+        1. Create MANY ROWS - aim for 50+ rows minimum if the document has substantial content
+        2. Create MULTIPLE COLUMNS - use as many Value columns as needed (Value 1, Value 2, Value 3, Value 4, Value 5, etc.)
+        3. Break down EVERY piece of information into separate rows:
+           - Each financial figure gets its own row
+           - Each date gets its own row  
+           - Each name gets its own row
+           - Each address component gets its own row
+           - Each percentage or ratio gets its own row
+           - Each section header gets its own row
+           - Each business metric gets its own row
+
+        EXAMPLES OF GRANULAR BREAKDOWN:
+        - Company "Life360, Inc." becomes multiple rows:
+          * Company Legal Name: Life360, Inc.
+          * Company Short Name: Life360
+          * Company Type: Inc.
+          * Industry Classification: Technology/Software
+        
+        - "Q4 2024 Revenue $115.5 million" becomes multiple rows:
+          * Reporting Period: Q4 2024
+          * Revenue Quarter: Q4
+          * Revenue Year: 2024
+          * Revenue Amount: $115.5 million
+          * Revenue Currency: USD
+          * Revenue Value (Numeric): 115.5
+          * Revenue Unit: Million
+
+        - Any table in the document should be broken down cell by cell
+        - Any list should have each item as a separate row
+        - Any multi-part information should be separated into components
+
+        CREATE A COMPREHENSIVE MULTI-DIMENSIONAL TABLE with maximum rows and columns.
         """
 
         # Send the prompt to the model
@@ -93,7 +125,8 @@ def process_text_with_llm(text):
                 "role": "user",
                 "content": user_prompt
             }],
-            temperature=0,
+            temperature=0.1,
+            max_tokens=4000,
             response_format={"type": "json_object"})
 
         # Extract JSON from the response
