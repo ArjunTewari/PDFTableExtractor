@@ -1,77 +1,10 @@
-import pdfplumber
-import io
-import base64
 import os
-from openai import OpenAI
-
-# Initialize OpenAI client
-openai_client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
-
-def convert_pdf_page_to_image_base64(page):
-    """
-    Convert a PDF page to base64 image for OpenAI vision analysis.
-    
-    Args:
-        page: pdfplumber page object
-        
-    Returns:
-        str: Base64 encoded image
-    """
-    try:
-        # Convert page to image
-        img = page.to_image(resolution=300)
-        
-        # Convert PIL image to base64
-        from io import BytesIO
-        buffered = BytesIO()
-        img.save(buffered, format="PNG")
-        img_base64 = base64.b64encode(buffered.getvalue()).decode()
-        
-        return img_base64
-    except Exception as e:
-        print(f"Error converting page to image: {str(e)}")
-        return None
-
-def extract_text_with_gpt4o(page_image_base64):
-    """
-    Use GPT-4o vision to extract text from a PDF page image.
-    
-    Args:
-        page_image_base64 (str): Base64 encoded image of the PDF page
-        
-    Returns:
-        str: Extracted text from the image
-    """
-    try:
-        response = openai_client.chat.completions.create(
-            model="gpt-4o",  # the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-            messages=[
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": "Extract all text from this PDF page image. Preserve the layout, formatting, and structure as much as possible. Include tables, headers, and any structured data. Maintain the original order and hierarchy of information."
-                        },
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:image/png;base64,{page_image_base64}"
-                            }
-                        }
-                    ]
-                }
-            ],
-            max_tokens=4000
-        )
-        return response.choices[0].message.content
-    except Exception as e:
-        print(f"Error with GPT-4o extraction: {str(e)}")
-        return None
+import tempfile
+from llama_cloud_services import LlamaParse
 
 def extract_text_from_pdf(pdf_path):
     """
-    Extract text from a PDF file using GPT-4o exclusively for maximum accuracy.
+    Extract text from a PDF file using LlamaParse for superior accuracy.
     
     Args:
         pdf_path (str): Path to the PDF file
@@ -79,34 +12,53 @@ def extract_text_from_pdf(pdf_path):
     Returns:
         str: Extracted text from the PDF
     """
-    text = ""
     try:
-        # Open the PDF file with pdfplumber
-        with pdfplumber.open(pdf_path) as pdf:
-            # Iterate through each page and extract text using GPT-4o only
-            for page_num, page in enumerate(pdf.pages):
-                text += f"\n--- Page {page_num + 1} ---\n"
-                
-                # Use GPT-4o exclusively for text extraction
-                print(f"Using GPT-4o for text extraction on page {page_num + 1}")
-                page_image = convert_pdf_page_to_image_base64(page)
-                if page_image:
-                    gpt_text = extract_text_with_gpt4o(page_image)
-                    if gpt_text:
-                        text += gpt_text + "\n"
+        # Initialize LlamaParse with API key
+        parser = LlamaParse(
+            api_key="llx-CuuMEEIRSedt2PvGFWWam1ym70sMLMh4ACOC6soERwzL59HW",
+            num_workers=4,
+            verbose=True,
+            language="en"
+        )
+        
+        print(f"Using LlamaParse for text extraction from {pdf_path}")
+        # Parse the PDF file
+        result = parser.parse(pdf_path)
+        
+        # Extract text from result
+        if result:
+            extracted_text = ""
+            # Handle both single document and list of documents
+            if isinstance(result, list):
+                for doc in result:
+                    if hasattr(doc, 'text'):
+                        extracted_text += doc.text + "\n"
+                    elif hasattr(doc, 'get_content'):
+                        extracted_text += doc.get_content() + "\n"
                     else:
-                        text += "Error: Could not extract text with GPT-4o\n"
+                        extracted_text += str(doc) + "\n"
+            else:
+                # Single document
+                if hasattr(result, 'text'):
+                    extracted_text = result.text
+                elif hasattr(result, 'get_content'):
+                    extracted_text = result.get_content()
                 else:
-                    text += "Error: Could not convert page to image\n"
+                    extracted_text = str(result)
+            
+            if extracted_text.strip():
+                return extracted_text.strip()
+            else:
+                raise Exception("No text content found in parsed result")
+        else:
+            raise Exception("No result returned from LlamaParse")
             
     except Exception as e:
-        raise Exception(f"Error extracting text from PDF: {str(e)}")
-    
-    return text.strip()
+        raise Exception(f"Error extracting text from PDF with LlamaParse: {str(e)}")
 
 def extract_text_from_pdf_bytes(pdf_bytes):
     """
-    Extract text from PDF bytes using GPT-4o exclusively for maximum accuracy.
+    Extract text from PDF bytes using LlamaParse for superior accuracy.
     
     Args:
         pdf_bytes (bytes): PDF file as bytes
@@ -114,30 +66,56 @@ def extract_text_from_pdf_bytes(pdf_bytes):
     Returns:
         str: Extracted text from the PDF
     """
-    text = ""
     try:
-        # Create a BytesIO object
-        file_stream = io.BytesIO(pdf_bytes)
+        # Create a temporary file to store the PDF bytes
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
+            temp_file.write(pdf_bytes)
+            temp_file_path = temp_file.name
         
-        # Open the PDF with pdfplumber
-        with pdfplumber.open(file_stream) as pdf:
-            # Iterate through each page and extract text using GPT-4o only
-            for page_num, page in enumerate(pdf.pages):
-                text += f"\n--- Page {page_num + 1} ---\n"
-                
-                # Use GPT-4o exclusively for text extraction
-                print(f"Using GPT-4o for text extraction on page {page_num + 1}")
-                page_image = convert_pdf_page_to_image_base64(page)
-                if page_image:
-                    gpt_text = extract_text_with_gpt4o(page_image)
-                    if gpt_text:
-                        text += gpt_text + "\n"
-                    else:
-                        text += "Error: Could not extract text with GPT-4o\n"
+        try:
+            # Initialize LlamaParse with API key
+            parser = LlamaParse(
+                api_key="llx-CuuMEEIRSedt2PvGFWWam1ym70sMLMh4ACOC6soERwzL59HW",
+                num_workers=4,
+                verbose=True,
+                language="en"
+            )
+            
+            print(f"Using LlamaParse for text extraction from PDF bytes")
+            # Parse the temporary PDF file
+            result = parser.parse(temp_file_path)
+            
+            # Extract text from result
+            if result:
+                extracted_text = ""
+                # Handle both single document and list of documents
+                if isinstance(result, list):
+                    for doc in result:
+                        if hasattr(doc, 'text'):
+                            extracted_text += doc.text + "\n"
+                        elif hasattr(doc, 'get_content'):
+                            extracted_text += doc.get_content() + "\n"
+                        else:
+                            extracted_text += str(doc) + "\n"
                 else:
-                    text += "Error: Could not convert page to image\n"
-        
+                    # Single document
+                    if hasattr(result, 'text'):
+                        extracted_text = result.text
+                    elif hasattr(result, 'get_content'):
+                        extracted_text = result.get_content()
+                    else:
+                        extracted_text = str(result)
+                
+                if extracted_text.strip():
+                    return extracted_text.strip()
+                else:
+                    raise Exception("No text content found in parsed result")
+            else:
+                raise Exception("No result returned from LlamaParse")
+                
+        finally:
+            # Clean up the temporary file
+            os.unlink(temp_file_path)
+            
     except Exception as e:
-        raise Exception(f"Error extracting text from PDF bytes: {str(e)}")
-    
-    return text.strip()
+        raise Exception(f"Error extracting text from PDF bytes with LlamaParse: {str(e)}")

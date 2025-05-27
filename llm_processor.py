@@ -22,37 +22,44 @@ def process_text_with_llm(text):
         # Create OpenAI client
         client = OpenAI(api_key=api_key)
 
-        # Build the prompt using the specific document analysis instructions
+        # Build the optimized prompt for LlamaParse output analysis
         system_prompt = """
-        Extract all key pieces of structured information from the provided text.
+        You are an expert data extraction specialist working with high-quality text extracted using LlamaParse technology. The input text preserves excellent structure and formatting from the original PDF.
 
-Use the following format:
+        Your task:
+        1. Thoroughly analyze ALL the provided text content
+        2. Extract every piece of meaningful information
+        3. Organize it into a comprehensive structured table
+        4. Create logical categories that capture all important data points
+        5. Ensure no valuable information is lost
 
-        | Category     | Value 1           | Value 2           | Value 3        | ... |                   |
+        Table Structure:
+        - Use "Category" as the first column for descriptive labels
+        - Use "Value 1", "Value 2", "Value 3", etc. for additional columns as needed
+        - Each row represents a distinct piece of information or data point
+        - Group related information logically under appropriate categories
 
-Guidelines:
-- Do combine multiple values into one cell.
-- If multiple values belong to the same category (e.g., several designations). Add an adjacent column for each additional value.
-- Stick to a consistent table format. Avoid adding extra formatting or explanation.
+        Extraction Guidelines:
+        - Be exhaustive - extract ALL relevant information including names, dates, numbers, addresses, descriptions, titles, amounts, etc.
+        - Preserve exact values, numbers, and proper nouns with complete accuracy
+        - Create meaningful category names that clearly describe the information type
+        - Handle multiple values per category by using separate Value columns
+        - Include structural information like sections, headers, or document metadata when relevant
+        - Process tables, lists, and structured data with careful attention to detail
 
-
-
-
-        
         Your output must be a valid JSON object with this exact structure:
         {
           "data": [
             {
               "Category": "category_name",
-              "Value 1": "first_related_value",
-              "Value 2": "second_related_value",
-              "Value 3": "third_related_value"
-            },
-            ...more rows...
+              "Value 1": "first_value",
+              "Value 2": "second_value",
+              "Value 3": "third_value"
+            }
           ]
         }
 
-        Note: Each row may have a different number of values. Include as many value columns as needed for each category, but maintain consistent column naming (Value 1, Value 2, etc.)
+        Important: Return ONLY the JSON object, no additional text or explanations.
         """
 
         user_prompt = f"""
