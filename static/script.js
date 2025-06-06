@@ -198,14 +198,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 processedData = data.data;
                 displayResults(data.data);
                 
-                // Initialize visualization if we have iteration history
-                if (data.iteration_history && window.dataVisualization) {
-                    window.dataVisualization.initialize(
-                        extractedText,
-                        data.data,
-                        data.iteration_history
-                    );
-                }
+                // Visualization removed for simpler interface
                 
                 // Show processing summary
                 if (data.metadata) {
@@ -224,29 +217,15 @@ document.addEventListener('DOMContentLoaded', function() {
     function showProcessingSummary(metadata) {
         if (!metadata) return;
         
-        let optimizationInfo = '';
-        if (metadata.optimization && metadata.optimization.optimization_applied) {
-            const opt = metadata.optimization;
-            optimizationInfo = `
-                <div class="mt-2">
+        const summaryHtml = `
+            <div class="processing-summary alert alert-success mb-3">
+                <h5>Processing Complete</h5>
+                <div class="summary-stats">
                     <small class="text-muted">
-                        <strong>Table Optimization:</strong> ${opt.summary || 'Applied formatting improvements'}
-                        ${opt.final_structure ? ` | ${opt.final_structure.rows} rows, ${opt.final_structure.columns} columns` : ''}
+                        Extracted and analyzed using ${metadata.processing_mode === 'agentic' ? 'advanced AI processing' : 'standard processing'}
+                        ${metadata.optimization && metadata.optimization.optimization_applied ? ' with table optimization applied' : ''}
                     </small>
                 </div>
-            `;
-        }
-        
-        const summaryHtml = `
-            <div class="processing-summary alert alert-info mb-3">
-                <h5>AI Processing Complete</h5>
-                <div class="summary-stats d-flex gap-3">
-                    <span class="badge bg-primary">Mode: ${metadata.processing_mode}</span>
-                    ${metadata.total_iterations ? `<span class="badge bg-success">Iterations: ${metadata.total_iterations}</span>` : ''}
-                    ${metadata.final_coverage ? `<span class="badge bg-warning">Coverage: ${metadata.final_coverage}%</span>` : ''}
-                    ${metadata.optimization && metadata.optimization.optimization_applied ? `<span class="badge bg-info">Optimized</span>` : ''}
-                </div>
-                ${optimizationInfo}
             </div>
         `;
         
