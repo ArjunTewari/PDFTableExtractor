@@ -228,9 +228,12 @@ def process_with_streaming(text: str, max_iterations: int = 3) -> Generator[Dict
         
         yield {"type": "iteration_complete", "iteration": iteration + 1, "data": iteration_data}
         
-        # Check if coverage is sufficient
-        coverage = tabulation_result.get("coverage_analysis", {}).get("coverage_percentage", 0)
-        if coverage >= 90:
+        # Check if coverage is sufficient based on verification results
+        coverage = verification.get("coverage_score", 0) if verification else 0
+        yield {"type": "iteration_coverage", "iteration": iteration + 1, "coverage": coverage}
+        
+        # Only stop if we have very high coverage and multiple iterations
+        if coverage >= 95 and iteration > 0:  # Require at least 2 iterations and 95% coverage
             yield {"type": "coverage_achieved", "coverage": coverage}
             break
     

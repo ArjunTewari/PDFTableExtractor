@@ -211,9 +211,12 @@ class AgenticProcessor:
             }
             iteration_results.append(iteration_data)
             
-            # Check if we should continue
-            coverage = tabulation_result.get("coverage_analysis", {}).get("coverage_percentage", 0)
-            if coverage >= 90:  # Stop if 90% coverage achieved
+            # Check if we should continue based on verification coverage
+            coverage = verification.get("coverage_score", 0)
+            print(f"Iteration {iteration + 1} coverage: {coverage}%")
+            
+            # Only stop if we have very high coverage and multiple iterations
+            if coverage >= 95 and iteration > 0:  # Require at least 2 iterations and 95% coverage
                 print(f"High coverage achieved ({coverage}%), stopping iterations.")
                 break
         
