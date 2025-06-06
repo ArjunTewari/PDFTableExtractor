@@ -5,6 +5,8 @@ from typing import Dict, Any, List
 from io import BytesIO
 from PIL import Image
 import base64
+import fitz  # PyMuPDF
+import tempfile
 
 class TextractProcessor:
     def __init__(self):
@@ -19,6 +21,7 @@ class TextractProcessor:
     def extract_text_from_pdf_bytes(self, pdf_bytes: bytes) -> str:
         """
         Extract text from PDF bytes using Amazon Textract.
+        Converts PDF pages to images first, then processes with Textract.
         
         Args:
             pdf_bytes (bytes): PDF file as bytes
@@ -29,17 +32,39 @@ class TextractProcessor:
         try:
             print("Using Amazon Textract for text extraction from PDF bytes")
             
-            # Use Textract to analyze the document
-            response = self.textract_client.analyze_document(
-                Document={'Bytes': pdf_bytes},
-                FeatureTypes=['TABLES', 'FORMS']
-            )
+            # Convert PDF to images using PyMuPDF
+            pdf_document = fitz.open(stream=pdf_bytes, filetype="pdf")
+            page_count = len(pdf_document)
+            all_extracted_text = []
             
-            # Extract text from the response
-            extracted_text = self._extract_text_from_response(response)
+            for page_num in range(page_count):
+                print(f"Processing page {page_num + 1}/{page_count}")
+                
+                # Get page
+                page = pdf_document.load_page(page_num)
+                
+                # Convert page to image
+                mat = fitz.Matrix(2.0, 2.0)  # Scale factor for better quality
+                pix = page.get_pixmap(matrix=mat)
+                img_data = pix.tobytes("png")
+                
+                # Use Textract to analyze the page image
+                response = self.textract_client.analyze_document(
+                    Document={'Bytes': img_data},
+                    FeatureTypes=['TABLES', 'FORMS']
+                )
+                
+                # Extract text from the response
+                page_text = self._extract_text_from_response(response)
+                if page_text.strip():
+                    all_extracted_text.append(f"=== PAGE {page_num + 1} ===\n{page_text}")
             
-            print(f"Extracted {len(extracted_text)} characters using Textract")
-            return extracted_text
+            pdf_document.close()
+            
+            # Combine all pages
+            final_text = '\n\n'.join(all_extracted_text)
+            print(f"Extracted {len(final_text)} characters from {page_count} pages using Textract")
+            return final_text
             
         except Exception as e:
             print(f"Textract extraction failed: {e}")
