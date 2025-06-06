@@ -14,4 +14,6 @@ dependencies = [
     "flask>=3.1.1",
     "pdfplumber>=0.11.6",
     "llama-cloud-services>=0.6.23",
+    "crewai>=0.118.0",
+    "crewai-tools>=0.44.0",
 ]

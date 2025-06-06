@@ -178,7 +178,10 @@ document.addEventListener('DOMContentLoaded', function() {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ text: extractedText })
+            body: JSON.stringify({ 
+                text: extractedText,
+                mode: 'agentic'
+            })
         })
         .then(response => {
             if (!response.ok) {
@@ -194,6 +197,20 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.data && Array.isArray(data.data)) {
                 processedData = data.data;
                 displayResults(data.data);
+                
+                // Initialize visualization if we have iteration history
+                if (data.iteration_history && window.dataVisualization) {
+                    window.dataVisualization.initialize(
+                        extractedText,
+                        data.data,
+                        data.iteration_history
+                    );
+                }
+                
+                // Show processing summary
+                if (data.metadata) {
+                    showProcessingSummary(data.metadata);
+                }
             } else {
                 throw new Error('Invalid data format received from server');
             }
@@ -202,6 +219,30 @@ document.addEventListener('DOMContentLoaded', function() {
             hideLoading();
             showError(error.message);
         });
+    }
+
+    function showProcessingSummary(metadata) {
+        if (!metadata) return;
+        
+        const summaryHtml = `
+            <div class="processing-summary alert alert-info mb-3">
+                <h5>🤖 Agentic Processing Complete</h5>
+                <div class="summary-stats d-flex gap-3">
+                    <span class="badge bg-primary">Mode: ${metadata.processing_mode}</span>
+                    ${metadata.total_iterations ? `<span class="badge bg-success">Iterations: ${metadata.total_iterations}</span>` : ''}
+                    ${metadata.final_coverage ? `<span class="badge bg-warning">Coverage: ${metadata.final_coverage}%</span>` : ''}
+                </div>
+            </div>
+        `;
+        
+        const resultsSection = document.querySelector('.results-section');
+        if (resultsSection) {
+            const existingSummary = resultsSection.querySelector('.processing-summary');
+            if (existingSummary) {
+                existingSummary.remove();
+            }
+            resultsSection.insertAdjacentHTML('afterbegin', summaryHtml);
+        }
     }
 
     function displayResults(data) {

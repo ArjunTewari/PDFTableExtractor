@@ -7,6 +7,7 @@ from io import BytesIO
 
 from pdf_processor import extract_text_from_pdf, extract_text_from_pdf_bytes
 from llm_processor import process_text_with_llm
+from agentic_processor_simple import process_text_with_agents
 from export_utils import export_to_pdf
 
 app = Flask(__name__)
@@ -44,9 +45,33 @@ def process():
         return jsonify({'error': 'No text provided'}), 400
     
     try:
-        # Process text with LLM
-        structured_data = process_text_with_llm(data['text'])
-        return jsonify({'data': structured_data})
+        # Check processing mode (standard or agentic)
+        processing_mode = data.get('mode', 'agentic')  # Default to agentic for enhanced processing
+        
+        if processing_mode == 'agentic':
+            # Use agentic processing with iterative cross-verification
+            result = process_text_with_agents(data['text'])
+            structured_data = result.get('final_tabulation', [])
+            
+            return jsonify({
+                'data': structured_data,
+                'iteration_history': result.get('iteration_history', []),
+                'metadata': {
+                    'processing_mode': 'agentic',
+                    'total_iterations': result.get('total_iterations', 0),
+                    'final_coverage': result.get('final_coverage', 0)
+                }
+            })
+        else:
+            # Use standard processing
+            structured_data = process_text_with_llm(data['text'])
+            return jsonify({
+                'data': structured_data,
+                'metadata': {
+                    'processing_mode': 'standard'
+                }
+            })
+            
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
