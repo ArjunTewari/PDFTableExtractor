@@ -147,18 +147,17 @@ def cleanup_storage():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/process_stream', methods=['POST'])
+@app.route('/process_stream', methods=['GET'])
 def process_stream():
     """Stream crew processing results in real-time"""
-    data = request.json
-    if not data or 'text' not in data:
+    text_content = request.args.get('text')
+    text_id = request.args.get('text_id')
+    
+    if not text_content:
         return jsonify({'error': 'No text provided'}), 400
     
     def generate_stream():
         try:
-            text_content = data['text']
-            text_id = data.get('text_id')
-            
             # Import the streaming processor
             from agentic_processor_streaming import process_with_streaming
             
@@ -167,7 +166,7 @@ def process_stream():
                 yield f"data: {json.dumps(update)}\n\n"
                 
         except Exception as e:
-            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+            yield f"data: {json.dumps({'type': 'error', 'error': str(e)})}\n\n"
     
     return Response(generate_stream(), mimetype='text/event-stream',
                    headers={'Cache-Control': 'no-cache',

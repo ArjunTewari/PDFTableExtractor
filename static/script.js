@@ -173,8 +173,197 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        showLoading('Processing text with AI...');
+        showLoading('Initializing crew agents...');
+        startRealTimeProcessing();
+    }
 
+    function startRealTimeProcessing() {
+        const liveProgressContainer = createLiveProgressContainer();
+        let iterationHistory = [];
+        let currentIteration = 0;
+        let finalData = null;
+
+        // Use EventSource for real-time streaming
+        const eventSource = new EventSource(`/process_stream?text=${encodeURIComponent(extractedText)}&text_id=${currentTextId || ''}`);
+        
+        eventSource.onmessage = function(event) {
+            try {
+                const update = JSON.parse(event.data);
+                handleStreamingUpdate(update, liveProgressContainer);
+                
+                if (update.type === 'iteration_complete') {
+                    iterationHistory.push(update.data);
+                    updateLiveProgress(update.data, liveProgressContainer);
+                }
+                
+                if (update.type === 'processing_complete') {
+                    finalData = update.result;
+                    eventSource.close();
+                    hideLoading();
+                    showFinalResults(finalData, iterationHistory);
+                }
+                
+                if (update.type === 'error') {
+                    eventSource.close();
+                    hideLoading();
+                    showError(update.error);
+                }
+            } catch (e) {
+                console.error('Error parsing streaming data:', e);
+            }
+        };
+
+        eventSource.onerror = function(event) {
+            console.error('EventSource failed:', event);
+            eventSource.close();
+            hideLoading();
+            // Fallback to regular processing
+            fallbackToRegularProcessing();
+        };
+
+        // Close connection after 2 minutes to prevent hanging
+        setTimeout(() => {
+            if (eventSource.readyState !== EventSource.CLOSED) {
+                eventSource.close();
+                hideLoading();
+                showError('Processing timeout - please try again');
+            }
+        }, 120000);
+    }
+
+    function createLiveProgressContainer() {
+        const progressHtml = `
+            <div class="live-progress-container mb-4" id="live-progress">
+                <h5>🔄 Crew Agents Working Live</h5>
+                <div class="crew-status">
+                    <div class="agent-status" id="analysis-agent">
+                        <span class="agent-name">Analysis Agent</span>
+                        <span class="status-indicator waiting">⏳ Waiting</span>
+                    </div>
+                    <div class="agent-status" id="tabulation-agent">
+                        <span class="agent-name">Tabulation Agent</span>
+                        <span class="status-indicator waiting">⏳ Waiting</span>
+                    </div>
+                    <div class="agent-status" id="verification-agent">
+                        <span class="agent-name">Verification Agent</span>
+                        <span class="status-indicator waiting">⏳ Waiting</span>
+                    </div>
+                </div>
+                <div class="iteration-live-feed" id="iteration-feed"></div>
+            </div>
+        `;
+        
+        const resultsSection = document.querySelector('.results-section') || document.body;
+        resultsSection.insertAdjacentHTML('afterbegin', progressHtml);
+        return document.getElementById('live-progress');
+    }
+
+    function handleStreamingUpdate(update, container) {
+        const feedElement = container.querySelector('#iteration-feed');
+        const timestamp = new Date().toLocaleTimeString();
+        
+        let message = '';
+        let agentId = '';
+        
+        switch(update.type) {
+            case 'iteration_start':
+                message = `Starting iteration ${update.iteration}/${update.total}`;
+                break;
+            case 'step_start':
+                agentId = update.step;
+                message = update.message || `${update.step} agent starting...`;
+                updateAgentStatus(agentId, 'working', '🔄 Working');
+                break;
+            case 'step_complete':
+                agentId = update.step;
+                message = `${update.step} agent completed`;
+                updateAgentStatus(agentId, 'complete', '✅ Complete');
+                break;
+            case 'step_error':
+                agentId = update.step;
+                message = `${update.step} agent error: ${update.error}`;
+                updateAgentStatus(agentId, 'error', '❌ Error');
+                break;
+            case 'coverage_achieved':
+                message = `High coverage achieved (${update.coverage}%)`;
+                break;
+        }
+        
+        if (message) {
+            const logEntry = document.createElement('div');
+            logEntry.className = 'feed-entry';
+            logEntry.innerHTML = `<span class="timestamp">${timestamp}</span> ${message}`;
+            feedElement.appendChild(logEntry);
+            feedElement.scrollTop = feedElement.scrollHeight;
+        }
+    }
+
+    function updateAgentStatus(agentId, status, statusText) {
+        const agentElement = document.getElementById(`${agentId}-agent`);
+        if (agentElement) {
+            const indicator = agentElement.querySelector('.status-indicator');
+            indicator.className = `status-indicator ${status}`;
+            indicator.textContent = statusText;
+        }
+    }
+
+    function updateLiveProgress(iterationData, container) {
+        const feedElement = container.querySelector('#iteration-feed');
+        
+        // Add iteration summary
+        const summary = document.createElement('div');
+        summary.className = 'iteration-summary';
+        summary.innerHTML = `
+            <div class="iteration-header">
+                <strong>Iteration ${iterationData.iteration} Summary</strong>
+                <span class="coverage-badge">Coverage: ${iterationData.coverage_score}%</span>
+            </div>
+            <div class="iteration-details">
+                <small>Data points: ${iterationData.tabulation?.data?.length || 0} | 
+                Gaps found: ${iterationData.verification?.missing_information?.length || 0}</small>
+            </div>
+        `;
+        feedElement.appendChild(summary);
+        feedElement.scrollTop = feedElement.scrollHeight;
+        
+        // Reset agent statuses for next iteration
+        setTimeout(() => {
+            ['analysis', 'tabulation', 'verification'].forEach(agent => {
+                updateAgentStatus(agent, 'waiting', '⏳ Waiting');
+            });
+        }, 1000);
+    }
+
+    function showFinalResults(finalData, iterationHistory) {
+        if (finalData && finalData.final_tabulation) {
+            processedData = finalData.final_tabulation;
+            
+            // Show final iteration progress
+            if (iterationHistory.length > 0) {
+                showIterationProgress(iterationHistory);
+            }
+            
+            displayResults(finalData.final_tabulation);
+            
+            // Initialize visualization
+            if (iterationHistory.length > 0 && window.dataVisualization) {
+                window.dataVisualization.initialize(
+                    extractedText,
+                    finalData.final_tabulation,
+                    iterationHistory
+                );
+            }
+            
+            // Show processing summary
+            showProcessingSummary({
+                processing_mode: 'agentic_live',
+                total_iterations: finalData.total_iterations,
+                final_coverage: finalData.final_coverage
+            });
+        }
+    }
+
+    function fallbackToRegularProcessing() {
         fetch('/process', {
             method: 'POST',
             headers: {
@@ -186,47 +375,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 mode: 'agentic'
             })
         })
-        .then(response => {
-            if (!response.ok) {
-                return response.json().then(data => {
-                    throw new Error(data.error || 'Failed to process text');
-                });
-            }
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
-            hideLoading();
-            
             if (data.data && Array.isArray(data.data)) {
                 processedData = data.data;
-                
-                // Show dynamic iteration progress first
-                if (data.iteration_history && data.iteration_history.length > 0) {
-                    showIterationProgress(data.iteration_history);
-                }
-                
                 displayResults(data.data);
-                
-                // Initialize visualization if we have iteration history
-                if (data.iteration_history && window.dataVisualization) {
-                    window.dataVisualization.initialize(
-                        extractedText,
-                        data.data,
-                        data.iteration_history
-                    );
-                }
-                
-                // Show processing summary
                 if (data.metadata) {
                     showProcessingSummary(data.metadata);
                 }
-            } else {
-                throw new Error('Invalid data format received from server');
             }
         })
         .catch(error => {
-            hideLoading();
-            showError(error.message);
+            showError('Processing failed: ' + error.message);
         });
     }
 
