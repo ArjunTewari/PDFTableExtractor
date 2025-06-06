@@ -199,6 +199,12 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (data.data && Array.isArray(data.data)) {
                 processedData = data.data;
+                
+                // Show dynamic iteration progress first
+                if (data.iteration_history && data.iteration_history.length > 0) {
+                    showIterationProgress(data.iteration_history);
+                }
+                
                 displayResults(data.data);
                 
                 // Initialize visualization if we have iteration history
@@ -261,6 +267,83 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             resultsSection.insertAdjacentHTML('afterbegin', summaryHtml);
         }
+    }
+
+    function showIterationProgress(iterationHistory) {
+        const progressHtml = `
+            <div class="iteration-progress mb-4" id="iteration-progress">
+                <h5>🤖 Crew Processing Progress</h5>
+                <div class="iteration-timeline">
+                    ${iterationHistory.map((iteration, index) => `
+                        <div class="iteration-item" data-iteration="${index + 1}">
+                            <div class="iteration-header">
+                                <strong>Iteration ${iteration.iteration}</strong>
+                                <span class="badge bg-${iteration.coverage_score >= 90 ? 'success' : iteration.coverage_score >= 70 ? 'warning' : 'secondary'}">
+                                    Coverage: ${iteration.coverage_score}%
+                                </span>
+                            </div>
+                            <div class="iteration-details">
+                                <div class="agent-work">
+                                    <small><strong>Analysis Agent:</strong> ${iteration.analysis?.data_points_found || 0} data points identified</small><br>
+                                    <small><strong>Tabulation Agent:</strong> ${iteration.tabulation?.data?.length || 0} entries created</small><br>
+                                    <small><strong>Verification Agent:</strong> ${iteration.verification?.missing_information?.length || 0} gaps found</small>
+                                </div>
+                                ${iteration.tabulation?.data ? `
+                                    <div class="iteration-table mt-2">
+                                        <small>Sample data from this iteration:</small>
+                                        <div class="table-preview">
+                                            ${generateTablePreview(iteration.tabulation.data.slice(0, 3))}
+                                        </div>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+        
+        const resultsSection = document.querySelector('.results-section') || document.body;
+        const existingProgress = resultsSection.querySelector('.iteration-progress');
+        if (existingProgress) {
+            existingProgress.remove();
+        }
+        resultsSection.insertAdjacentHTML('afterbegin', progressHtml);
+        
+        // Add animation to show iterations progressively
+        animateIterationProgress(iterationHistory.length);
+    }
+
+    function generateTablePreview(data) {
+        if (!data || data.length === 0) return '<em>No data available</em>';
+        
+        const headers = Object.keys(data[0]);
+        return `
+            <table class="table table-sm table-bordered">
+                <thead>
+                    <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
+                </thead>
+                <tbody>
+                    ${data.map(row => `
+                        <tr>${headers.map(h => `<td>${String(row[h] || '').substring(0, 50)}${String(row[h] || '').length > 50 ? '...' : ''}</td>`).join('')}</tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+    }
+
+    function animateIterationProgress(totalIterations) {
+        const items = document.querySelectorAll('.iteration-item');
+        items.forEach((item, index) => {
+            item.style.opacity = '0';
+            item.style.transform = 'translateX(-20px)';
+            
+            setTimeout(() => {
+                item.style.transition = 'all 0.5s ease';
+                item.style.opacity = '1';
+                item.style.transform = 'translateX(0)';
+            }, index * 300);
+        });
     }
 
     function displayResults(data) {

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, send_file
+from flask import Flask, render_template, request, jsonify, send_file, Response
 import os
 import tempfile
 import base64
@@ -146,6 +146,32 @@ def cleanup_storage():
         return jsonify({'message': f'Cleaned up files older than {days} days'})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/process_stream', methods=['POST'])
+def process_stream():
+    """Stream crew processing results in real-time"""
+    data = request.json
+    if not data or 'text' not in data:
+        return jsonify({'error': 'No text provided'}), 400
+    
+    def generate_stream():
+        try:
+            text_content = data['text']
+            text_id = data.get('text_id')
+            
+            # Import the streaming processor
+            from agentic_processor_streaming import process_with_streaming
+            
+            # Process with streaming updates
+            for update in process_with_streaming(text_content):
+                yield f"data: {json.dumps(update)}\n\n"
+                
+        except Exception as e:
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+    
+    return Response(generate_stream(), mimetype='text/event-stream',
+                   headers={'Cache-Control': 'no-cache',
+                           'Access-Control-Allow-Origin': '*'})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
