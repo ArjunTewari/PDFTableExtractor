@@ -5,7 +5,7 @@ import base64
 import json
 from io import BytesIO
 
-from pdf_processor import extract_text_from_pdf, extract_text_from_pdf_bytes
+from textract_processor import extract_text_from_pdf, extract_text_from_pdf_bytes
 from llm_processor import process_text_with_llm
 from agentic_processor_simple import process_text_with_agents
 from export_utils import export_to_pdf
