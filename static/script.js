@@ -664,16 +664,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 100);
     }
 
-    // UI helpers
+    // UI helpers - removed loading overlay to prevent blocking streaming visualization
     function showLoading(message) {
-        loadingMessage.textContent = message || 'Processing...';
-        loadingOverlay.classList.remove('d-none');
-        loadingOverlay.classList.add('active');
+        console.log('Processing:', message);
     }
 
     function hideLoading() {
-        loadingOverlay.classList.remove('active');
-        loadingOverlay.classList.add('d-none');
+        console.log('Processing complete');
     }
 
     function showError(message) {
