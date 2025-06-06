@@ -68,7 +68,7 @@ class AgenticProcessor:
             You are a table formatting specialist. Analyze this extracted data and optimize it for maximum clarity and usability.
 
             OPTIMIZATION GOALS:
-            1. Remove redundant information and consolidate similar entries
+            1. Preserve ALL information including redundant text (DO NOT remove any data)
             2. Create logical column groupings and hierarchies
             3. Ensure each row represents a distinct data entity
             4. Use clear, descriptive column headers
@@ -90,11 +90,12 @@ class AgenticProcessor:
             }}
 
             RULES:
-            - Preserve all important data points
+            - Preserve ALL data points including redundant information
             - Create meaningful column names
             - Group related information logically
-            - Remove duplicate or redundant entries
+            - NEVER remove any entries, even if they appear duplicate
             - Ensure data is properly structured for CSV/Excel export
+            - Keep all text content exactly as extracted
             """
 
             response = self.client.chat.completions.create(
