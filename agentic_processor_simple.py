@@ -2,6 +2,7 @@ import os
 import json
 from typing import Dict, List, Any
 from openai import OpenAI
+from storage_manager import storage_manager
 
 class AgenticProcessor:
     def __init__(self):

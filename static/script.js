@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Store data
     let extractedText = '';
     let processedData = [];
+    let currentTextId = null;
 
     // Initialize drag and drop events
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
@@ -142,6 +143,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (data.text) {
                 extractedText = data.text;
+                currentTextId = data.text_id;
                 showExtractedText(data.text);
             } else {
                 throw new Error('No text was extracted from the PDF');
@@ -180,6 +182,7 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             body: JSON.stringify({ 
                 text: extractedText,
+                text_id: currentTextId,
                 mode: 'agentic'
             })
         })
