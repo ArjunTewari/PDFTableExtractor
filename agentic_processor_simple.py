@@ -217,31 +217,11 @@ class AgenticProcessor:
                 print(f"High coverage achieved ({coverage}%), stopping iterations.")
                 break
         
-        # Apply final formatting optimization
-        if current_table:
-            print("Applying final table formatting optimization...")
-            optimization_result = self.optimize_table_format(current_table, extracted_text)
-            current_table = optimization_result.get("optimized_data", current_table)
-            
-            # Add optimization info
-            optimization_summary = {
-                "optimization_applied": True,
-                "summary": optimization_result.get("optimization_summary", ""),
-                "improvements": optimization_result.get("improvements", []),
-                "final_structure": {
-                    "columns": optimization_result.get("column_count", 0),
-                    "rows": optimization_result.get("row_count", 0)
-                }
-            }
-        else:
-            optimization_summary = {"optimization_applied": False}
-        
         return {
             "final_tabulation": current_table,
             "iteration_history": iteration_results,
             "total_iterations": len(iteration_results),
-            "final_coverage": iteration_results[-1]["coverage_score"] if iteration_results else 0,
-            "optimization": optimization_summary
+            "final_coverage": iteration_results[-1]["coverage_score"] if iteration_results else 0
         }
 
 def process_text_with_agents(text: str) -> Dict[str, Any]:

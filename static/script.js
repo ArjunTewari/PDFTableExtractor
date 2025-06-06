@@ -183,52 +183,73 @@ document.addEventListener('DOMContentLoaded', function() {
         let currentIteration = 0;
         let finalData = null;
 
-        // Use EventSource for real-time streaming
-        const eventSource = new EventSource(`/process_stream?text=${encodeURIComponent(extractedText)}&text_id=${currentTextId || ''}`);
-        
-        eventSource.onmessage = function(event) {
-            try {
-                const update = JSON.parse(event.data);
-                handleStreamingUpdate(update, liveProgressContainer);
-                
-                if (update.type === 'iteration_complete') {
-                    iterationHistory.push(update.data);
-                    updateLiveProgress(update.data, liveProgressContainer);
-                }
-                
-                if (update.type === 'processing_complete') {
-                    finalData = update.result;
-                    eventSource.close();
-                    hideLoading();
-                    showFinalResults(finalData, iterationHistory);
-                }
-                
-                if (update.type === 'error') {
-                    eventSource.close();
-                    hideLoading();
-                    showError(update.error);
-                }
-            } catch (e) {
-                console.error('Error parsing streaming data:', e);
+        // Use fetch with streaming for real-time updates
+        fetch('/process_stream', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                text: extractedText,
+                text_id: currentTextId
+            })
+        })
+        .then(response => {
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            
+            function readStream() {
+                return reader.read().then(({ done, value }) => {
+                    if (done) {
+                        hideLoading();
+                        return;
+                    }
+                    
+                    const chunk = decoder.decode(value);
+                    const lines = chunk.split('\n');
+                    
+                    lines.forEach(line => {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const jsonData = line.substring(6);
+                                const update = JSON.parse(jsonData);
+                                handleStreamingUpdate(update, liveProgressContainer);
+                                
+                                if (update.type === 'iteration_complete') {
+                                    iterationHistory.push(update.data);
+                                    updateLiveProgress(update.data, liveProgressContainer);
+                                }
+                                
+                                if (update.type === 'processing_complete') {
+                                    finalData = update.result;
+                                    hideLoading();
+                                    showFinalResults(finalData, iterationHistory);
+                                    return;
+                                }
+                                
+                                if (update.type === 'error') {
+                                    hideLoading();
+                                    showError(update.error);
+                                    return;
+                                }
+                            } catch (e) {
+                                console.error('Error parsing streaming data:', e);
+                            }
+                        }
+                    });
+                    
+                    return readStream();
+                });
             }
-        };
-
-        eventSource.onerror = function(event) {
-            console.error('EventSource failed:', event);
-            eventSource.close();
+            
+            return readStream();
+        })
+        .catch(error => {
+            console.error('Streaming failed:', error);
             hideLoading();
             // Fallback to regular processing
             fallbackToRegularProcessing();
-        };
-
-        // Close connection after 2 minutes to prevent hanging
-        setTimeout(() => {
-            if (eventSource.readyState !== EventSource.CLOSED) {
-                eventSource.close();
-                hideLoading();
-                showError('Processing timeout - please try again');
-            }
-        }, 120000);
+        });
     }
 
     function createLiveProgressContainer() {

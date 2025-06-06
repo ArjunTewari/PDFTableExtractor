@@ -74,7 +74,6 @@ def process():
                     'processing_mode': 'agentic',
                     'total_iterations': result.get('total_iterations', 0),
                     'final_coverage': result.get('final_coverage', 0),
-                    'optimization': result.get('optimization', {}),
                     'text_id': text_id
                 }
             })
@@ -147,14 +146,15 @@ def cleanup_storage():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/process_stream', methods=['GET'])
+@app.route('/process_stream', methods=['POST'])
 def process_stream():
     """Stream crew processing results in real-time"""
-    text_content = request.args.get('text')
-    text_id = request.args.get('text_id')
-    
-    if not text_content:
+    data = request.json
+    if not data or 'text' not in data:
         return jsonify({'error': 'No text provided'}), 400
+    
+    text_content = data['text']
+    text_id = data.get('text_id')
     
     def generate_stream():
         try:

@@ -234,17 +234,9 @@ def process_with_streaming(text: str, max_iterations: int = 3) -> Generator[Dict
             yield {"type": "coverage_achieved", "coverage": coverage}
             break
     
-    # Final optimization
-    optimized_table = current_table
-    if current_table:
-        for update in processor.optimize_table_streaming(current_table, text):
-            yield update
-            if update["type"] == "step_complete":
-                optimized_table = update["result"].get("optimized_data", current_table)
-    
-    # Final results
+    # Final results without optimization to preserve all data
     final_result = {
-        "final_tabulation": optimized_table,
+        "final_tabulation": current_table,
         "iteration_history": iteration_results,
         "total_iterations": len(iteration_results),
         "final_coverage": iteration_results[-1]["coverage_score"] if iteration_results else 0
