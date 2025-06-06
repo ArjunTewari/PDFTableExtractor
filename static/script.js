@@ -205,35 +205,38 @@ document.addEventListener('DOMContentLoaded', function() {
                         return;
                     }
                     
-                    const chunk = decoder.decode(value);
+                    const chunk = decoder.decode(value, { stream: true });
                     const lines = chunk.split('\n');
                     
                     lines.forEach(line => {
-                        if (line.startsWith('data: ')) {
+                        if (line.trim().startsWith('data: ')) {
                             try {
-                                const jsonData = line.substring(6);
-                                const update = JSON.parse(jsonData);
-                                handleStreamingUpdate(update, liveProgressContainer);
-                                
-                                if (update.type === 'iteration_complete') {
-                                    iterationHistory.push(update.data);
-                                    updateLiveProgress(update.data, liveProgressContainer);
-                                }
-                                
-                                if (update.type === 'processing_complete') {
-                                    finalData = update.result;
-                                    hideLoading();
-                                    showFinalResults(finalData, iterationHistory);
-                                    return;
-                                }
-                                
-                                if (update.type === 'error') {
-                                    hideLoading();
-                                    showError(update.error);
-                                    return;
+                                const jsonData = line.substring(6).trim();
+                                if (jsonData) {
+                                    console.log('Received streaming update:', jsonData);
+                                    const update = JSON.parse(jsonData);
+                                    handleStreamingUpdate(update, liveProgressContainer);
+                                    
+                                    if (update.type === 'iteration_complete') {
+                                        iterationHistory.push(update.data);
+                                        updateLiveProgress(update.data, liveProgressContainer);
+                                    }
+                                    
+                                    if (update.type === 'processing_complete') {
+                                        finalData = update.result;
+                                        console.log('Processing complete, showing final results');
+                                        showFinalResults(finalData, iterationHistory);
+                                        return;
+                                    }
+                                    
+                                    if (update.type === 'error') {
+                                        console.error('Streaming error:', update.error);
+                                        showError(update.error);
+                                        return;
+                                    }
                                 }
                             } catch (e) {
-                                console.error('Error parsing streaming data:', e);
+                                console.error('Error parsing streaming data:', e, 'Raw line:', line);
                             }
                         }
                     });
@@ -681,4 +684,22 @@ document.addEventListener('DOMContentLoaded', function() {
             errorMessage.classList.add('d-none');
         }, 5000);
     }
+    
+    // Make processDirectText available globally
+    window.processDirectText = function() {
+        const textInput = document.getElementById('direct-text');
+        const text = textInput.value.trim();
+        
+        if (!text) {
+            showError('Please enter some text to process');
+            return;
+        }
+        
+        // Set the extracted text and show it
+        extractedText = text;
+        showExtractedText(text);
+        
+        // Auto-trigger processing
+        processText();
+    };
 });
