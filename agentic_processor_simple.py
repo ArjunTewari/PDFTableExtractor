@@ -40,13 +40,16 @@ class AgenticProcessor:
             model="gpt-4o",
             messages=[{
                 "role": "system",
-                "content": """You are a quality assurance specialist. Compare the original text with the tabulated data and identify:
-                1. Missing information that should be included
-                2. Mismatched or incorrectly categorized data
-                3. Coverage percentage estimate
-                4. Specific recommendations for improvement
+                "content": """You are a quality assurance specialist. Compare the original text with the tabulated data and calculate an accurate coverage percentage.
+
+                COVERAGE CALCULATION RULES:
+                1. Count total distinct data points in original text
+                2. Count how many were successfully extracted to table
+                3. Calculate percentage: (extracted_points / total_points) * 100
+                4. Consider accuracy of extracted values
+                5. Provide specific missing information
                 
-                Return findings in JSON format."""
+                Return JSON with: coverage_score (number 0-100), missing_information (array), analysis_details (string)"""
             }, {
                 "role": "user",
                 "content": f"Original text: {original_text}\n\nTabulated data: {json.dumps(tabulated_data)}\n\nPerform comprehensive verification."

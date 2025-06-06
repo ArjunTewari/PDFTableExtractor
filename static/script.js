@@ -224,8 +224,15 @@ document.addEventListener('DOMContentLoaded', function() {
                                     
                                     if (update.type === 'processing_complete') {
                                         finalData = update.result;
-                                        console.log('Processing complete, showing final results');
-                                        showFinalResults(finalData, iterationHistory);
+                                        console.log('Processing complete, showing final results:', finalData);
+                                        // Ensure results are displayed
+                                        if (finalData && finalData.final_tabulation) {
+                                            displayResults(finalData.final_tabulation);
+                                            showFinalResults(finalData, iterationHistory);
+                                        } else {
+                                            console.error('No final tabulation data received');
+                                            showError('Processing completed but no results received');
+                                        }
                                         return;
                                     }
                                     
