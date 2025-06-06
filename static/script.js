@@ -308,7 +308,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const headers = Object.keys(processedData[0]);
         
         // Create CSV content
-        let csvContent = headers.join(',') + '\\n';
+        let csvContent = headers.join(',') + '\n';
         
         processedData.forEach(row => {
             const values = headers.map(header => {
@@ -316,7 +316,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Escape commas and quotes in values
                 return `"${value.toString().replace(/"/g, '""')}"`;
             });
-            csvContent += values.join(',') + '\\n';
+            csvContent += values.join(',') + '\n';
         });
         
         downloadFile(csvContent, 'extracted_data.csv', 'text/csv');

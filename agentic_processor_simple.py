@@ -59,6 +59,64 @@ class AgenticProcessor:
         except json.JSONDecodeError:
             return {"missing_information": [], "mismatches": [], "coverage_score": 0}
 
+    def optimize_table_format(self, table_data: List[Dict], original_text: str) -> Dict[str, Any]:
+        """Final formatting agent that optimizes table structure and removes redundancy"""
+        try:
+            # the newest OpenAI model is "gpt-4o" which was released May 13, 2024.
+            # do not change this unless explicitly requested by the user
+            prompt = f"""
+            You are a table formatting specialist. Analyze this extracted data and optimize it for maximum clarity and usability.
+
+            OPTIMIZATION GOALS:
+            1. Remove redundant information and consolidate similar entries
+            2. Create logical column groupings and hierarchies
+            3. Ensure each row represents a distinct data entity
+            4. Use clear, descriptive column headers
+            5. Optimize for readability in spreadsheet applications
+
+            CURRENT TABLE DATA:
+            {json.dumps(table_data, indent=2)}
+
+            ORIGINAL TEXT CONTEXT:
+            {original_text[:2000]}...
+
+            Return a JSON object with this structure:
+            {{
+                "optimized_data": [list of optimized dictionary objects],
+                "optimization_summary": "Brief description of changes made",
+                "column_count": number,
+                "row_count": number,
+                "improvements": ["list of specific improvements made"]
+            }}
+
+            RULES:
+            - Preserve all important data points
+            - Create meaningful column names
+            - Group related information logically
+            - Remove duplicate or redundant entries
+            - Ensure data is properly structured for CSV/Excel export
+            """
+
+            response = self.client.chat.completions.create(
+                model="gpt-4o",
+                messages=[{"role": "user", "content": prompt}],
+                response_format={"type": "json_object"},
+                temperature=0.3
+            )
+            
+            result = json.loads(response.choices[0].message.content or "{}")
+            return result
+
+        except Exception as e:
+            print(f"Table optimization error: {e}")
+            return {
+                "optimized_data": table_data,
+                "optimization_summary": "No optimization applied due to error",
+                "column_count": len(table_data[0].keys()) if table_data else 0,
+                "row_count": len(table_data),
+                "improvements": []
+            }
+
     def create_enhanced_tabulation(self, text: str, analysis: Dict, verification: Dict, previous_table: List[Dict] = None) -> Dict[str, Any]:
         """Create enhanced tabulation based on analysis and verification feedback"""
         system_prompt = """
@@ -157,11 +215,31 @@ class AgenticProcessor:
                 print(f"High coverage achieved ({coverage}%), stopping iterations.")
                 break
         
+        # Apply final formatting optimization
+        if current_table:
+            print("Applying final table formatting optimization...")
+            optimization_result = self.optimize_table_format(current_table, extracted_text)
+            current_table = optimization_result.get("optimized_data", current_table)
+            
+            # Add optimization info
+            optimization_summary = {
+                "optimization_applied": True,
+                "summary": optimization_result.get("optimization_summary", ""),
+                "improvements": optimization_result.get("improvements", []),
+                "final_structure": {
+                    "columns": optimization_result.get("column_count", 0),
+                    "rows": optimization_result.get("row_count", 0)
+                }
+            }
+        else:
+            optimization_summary = {"optimization_applied": False}
+        
         return {
             "final_tabulation": current_table,
             "iteration_history": iteration_results,
             "total_iterations": len(iteration_results),
-            "final_coverage": iteration_results[-1]["coverage_score"] if iteration_results else 0
+            "final_coverage": iteration_results[-1]["coverage_score"] if iteration_results else 0,
+            "optimization": optimization_summary
         }
 
 def process_text_with_agents(text: str) -> Dict[str, Any]:

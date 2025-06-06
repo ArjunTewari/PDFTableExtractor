@@ -59,7 +59,8 @@ def process():
                 'metadata': {
                     'processing_mode': 'agentic',
                     'total_iterations': result.get('total_iterations', 0),
-                    'final_coverage': result.get('final_coverage', 0)
+                    'final_coverage': result.get('final_coverage', 0),
+                    'optimization': result.get('optimization', {})
                 }
             })
         else:
