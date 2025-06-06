@@ -17,54 +17,20 @@
 
         <div class="card mb-4 shadow-sm">
             <div class="card-header bg-primary text-white">
-                <h4 class="mb-0"><i class="bi bi-file-earmark-pdf"></i> Upload PDF or Enter Text</h4>
+                <h4 class="mb-0"><i class="bi bi-file-earmark-pdf"></i> Upload PDF</h4>
             </div>
             <div class="card-body">
-                <!-- Tab Navigation -->
-                <ul class="nav nav-tabs mb-3" id="inputTabs" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="pdf-tab" data-bs-toggle="tab" data-bs-target="#pdf-upload" type="button" role="tab">
-                            <i class="bi bi-file-earmark-pdf"></i> Upload PDF
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="text-tab" data-bs-toggle="tab" data-bs-target="#text-input" type="button" role="tab">
-                            <i class="bi bi-textarea-t"></i> Enter Text
-                        </button>
-                    </li>
-                </ul>
-                
-                <!-- Tab Content -->
-                <div class="tab-content" id="inputTabsContent">
-                    <!-- PDF Upload Tab -->
-                    <div class="tab-pane fade show active" id="pdf-upload" role="tabpanel">
-                        <div class="upload-area p-4 border rounded text-center mb-3" id="drop-area">
-                            <div class="mb-3">
-                                <i class="bi bi-cloud-arrow-up display-4"></i>
-                                <p>Drag and drop your PDF file here or click to browse</p>
-                            </div>
-                            <input type="file" id="file-input" accept=".pdf" class="d-none">
-                            <button class="btn btn-outline-primary" id="browse-btn">Browse Files</button>
-                        </div>
-                        <div id="file-info" class="alert alert-info d-none"></div>
-                        <div class="progress d-none" id="upload-progress">
-                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
-                        </div>
+                <div class="upload-area p-4 border rounded text-center mb-3" id="drop-area">
+                    <div class="mb-3">
+                        <i class="bi bi-cloud-arrow-up display-4"></i>
+                        <p>Drag and drop your PDF file here or click to browse</p>
                     </div>
-                    
-                    <!-- Text Input Tab -->
-                    <div class="tab-pane fade" id="text-input" role="tabpanel">
-                        <div class="mb-3">
-                            <label for="direct-text" class="form-label">Enter your text to be analyzed and tabulated:</label>
-                            <textarea class="form-control" id="direct-text" rows="8" 
-                                placeholder="Paste or type your text here. The AI will analyze it and create structured tables from any data it finds..."></textarea>
-                        </div>
-                        <div class="d-grid">
-                            <button class="btn btn-success" onclick="processDirectText()">
-                                <i class="bi bi-gear"></i> Process Text with AI
-                            </button>
-                        </div>
-                    </div>
+                    <input type="file" id="file-input" accept=".pdf" class="d-none">
+                    <button class="btn btn-outline-primary" id="browse-btn">Browse Files</button>
+                </div>
+                <div id="file-info" class="alert alert-info d-none"></div>
+                <div class="progress d-none" id="upload-progress">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
                 </div>
             </div>
         </div>

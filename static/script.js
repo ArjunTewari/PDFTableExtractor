@@ -24,7 +24,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Store data
     let extractedText = '';
     let processedData = [];
-    let currentTextId = null;
 
     // Initialize drag and drop events
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
@@ -143,7 +142,6 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (data.text) {
                 extractedText = data.text;
-                currentTextId = data.text_id;
                 showExtractedText(data.text);
             } else {
                 throw new Error('No text was extracted from the PDF');
@@ -173,228 +171,8 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        showLoading('Initializing crew agents...');
-        startRealTimeProcessing();
-    }
+        showLoading('Processing text with AI...');
 
-    function startRealTimeProcessing() {
-        const liveProgressContainer = createLiveProgressContainer();
-        let iterationHistory = [];
-        let currentIteration = 0;
-        let finalData = null;
-
-        // Use fetch with streaming for real-time updates
-        fetch('/process_stream', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                text: extractedText,
-                text_id: currentTextId
-            })
-        })
-        .then(response => {
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            
-            function readStream() {
-                return reader.read().then(({ done, value }) => {
-                    if (done) {
-                        hideLoading();
-                        return;
-                    }
-                    
-                    const chunk = decoder.decode(value, { stream: true });
-                    const lines = chunk.split('\n');
-                    
-                    lines.forEach(line => {
-                        if (line.trim().startsWith('data: ')) {
-                            try {
-                                const jsonData = line.substring(6).trim();
-                                if (jsonData) {
-                                    console.log('Received streaming update:', jsonData);
-                                    const update = JSON.parse(jsonData);
-                                    handleStreamingUpdate(update, liveProgressContainer);
-                                    
-                                    if (update.type === 'iteration_complete') {
-                                        iterationHistory.push(update.data);
-                                        updateLiveProgress(update.data, liveProgressContainer);
-                                    }
-                                    
-                                    if (update.type === 'processing_complete') {
-                                        finalData = update.result;
-                                        console.log('Processing complete, showing final results:', finalData);
-                                        // Ensure results are displayed
-                                        if (finalData && finalData.final_tabulation) {
-                                            displayResults(finalData.final_tabulation);
-                                            showFinalResults(finalData, iterationHistory);
-                                        } else {
-                                            console.error('No final tabulation data received');
-                                            showError('Processing completed but no results received');
-                                        }
-                                        return;
-                                    }
-                                    
-                                    if (update.type === 'error') {
-                                        console.error('Streaming error:', update.error);
-                                        showError(update.error);
-                                        return;
-                                    }
-                                }
-                            } catch (e) {
-                                console.error('Error parsing streaming data:', e, 'Raw line:', line);
-                            }
-                        }
-                    });
-                    
-                    return readStream();
-                });
-            }
-            
-            return readStream();
-        })
-        .catch(error => {
-            console.error('Streaming failed:', error);
-            hideLoading();
-            // Fallback to regular processing
-            fallbackToRegularProcessing();
-        });
-    }
-
-    function createLiveProgressContainer() {
-        const progressHtml = `
-            <div class="live-progress-container mb-4" id="live-progress">
-                <h5>🔄 Crew Agents Working Live</h5>
-                <div class="crew-status">
-                    <div class="agent-status" id="analysis-agent">
-                        <span class="agent-name">Analysis Agent</span>
-                        <span class="status-indicator waiting">⏳ Waiting</span>
-                    </div>
-                    <div class="agent-status" id="tabulation-agent">
-                        <span class="agent-name">Tabulation Agent</span>
-                        <span class="status-indicator waiting">⏳ Waiting</span>
-                    </div>
-                    <div class="agent-status" id="verification-agent">
-                        <span class="agent-name">Verification Agent</span>
-                        <span class="status-indicator waiting">⏳ Waiting</span>
-                    </div>
-                </div>
-                <div class="iteration-live-feed" id="iteration-feed"></div>
-            </div>
-        `;
-        
-        const resultsSection = document.querySelector('.results-section') || document.body;
-        resultsSection.insertAdjacentHTML('afterbegin', progressHtml);
-        return document.getElementById('live-progress');
-    }
-
-    function handleStreamingUpdate(update, container) {
-        const feedElement = container.querySelector('#iteration-feed');
-        const timestamp = new Date().toLocaleTimeString();
-        
-        let message = '';
-        let agentId = '';
-        
-        switch(update.type) {
-            case 'iteration_start':
-                message = `Starting iteration ${update.iteration}/${update.total}`;
-                break;
-            case 'step_start':
-                agentId = update.step;
-                message = update.message || `${update.step} agent starting...`;
-                updateAgentStatus(agentId, 'working', '🔄 Working');
-                break;
-            case 'step_complete':
-                agentId = update.step;
-                message = `${update.step} agent completed`;
-                updateAgentStatus(agentId, 'complete', '✅ Complete');
-                break;
-            case 'step_error':
-                agentId = update.step;
-                message = `${update.step} agent error: ${update.error}`;
-                updateAgentStatus(agentId, 'error', '❌ Error');
-                break;
-            case 'coverage_achieved':
-                message = `High coverage achieved (${update.coverage}%)`;
-                break;
-        }
-        
-        if (message) {
-            const logEntry = document.createElement('div');
-            logEntry.className = 'feed-entry';
-            logEntry.innerHTML = `<span class="timestamp">${timestamp}</span> ${message}`;
-            feedElement.appendChild(logEntry);
-            feedElement.scrollTop = feedElement.scrollHeight;
-        }
-    }
-
-    function updateAgentStatus(agentId, status, statusText) {
-        const agentElement = document.getElementById(`${agentId}-agent`);
-        if (agentElement) {
-            const indicator = agentElement.querySelector('.status-indicator');
-            indicator.className = `status-indicator ${status}`;
-            indicator.textContent = statusText;
-        }
-    }
-
-    function updateLiveProgress(iterationData, container) {
-        const feedElement = container.querySelector('#iteration-feed');
-        
-        // Add iteration summary
-        const summary = document.createElement('div');
-        summary.className = 'iteration-summary';
-        summary.innerHTML = `
-            <div class="iteration-header">
-                <strong>Iteration ${iterationData.iteration} Summary</strong>
-                <span class="coverage-badge">Coverage: ${iterationData.coverage_score}%</span>
-            </div>
-            <div class="iteration-details">
-                <small>Data points: ${iterationData.tabulation?.data?.length || 0} | 
-                Gaps found: ${iterationData.verification?.missing_information?.length || 0}</small>
-            </div>
-        `;
-        feedElement.appendChild(summary);
-        feedElement.scrollTop = feedElement.scrollHeight;
-        
-        // Reset agent statuses for next iteration
-        setTimeout(() => {
-            ['analysis', 'tabulation', 'verification'].forEach(agent => {
-                updateAgentStatus(agent, 'waiting', '⏳ Waiting');
-            });
-        }, 1000);
-    }
-
-    function showFinalResults(finalData, iterationHistory) {
-        if (finalData && finalData.final_tabulation) {
-            processedData = finalData.final_tabulation;
-            
-            // Show final iteration progress
-            if (iterationHistory.length > 0) {
-                showIterationProgress(iterationHistory);
-            }
-            
-            displayResults(finalData.final_tabulation);
-            
-            // Initialize visualization
-            if (iterationHistory.length > 0 && window.dataVisualization) {
-                window.dataVisualization.initialize(
-                    extractedText,
-                    finalData.final_tabulation,
-                    iterationHistory
-                );
-            }
-            
-            // Show processing summary
-            showProcessingSummary({
-                processing_mode: 'agentic_live',
-                total_iterations: finalData.total_iterations,
-                final_coverage: finalData.final_coverage
-            });
-        }
-    }
-
-    function fallbackToRegularProcessing() {
         fetch('/process', {
             method: 'POST',
             headers: {
@@ -402,22 +180,44 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             body: JSON.stringify({ 
                 text: extractedText,
-                text_id: currentTextId,
                 mode: 'agentic'
             })
         })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => {
+                    throw new Error(data.error || 'Failed to process text');
+                });
+            }
+            return response.json();
+        })
         .then(data => {
+            hideLoading();
+            
             if (data.data && Array.isArray(data.data)) {
                 processedData = data.data;
                 displayResults(data.data);
+                
+                // Initialize visualization if we have iteration history
+                if (data.iteration_history && window.dataVisualization) {
+                    window.dataVisualization.initialize(
+                        extractedText,
+                        data.data,
+                        data.iteration_history
+                    );
+                }
+                
+                // Show processing summary
                 if (data.metadata) {
                     showProcessingSummary(data.metadata);
                 }
+            } else {
+                throw new Error('Invalid data format received from server');
             }
         })
         .catch(error => {
-            showError('Processing failed: ' + error.message);
+            hideLoading();
+            showError(error.message);
         });
     }
 
@@ -458,83 +258,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             resultsSection.insertAdjacentHTML('afterbegin', summaryHtml);
         }
-    }
-
-    function showIterationProgress(iterationHistory) {
-        const progressHtml = `
-            <div class="iteration-progress mb-4" id="iteration-progress">
-                <h5>🤖 Crew Processing Progress</h5>
-                <div class="iteration-timeline">
-                    ${iterationHistory.map((iteration, index) => `
-                        <div class="iteration-item" data-iteration="${index + 1}">
-                            <div class="iteration-header">
-                                <strong>Iteration ${iteration.iteration}</strong>
-                                <span class="badge bg-${iteration.coverage_score >= 90 ? 'success' : iteration.coverage_score >= 70 ? 'warning' : 'secondary'}">
-                                    Coverage: ${iteration.coverage_score}%
-                                </span>
-                            </div>
-                            <div class="iteration-details">
-                                <div class="agent-work">
-                                    <small><strong>Analysis Agent:</strong> ${iteration.analysis?.data_points_found || 0} data points identified</small><br>
-                                    <small><strong>Tabulation Agent:</strong> ${iteration.tabulation?.data?.length || 0} entries created</small><br>
-                                    <small><strong>Verification Agent:</strong> ${iteration.verification?.missing_information?.length || 0} gaps found</small>
-                                </div>
-                                ${iteration.tabulation?.data ? `
-                                    <div class="iteration-table mt-2">
-                                        <small>Sample data from this iteration:</small>
-                                        <div class="table-preview">
-                                            ${generateTablePreview(iteration.tabulation.data.slice(0, 3))}
-                                        </div>
-                                    </div>
-                                ` : ''}
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        `;
-        
-        const resultsSection = document.querySelector('.results-section') || document.body;
-        const existingProgress = resultsSection.querySelector('.iteration-progress');
-        if (existingProgress) {
-            existingProgress.remove();
-        }
-        resultsSection.insertAdjacentHTML('afterbegin', progressHtml);
-        
-        // Add animation to show iterations progressively
-        animateIterationProgress(iterationHistory.length);
-    }
-
-    function generateTablePreview(data) {
-        if (!data || data.length === 0) return '<em>No data available</em>';
-        
-        const headers = Object.keys(data[0]);
-        return `
-            <table class="table table-sm table-bordered">
-                <thead>
-                    <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
-                </thead>
-                <tbody>
-                    ${data.map(row => `
-                        <tr>${headers.map(h => `<td>${String(row[h] || '').substring(0, 50)}${String(row[h] || '').length > 50 ? '...' : ''}</td>`).join('')}</tr>
-                    `).join('')}
-                </tbody>
-            </table>
-        `;
-    }
-
-    function animateIterationProgress(totalIterations) {
-        const items = document.querySelectorAll('.iteration-item');
-        items.forEach((item, index) => {
-            item.style.opacity = '0';
-            item.style.transform = 'translateX(-20px)';
-            
-            setTimeout(() => {
-                item.style.transition = 'all 0.5s ease';
-                item.style.opacity = '1';
-                item.style.transform = 'translateX(0)';
-            }, index * 300);
-        });
     }
 
     function displayResults(data) {
@@ -674,13 +397,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 100);
     }
 
-    // UI helpers - removed loading overlay to prevent blocking streaming visualization
+    // UI helpers
     function showLoading(message) {
-        console.log('Processing:', message);
+        loadingMessage.textContent = message || 'Processing...';
+        loadingOverlay.classList.remove('d-none');
+        loadingOverlay.classList.add('active');
     }
 
     function hideLoading() {
-        console.log('Processing complete');
+        loadingOverlay.classList.remove('active');
+        loadingOverlay.classList.add('d-none');
     }
 
     function showError(message) {
@@ -691,22 +417,4 @@ document.addEventListener('DOMContentLoaded', function() {
             errorMessage.classList.add('d-none');
         }, 5000);
     }
-    
-    // Make processDirectText available globally
-    window.processDirectText = function() {
-        const textInput = document.getElementById('direct-text');
-        const text = textInput.value.trim();
-        
-        if (!text) {
-            showError('Please enter some text to process');
-            return;
-        }
-        
-        // Set the extracted text and show it
-        extractedText = text;
-        showExtractedText(text);
-        
-        // Auto-trigger processing
-        processText();
-    };
 });

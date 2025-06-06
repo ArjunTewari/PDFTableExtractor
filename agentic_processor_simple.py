@@ -2,7 +2,6 @@ import os
 import json
 from typing import Dict, List, Any
 from openai import OpenAI
-from storage_manager import storage_manager
 
 class AgenticProcessor:
     def __init__(self):
@@ -40,16 +39,13 @@ class AgenticProcessor:
             model="gpt-4o",
             messages=[{
                 "role": "system",
-                "content": """You are a quality assurance specialist. Compare the original text with the tabulated data and calculate an accurate coverage percentage.
-
-                COVERAGE CALCULATION RULES:
-                1. Count total distinct data points in original text
-                2. Count how many were successfully extracted to table
-                3. Calculate percentage: (extracted_points / total_points) * 100
-                4. Consider accuracy of extracted values
-                5. Provide specific missing information
+                "content": """You are a quality assurance specialist. Compare the original text with the tabulated data and identify:
+                1. Missing information that should be included
+                2. Mismatched or incorrectly categorized data
+                3. Coverage percentage estimate
+                4. Specific recommendations for improvement
                 
-                Return JSON with: coverage_score (number 0-100), missing_information (array), analysis_details (string)"""
+                Return findings in JSON format."""
             }, {
                 "role": "user",
                 "content": f"Original text: {original_text}\n\nTabulated data: {json.dumps(tabulated_data)}\n\nPerform comprehensive verification."
@@ -214,20 +210,37 @@ class AgenticProcessor:
             }
             iteration_results.append(iteration_data)
             
-            # Check if we should continue based on verification coverage
-            coverage = verification.get("coverage_score", 0)
-            print(f"Iteration {iteration + 1} coverage: {coverage}%")
-            
-            # Only stop if we have very high coverage and multiple iterations
-            if coverage >= 95 and iteration > 0:  # Require at least 2 iterations and 95% coverage
+            # Check if we should continue
+            coverage = tabulation_result.get("coverage_analysis", {}).get("coverage_percentage", 0)
+            if coverage >= 90:  # Stop if 90% coverage achieved
                 print(f"High coverage achieved ({coverage}%), stopping iterations.")
                 break
+        
+        # Apply final formatting optimization
+        if current_table:
+            print("Applying final table formatting optimization...")
+            optimization_result = self.optimize_table_format(current_table, extracted_text)
+            current_table = optimization_result.get("optimized_data", current_table)
+            
+            # Add optimization info
+            optimization_summary = {
+                "optimization_applied": True,
+                "summary": optimization_result.get("optimization_summary", ""),
+                "improvements": optimization_result.get("improvements", []),
+                "final_structure": {
+                    "columns": optimization_result.get("column_count", 0),
+                    "rows": optimization_result.get("row_count", 0)
+                }
+            }
+        else:
+            optimization_summary = {"optimization_applied": False}
         
         return {
             "final_tabulation": current_table,
             "iteration_history": iteration_results,
             "total_iterations": len(iteration_results),
-            "final_coverage": iteration_results[-1]["coverage_score"] if iteration_results else 0
+            "final_coverage": iteration_results[-1]["coverage_score"] if iteration_results else 0,
+            "optimization": optimization_summary
         }
 
 def process_text_with_agents(text: str) -> Dict[str, Any]:
