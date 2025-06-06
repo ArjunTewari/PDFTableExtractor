@@ -224,14 +224,29 @@ document.addEventListener('DOMContentLoaded', function() {
     function showProcessingSummary(metadata) {
         if (!metadata) return;
         
+        let optimizationInfo = '';
+        if (metadata.optimization && metadata.optimization.optimization_applied) {
+            const opt = metadata.optimization;
+            optimizationInfo = `
+                <div class="mt-2">
+                    <small class="text-muted">
+                        <strong>Table Optimization:</strong> ${opt.summary || 'Applied formatting improvements'}
+                        ${opt.final_structure ? ` | ${opt.final_structure.rows} rows, ${opt.final_structure.columns} columns` : ''}
+                    </small>
+                </div>
+            `;
+        }
+        
         const summaryHtml = `
             <div class="processing-summary alert alert-info mb-3">
-                <h5>🤖 Agentic Processing Complete</h5>
+                <h5>AI Processing Complete</h5>
                 <div class="summary-stats d-flex gap-3">
                     <span class="badge bg-primary">Mode: ${metadata.processing_mode}</span>
                     ${metadata.total_iterations ? `<span class="badge bg-success">Iterations: ${metadata.total_iterations}</span>` : ''}
                     ${metadata.final_coverage ? `<span class="badge bg-warning">Coverage: ${metadata.final_coverage}%</span>` : ''}
+                    ${metadata.optimization && metadata.optimization.optimization_applied ? `<span class="badge bg-info">Optimized</span>` : ''}
                 </div>
+                ${optimizationInfo}
             </div>
         `;
         
