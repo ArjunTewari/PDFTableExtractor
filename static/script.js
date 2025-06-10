@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Store data
     let extractedText = '';
     let processedData = [];
+    let currentStructuredData = null;
 
     // Initialize drag and drop events
     ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
@@ -142,6 +143,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (data.text) {
                 extractedText = data.text;
+                currentStructuredData = data.structured_data;
                 showExtractedText(data.text, data.structured_data);
             } else {
                 throw new Error('No text was extracted from the PDF');
@@ -193,6 +195,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         <span class="badge bg-info">${keyValues.length} pairs</span>
                     </div>
                 ` : ''}
+                <div class="mt-3">
+                    <button class="btn btn-outline-primary btn-sm" onclick="showJsonModal()">
+                        📄 View Complete JSON Structure
+                    </button>
+                </div>
             `;
             
             // Insert at the beginning of the extracted text section
@@ -440,4 +447,68 @@ document.addEventListener('DOMContentLoaded', function() {
             errorMessage.classList.add('d-none');
         }, 5000);
     }
+
+    // Global function to show JSON modal
+    window.showJsonModal = function() {
+        if (!currentStructuredData) {
+            alert('No structured data available');
+            return;
+        }
+
+        // Create modal HTML
+        const modalHtml = `
+            <div class="modal fade" id="jsonModal" tabindex="-1" aria-labelledby="jsonModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-xl">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="jsonModalLabel">Complete Amazon Textract JSON Structure</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <button class="btn btn-outline-secondary btn-sm" onclick="copyJsonToClipboard()">Copy JSON</button>
+                                <button class="btn btn-outline-primary btn-sm" onclick="downloadJson()">Download JSON</button>
+                            </div>
+                            <pre class="bg-light p-3 rounded" style="max-height: 500px; overflow-y: auto; font-size: 12px;"><code id="jsonContent">${JSON.stringify(currentStructuredData, null, 2)}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Remove existing modal if any
+        const existingModal = document.getElementById('jsonModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+
+        // Add modal to body
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('jsonModal'));
+        modal.show();
+    };
+
+    window.copyJsonToClipboard = function() {
+        const jsonContent = JSON.stringify(currentStructuredData, null, 2);
+        navigator.clipboard.writeText(jsonContent).then(() => {
+            alert('JSON copied to clipboard!');
+        }).catch(() => {
+            alert('Failed to copy JSON to clipboard');
+        });
+    };
+
+    window.downloadJson = function() {
+        const jsonContent = JSON.stringify(currentStructuredData, null, 2);
+        const blob = new Blob([jsonContent], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'textract_output.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
 });
