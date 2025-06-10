@@ -345,6 +345,15 @@ document.addEventListener('DOMContentLoaded', function() {
         let csvData = [];
         let headers = [];
         
+        // Helper function to safely convert values to string
+        function safeStringify(value) {
+            if (value === null || value === undefined) return '';
+            if (typeof value === 'object') {
+                return JSON.stringify(value);
+            }
+            return String(value);
+        }
+        
         // Handle different table structures
         if (Array.isArray(tableData)) {
             // Array of objects
@@ -360,7 +369,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     html += '<tr>';
                     let csvRow = { source: `Table ${tableIndex} (Page ${page})`, type: 'Table Data' };
                     headers.forEach(header => {
-                        const value = row[header] || '';
+                        const value = safeStringify(row[header]);
                         html += `<td>${value}</td>`;
                         csvRow[header] = value;
                     });
@@ -368,12 +377,33 @@ document.addEventListener('DOMContentLoaded', function() {
                     csvData.push(csvRow);
                 });
             }
-        } else if (typeof tableData === 'object') {
+        } else if (typeof tableData === 'object' && tableData !== null) {
             // Object with key-value pairs
             headers = ['Field', 'Value'];
             html += '<tr><th>Field</th><th>Value</th></tr></thead><tbody>';
             
-            Object.entries(tableData).forEach(([key, value]) => {
+            // Flatten nested objects for better display
+            function flattenObject(obj, prefix = '') {
+                let flattened = {};
+                for (let key in obj) {
+                    if (obj.hasOwnProperty(key)) {
+                        const fullKey = prefix ? `${prefix}.${key}` : key;
+                        const value = obj[key];
+                        
+                        if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                            // Recursively flatten nested objects
+                            Object.assign(flattened, flattenObject(value, fullKey));
+                        } else {
+                            flattened[fullKey] = safeStringify(value);
+                        }
+                    }
+                }
+                return flattened;
+            }
+            
+            const flattenedData = flattenObject(tableData);
+            
+            Object.entries(flattenedData).forEach(([key, value]) => {
                 html += `<tr><td><strong>${key}</strong></td><td>${value}</td></tr>`;
                 csvData.push({
                     source: `Table ${tableIndex} (Page ${page})`,
@@ -401,7 +431,36 @@ document.addEventListener('DOMContentLoaded', function() {
         
         let csvData = [];
         
-        Object.entries(kvData).forEach(([key, value]) => {
+        // Helper function to safely convert values to string
+        function safeStringify(value) {
+            if (value === null || value === undefined) return '';
+            if (typeof value === 'object') {
+                return JSON.stringify(value);
+            }
+            return String(value);
+        }
+        
+        // Flatten nested objects for better display
+        function flattenObject(obj, prefix = '') {
+            let flattened = {};
+            for (let key in obj) {
+                if (obj.hasOwnProperty(key)) {
+                    const fullKey = prefix ? `${prefix}.${key}` : key;
+                    const value = obj[key];
+                    
+                    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                        Object.assign(flattened, flattenObject(value, fullKey));
+                    } else {
+                        flattened[fullKey] = safeStringify(value);
+                    }
+                }
+            }
+            return flattened;
+        }
+        
+        const flattenedData = flattenObject(kvData);
+        
+        Object.entries(flattenedData).forEach(([key, value]) => {
             html += `<tr><td><strong>${key}</strong></td><td>${value}</td></tr>`;
             csvData.push({
                 source: 'Key-Value Pairs',
@@ -428,18 +487,39 @@ document.addEventListener('DOMContentLoaded', function() {
         
         let csvData = [];
         
+        // Helper function to safely convert values to string
+        function safeStringify(value) {
+            if (value === null || value === undefined) return '';
+            if (typeof value === 'object') {
+                return JSON.stringify(value);
+            }
+            return String(value);
+        }
+        
+        // Flatten nested objects for better display
+        function flattenObject(obj, prefix = '') {
+            let flattened = {};
+            for (let key in obj) {
+                if (obj.hasOwnProperty(key)) {
+                    const fullKey = prefix ? `${prefix}.${key}` : key;
+                    const value = obj[key];
+                    
+                    if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+                        Object.assign(flattened, flattenObject(value, fullKey));
+                    } else {
+                        flattened[fullKey] = safeStringify(value);
+                    }
+                }
+            }
+            return flattened;
+        }
+        
         factsArray.forEach((chunk, chunkIndex) => {
             if (chunk.extracted_facts && !chunk.extracted_facts.error) {
-                Object.entries(chunk.extracted_facts).forEach(([key, value]) => {
-                    if (typeof value === 'object' && value.field && value.value) {
-                        html += `<tr><td><strong>${value.field}</strong></td><td>${value.value}</td><td>Text Chunk ${chunkIndex + 1}</td></tr>`;
-                        csvData.push({
-                            source: `Text Chunk ${chunkIndex + 1}`,
-                            type: 'Financial Data',
-                            field: value.field,
-                            value: value.value
-                        });
-                    } else {
+                const flattenedFacts = flattenObject(chunk.extracted_facts);
+                
+                Object.entries(flattenedFacts).forEach(([key, value]) => {
+                    if (key && value && value !== '') {
                         html += `<tr><td><strong>${key}</strong></td><td>${value}</td><td>Text Chunk ${chunkIndex + 1}</td></tr>`;
                         csvData.push({
                             source: `Text Chunk ${chunkIndex + 1}`,
