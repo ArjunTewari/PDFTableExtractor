@@ -3,6 +3,7 @@ import os
 from openai import OpenAI
 from typing import Dict, Any, List
 import asyncio
+import aiohttp
 import concurrent.futures
 
 # the newest OpenAI model is "gpt-4o" which was released May 13, 2024.
@@ -18,8 +19,8 @@ def split_text_section(text_lines, max_lines=20):
         chunks.append(chunk)
     return chunks
 
-def process_table_data(table_data: Dict[str, Any]) -> Dict[str, Any]:
-    """Process table data with GPT-4o"""
+async def process_table_data(table_data: Dict[str, Any]) -> Dict[str, Any]:
+    """Process table data with GPT-4o asynchronously"""
     prompt = f"""You are a data analyst. The following table data has been extracted from a document.
 
 Your task is to convert this into structured JSON format. Use the headers if present, and infer meaningful field names if not. Ensure the result is consistent and each row is a dictionary of field-value pairs.
@@ -30,10 +31,14 @@ Table data:
 Return only valid JSON."""
 
     try:
-        response = openai_client.chat.completions.create(
-            model="gpt-4o",
-            messages=[{"role": "user", "content": prompt}],
-            response_format={"type": "json_object"}
+        loop = asyncio.get_event_loop()
+        response = await loop.run_in_executor(
+            None,
+            lambda: openai_client.chat.completions.create(
+                model="gpt-4o",
+                messages=[{"role": "user", "content": prompt}],
+                response_format={"type": "json_object"}
+            )
         )
         
         content = response.choices[0].message.content
@@ -55,8 +60,8 @@ Return only valid JSON."""
             "original_rows": table_data.get("rows", [])
         }
 
-def process_key_value_data(key_value_pairs: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """Process key-value pairs with GPT-4o"""
+async def process_key_value_data(key_value_pairs: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Process key-value pairs with GPT-4o asynchronously"""
     prompt = f"""You are a data structuring assistant. Below is a list of key-value pairs extracted from a document.
 
 Your job is to tabulate this data into a clean JSON format. Normalize similar keys if needed, but do not lose any data.
@@ -67,10 +72,14 @@ Key-Value pairs:
 Return only valid JSON."""
 
     try:
-        response = openai_client.chat.completions.create(
-            model="gpt-4o",
-            messages=[{"role": "user", "content": prompt}],
-            response_format={"type": "json_object"}
+        loop = asyncio.get_event_loop()
+        response = await loop.run_in_executor(
+            None,
+            lambda: openai_client.chat.completions.create(
+                model="gpt-4o",
+                messages=[{"role": "user", "content": prompt}],
+                response_format={"type": "json_object"}
+            )
         )
         
         content = response.choices[0].message.content
@@ -90,8 +99,8 @@ Return only valid JSON."""
             "original_pairs": key_value_pairs
         }
 
-def process_text_chunk(text_chunk: List[str]) -> Dict[str, Any]:
-    """Process a text chunk with GPT-4o"""
+async def process_text_chunk(text_chunk: List[str]) -> Dict[str, Any]:
+    """Process a text chunk with GPT-4o asynchronously"""
     text_content = '\n'.join(text_chunk)
     
     prompt = f"""You are a financial document interpreter. The following is a segment from a business report.
@@ -104,10 +113,14 @@ Text:
 Return only valid JSON."""
 
     try:
-        response = openai_client.chat.completions.create(
-            model="gpt-4o",
-            messages=[{"role": "user", "content": prompt}],
-            response_format={"type": "json_object"}
+        loop = asyncio.get_event_loop()
+        response = await loop.run_in_executor(
+            None,
+            lambda: openai_client.chat.completions.create(
+                model="gpt-4o",
+                messages=[{"role": "user", "content": prompt}],
+                response_format={"type": "json_object"}
+            )
         )
         
         content = response.choices[0].message.content
@@ -127,8 +140,8 @@ Return only valid JSON."""
             "original_text": text_chunk
         }
 
-def process_structured_data_with_llm(structured_data: Dict[str, Any]) -> Dict[str, Any]:
-    """Process all sections of structured data with separate LLM calls"""
+async def process_structured_data_with_llm_async(structured_data: Dict[str, Any]) -> Dict[str, Any]:
+    """Process all sections of structured data with asynchronous LLM calls"""
     
     document_text = structured_data.get('document_text', [])
     tables = structured_data.get('tables', [])
@@ -146,26 +159,69 @@ def process_structured_data_with_llm(structured_data: Dict[str, Any]) -> Dict[st
         }
     }
     
+    # Create tasks for asynchronous processing
+    tasks = []
+    
     # Process tables asynchronously
-    print(f"Processing {len(tables)} tables...")
-    for table in tables:
-        processed_table = process_table_data(table)
-        results["processed_tables"].append(processed_table)
+    if tables:
+        print(f"Processing {len(tables)} tables asynchronously...")
+        table_tasks = [process_table_data(table) for table in tables]
+        tasks.extend(table_tasks)
     
     # Process key-value pairs
     if key_values:
-        print(f"Processing {len(key_values)} key-value pairs...")
-        results["processed_key_values"] = process_key_value_data(key_values)
+        print(f"Processing {len(key_values)} key-value pairs asynchronously...")
+        kv_task = process_key_value_data(key_values)
+        tasks.append(kv_task)
     
     # Process document text in chunks
+    text_tasks = []
     if document_text:
         text_chunks = split_text_section(document_text, max_lines=20)
-        print(f"Processing document text in {len(text_chunks)} chunks...")
-        
-        for chunk in text_chunks:
-            processed_chunk = process_text_chunk(chunk)
-            results["processed_document_text"].append(processed_chunk)
-        
+        print(f"Processing document text in {len(text_chunks)} chunks asynchronously...")
+        text_tasks = [process_text_chunk(chunk) for chunk in text_chunks]
+        tasks.extend(text_tasks)
         results["summary"]["text_chunks_processed"] = len(text_chunks)
     
+    # Execute all tasks concurrently
+    if tasks:
+        print(f"Executing {len(tasks)} LLM processing tasks concurrently...")
+        completed_tasks = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        # Organize results
+        task_index = 0
+        
+        # Process table results
+        if tables:
+            for i in range(len(tables)):
+                result = completed_tasks[task_index]
+                if isinstance(result, Exception):
+                    print(f"Table processing error: {result}")
+                    result = {"error": str(result), "page": tables[i].get("page", 1)}
+                results["processed_tables"].append(result)
+                task_index += 1
+        
+        # Process key-value result
+        if key_values:
+            result = completed_tasks[task_index]
+            if isinstance(result, Exception):
+                print(f"Key-value processing error: {result}")
+                result = {"error": str(result)}
+            results["processed_key_values"] = result
+            task_index += 1
+        
+        # Process text chunk results
+        if text_tasks:
+            for i in range(len(text_tasks)):
+                result = completed_tasks[task_index]
+                if isinstance(result, Exception):
+                    print(f"Text chunk processing error: {result}")
+                    result = {"error": str(result)}
+                results["processed_document_text"].append(result)
+                task_index += 1
+    
     return results
+
+def process_structured_data_with_llm(structured_data: Dict[str, Any]) -> Dict[str, Any]:
+    """Synchronous wrapper for asynchronous processing"""
+    return asyncio.run(process_structured_data_with_llm_async(structured_data))
