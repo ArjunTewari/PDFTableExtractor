@@ -8,24 +8,7 @@ class TextractProcessor:
         """Initialize AWS Textract and S3 clients with credentials from environment"""
         self.textract_client = boto3.client('textract')
         self.s3_client = boto3.client('s3')
-        self.bucket_name = 'textract-processing-bucket'  # You can customize this
-        
-        # Create bucket if it doesn't exist
-        try:
-            self.s3_client.head_bucket(Bucket=self.bucket_name)
-        except:
-            try:
-                # Get the current region
-                region = self.s3_client.meta.region_name
-                if region == 'us-east-1':
-                    self.s3_client.create_bucket(Bucket=self.bucket_name)
-                else:
-                    self.s3_client.create_bucket(
-                        Bucket=self.bucket_name,
-                        CreateBucketConfiguration={'LocationConstraint': region}
-                    )
-            except Exception as e:
-                print(f"Warning: Could not create S3 bucket: {e}")
+        self.bucket_name = 'textract-bucket-lk'
 
     def extract_text_from_pdf_bytes(self, pdf_bytes: bytes) -> Dict[str, Any]:
         """
