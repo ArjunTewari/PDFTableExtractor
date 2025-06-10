@@ -86,7 +86,7 @@ def extract_structured():
     if file.filename == '':
         return jsonify({'error': 'No file selected'}), 400
     
-    if not file.filename.lower().endswith('.pdf'):
+    if not file.filename or not file.filename.lower().endswith('.pdf'):
         return jsonify({'error': 'Only PDF files are supported'}), 400
     
     try:

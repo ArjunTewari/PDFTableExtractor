@@ -5,6 +5,8 @@ import time
 from typing import Dict, Any, List, Optional
 from io import BytesIO
 import uuid
+import fitz  # PyMuPDF
+from PIL import Image
 
 class TextractProcessor:
     def __init__(self):
@@ -51,13 +53,40 @@ class TextractProcessor:
             raise Exception(f"Failed to extract text using Amazon Textract: {str(e)}")
     
     def _process_sync(self, pdf_bytes: bytes, start_time: float) -> Dict[str, Any]:
-        """Process PDF synchronously using analyze_document"""
-        response = self.textract_client.analyze_document(
-            Document={'Bytes': pdf_bytes},
-            FeatureTypes=['TABLES', 'FORMS']
-        )
+        """Process PDF synchronously by converting to images and using analyze_document"""
+        # Convert PDF to images using PyMuPDF
+        pdf_document = fitz.open(stream=pdf_bytes, filetype="pdf")
+        all_blocks = []
+        page_count = len(pdf_document)
         
-        return self._parse_textract_response(response, start_time, "bytes")
+        for page_num in range(page_count):
+            print(f"Processing page {page_num + 1}/{page_count}")
+            
+            # Get page
+            page = pdf_document.load_page(page_num)
+            
+            # Convert page to image using PyMuPDF
+            mat = fitz.Matrix(2.0, 2.0)  # Scale factor for better quality
+            pix = page.get_pixmap(matrix=mat)
+            img_data = pix.tobytes("png")
+            
+            # Use Textract to analyze the page image
+            response = self.textract_client.analyze_document(
+                Document={'Bytes': img_data},
+                FeatureTypes=['TABLES', 'FORMS']
+            )
+            
+            # Add page number to blocks
+            for block in response.get('Blocks', []):
+                block['Page'] = page_num + 1
+            
+            all_blocks.extend(response.get('Blocks', []))
+        
+        pdf_document.close()
+        
+        # Create combined response
+        combined_response = {'Blocks': all_blocks}
+        return self._parse_textract_response(combined_response, start_time, "bytes")
     
     def _process_async(self, pdf_bytes: bytes, start_time: float) -> Dict[str, Any]:
         """Process PDF asynchronously using start_document_analysis"""
