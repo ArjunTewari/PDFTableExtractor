@@ -142,7 +142,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (data.text) {
                 extractedText = data.text;
-                showExtractedText(data.text);
+                showExtractedText(data.text, data.structured_data);
             } else {
                 throw new Error('No text was extracted from the PDF');
             }
@@ -153,8 +153,45 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    function showExtractedText(text) {
+    function showExtractedText(text, structuredData = null) {
+        // Update text content
         extractedTextContent.textContent = text;
+        
+        // Add structured data display if available
+        if (structuredData) {
+            const metadata = structuredData.metadata || {};
+            const tables = structuredData.tables || [];
+            const keyValues = structuredData.key_values || [];
+            
+            const structuredInfo = document.createElement('div');
+            structuredInfo.className = 'alert alert-info mb-3';
+            structuredInfo.innerHTML = `
+                <h6 class="mb-2">📊 Amazon Textract Analysis</h6>
+                <div class="row small">
+                    <div class="col-md-3">Pages: ${metadata.pages || 0}</div>
+                    <div class="col-md-3">Tables: ${tables.length}</div>
+                    <div class="col-md-3">Key-Values: ${keyValues.length}</div>
+                    <div class="col-md-3">Time: ${metadata.processing_time || 'N/A'}</div>
+                </div>
+                ${tables.length > 0 ? `
+                    <div class="mt-2">
+                        <strong>Tables Detected:</strong>
+                        ${tables.map((table, i) => 
+                            `<span class="badge bg-secondary me-1">Page ${table.page} (${table.table.length}×${table.table[0]?.length || 0})</span>`
+                        ).join('')}
+                    </div>
+                ` : ''}
+                ${keyValues.length > 0 ? `
+                    <div class="mt-2">
+                        <strong>Key-Value Pairs Found:</strong> 
+                        <span class="badge bg-info">${keyValues.length} pairs</span>
+                    </div>
+                ` : ''}
+            `;
+            
+            extractedTextSection.insertBefore(structuredInfo, extractedTextContent.parentElement);
+        }
+        
         extractedTextSection.classList.remove('d-none');
         window.scrollTo({
             top: extractedTextSection.offsetTop - 20,

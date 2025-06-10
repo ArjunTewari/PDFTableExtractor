@@ -30,11 +30,15 @@ def extract():
         return jsonify({'error': 'No file selected'}), 400
     
     try:
-        # Extract text from PDF
+        # Extract structured data from PDF using Amazon Textract
         pdf_bytes = file.read()
-        extracted_text = extract_text_from_pdf_bytes(pdf_bytes)
+        structured_data = extract_structured_data_from_pdf_bytes(pdf_bytes)
         
-        return jsonify({'text': extracted_text})
+        # Return both structured data and text for backward compatibility
+        return jsonify({
+            'text': structured_data.get('raw_text', ''),
+            'structured_data': structured_data
+        })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
