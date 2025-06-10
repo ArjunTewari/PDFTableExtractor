@@ -76,6 +76,32 @@ def process():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/extract_structured', methods=['POST'])
+def extract_structured():
+    """Extract structured data from PDF using Amazon Textract"""
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file uploaded'}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No file selected'}), 400
+    
+    if not file.filename.lower().endswith('.pdf'):
+        return jsonify({'error': 'Only PDF files are supported'}), 400
+    
+    try:
+        # Extract structured data using Textract
+        pdf_bytes = file.read()
+        structured_data = extract_structured_data_from_pdf_bytes(pdf_bytes)
+        
+        return jsonify({
+            'success': True,
+            'structured_data': structured_data
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/export/pdf', methods=['POST'])
 def export_pdf():
     data = request.json
