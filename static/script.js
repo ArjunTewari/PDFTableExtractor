@@ -141,10 +141,10 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             hideLoading();
             
-            if (data.text) {
-                extractedText = data.text;
-                currentStructuredData = data.structured_data;
-                showExtractedText(data.text, data.structured_data);
+            if (data.document_text) {
+                extractedText = data.document_text.join('\n');
+                currentStructuredData = data;
+                showExtractedText(extractedText, data);
             } else {
                 throw new Error('No text was extracted from the PDF');
             }
@@ -167,25 +167,25 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Add structured data display if available
         if (structuredData) {
-            const metadata = structuredData.metadata || {};
+            const documentText = structuredData.document_text || [];
             const tables = structuredData.tables || [];
             const keyValues = structuredData.key_values || [];
             
             const structuredInfo = document.createElement('div');
             structuredInfo.className = 'alert alert-info mb-3 structured-data-info';
             structuredInfo.innerHTML = `
-                <h6 class="mb-2">📊 Amazon Textract Analysis</h6>
+                <h6 class="mb-2">Amazon Textract Analysis</h6>
                 <div class="row small">
-                    <div class="col-md-3">Pages: ${metadata.pages || 0}</div>
+                    <div class="col-md-3">Lines: ${documentText.length}</div>
                     <div class="col-md-3">Tables: ${tables.length}</div>
                     <div class="col-md-3">Key-Values: ${keyValues.length}</div>
-                    <div class="col-md-3">Time: ${metadata.processing_time || 'N/A'}</div>
+                    <div class="col-md-3">Format: S3 Direct</div>
                 </div>
                 ${tables.length > 0 ? `
                     <div class="mt-2">
                         <strong>Tables Detected:</strong>
                         ${tables.map((table, i) => 
-                            `<span class="badge bg-secondary me-1">Page ${table.page} (${table.table.length}×${table.table[0]?.length || 0})</span>`
+                            `<span class="badge bg-secondary me-1">Page ${table.page} (${table.rows.length}×${table.rows[0]?.length || 0})</span>`
                         ).join('')}
                     </div>
                 ` : ''}
@@ -197,7 +197,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 ` : ''}
                 <div class="mt-3">
                     <button class="btn btn-outline-primary btn-sm" onclick="showJsonModal()">
-                        📄 View Complete JSON Structure
+                        View Complete JSON Structure
                     </button>
                 </div>
             `;

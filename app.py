@@ -34,11 +34,8 @@ def extract():
         pdf_bytes = file.read()
         structured_data = extract_structured_data_from_pdf_bytes(pdf_bytes)
         
-        # Return both structured data and text for backward compatibility
-        return jsonify({
-            'text': structured_data.get('raw_text', ''),
-            'structured_data': structured_data
-        })
+        # Return the new JSON format
+        return jsonify(structured_data)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
