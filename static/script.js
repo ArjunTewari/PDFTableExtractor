@@ -254,15 +254,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="col-md-3">Tables: ${data.processed_tables?.length || 0}</div>
                     <div class="col-md-3">Key-Values: ${data.processed_key_values ? 'Processed' : 'None'}</div>
                     <div class="col-md-3">Text Chunks: ${data.processed_document_text?.length || 0}</div>
-                    <div class="col-md-3">Total Lines: ${data.summary?.total_text_lines || 0}</div>
+                    <div class="col-md-3">Total Rows: ${data.total_rows || 0}</div>
                 </div>
             </div>
         `;
         
-        // Create unified table with all data
-        const unifiedData = createUnifiedTable(data);
+        // Use DataFrame data if available, otherwise fall back to unified table
+        const tableData = data.dataframe_data || createUnifiedTable(data);
         
-        if (unifiedData.length > 0) {
+        if (tableData.length > 0) {
             html += `
                 <h5>Extracted Document Data</h5>
                 <div class="table-responsive mb-4">
@@ -279,7 +279,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <tbody>
             `;
             
-            unifiedData.forEach(row => {
+            tableData.forEach(row => {
                 html += `
                     <tr>
                         <td><span class="badge bg-secondary">${row.source}</span></td>
@@ -313,13 +313,13 @@ document.addEventListener('DOMContentLoaded', function() {
         // Add export buttons
         html += `
             <div class="text-center mt-4">
-                <button id="export-csv-btn" class="btn btn-success me-2" ${unifiedData.length === 0 ? 'disabled' : ''}>
-                    <i class="bi bi-file-earmark-spreadsheet"></i> Export CSV (${unifiedData.length} rows)
+                <button id="export-csv-btn" class="btn btn-success me-2" ${tableData.length === 0 ? 'disabled' : ''}>
+                    <i class="bi bi-file-earmark-spreadsheet"></i> Export CSV (${tableData.length} rows)
                 </button>
                 <button id="export-json-btn" class="btn btn-outline-primary me-2">
                     <i class="bi bi-file-earmark-code"></i> Export JSON
                 </button>
-                <button id="export-excel-btn" class="btn btn-outline-success" ${unifiedData.length === 0 ? 'disabled' : ''}>
+                <button id="export-excel-btn" class="btn btn-outline-success" ${tableData.length === 0 ? 'disabled' : ''}>
                     <i class="bi bi-file-earmark-excel"></i> Export Excel
                 </button>
             </div>
@@ -329,13 +329,13 @@ document.addEventListener('DOMContentLoaded', function() {
         resultsSection.classList.remove('d-none');
         
         // Add export event listeners
-        if (unifiedData.length > 0) {
+        if (tableData.length > 0) {
             document.getElementById('export-csv-btn').addEventListener('click', () => {
-                exportToCSV(unifiedData);
+                exportToCSV(tableData);
             });
             
             document.getElementById('export-excel-btn').addEventListener('click', () => {
-                exportToExcel(unifiedData);
+                exportToExcel(tableData);
             });
         }
         
@@ -370,16 +370,16 @@ document.addEventListener('DOMContentLoaded', function() {
             if (Array.isArray(obj)) {
                 obj.forEach((item, index) => {
                     if (typeof item === 'object' && item !== null) {
-                        Object.entries(item).forEach(([key, value]) => {
-                            if (value !== null && value !== undefined && value !== '') {
-                                results.push({
-                                    source: source,
-                                    type: type,
-                                    field: key,
-                                    value: String(value),
-                                    page: page
-                                });
-                            }
+                        // Recursively extract from array items
+                        const subResults = extractValues(item, source, type, page);
+                        results = results.concat(subResults);
+                    } else if (item !== null && item !== undefined && item !== '') {
+                        results.push({
+                            source: source,
+                            type: type,
+                            field: `item_${index}`,
+                            value: String(item),
+                            page: page
                         });
                     }
                 });
@@ -390,7 +390,28 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (value !== null && value !== undefined && value !== '') {
                             const fieldName = prefix ? `${prefix}.${key}` : key;
                             
-                            if (typeof value === 'object' && !Array.isArray(value)) {
+                            if (Array.isArray(value)) {
+                                // Handle arrays by extracting each element
+                                value.forEach((arrayItem, arrayIndex) => {
+                                    if (typeof arrayItem === 'object' && arrayItem !== null) {
+                                        // Recursively flatten array objects
+                                        const subResults = extractValues(arrayItem, source, type, page);
+                                        results = results.concat(subResults.map(r => ({
+                                            ...r,
+                                            field: `${fieldName}[${arrayIndex}].${r.field}`
+                                        })));
+                                    } else if (arrayItem !== null && arrayItem !== undefined && arrayItem !== '') {
+                                        results.push({
+                                            source: source,
+                                            type: type,
+                                            field: `${fieldName}[${arrayIndex}]`,
+                                            value: String(arrayItem),
+                                            page: page
+                                        });
+                                    }
+                                });
+                            } else if (typeof value === 'object' && value !== null) {
+                                // Recursively flatten nested objects
                                 flattenObject(value, fieldName);
                             } else {
                                 results.push({

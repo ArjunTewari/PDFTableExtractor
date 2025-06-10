@@ -47,35 +47,105 @@ def process():
         return jsonify({'error': 'No data provided'}), 400
     
     try:
+        import pandas as pd
+        
         # Process the structured JSON data with separate LLM calls
         result = process_structured_data_with_llm(data)
         
-        # Add debug logging to understand the structure
-        print("=== DEBUG: AI Processing Result Structure ===")
-        print(f"Result keys: {list(result.keys()) if isinstance(result, dict) else 'Not a dict'}")
+        # Convert to DataFrame format for better structure
+        df_data = []
         
-        if 'processed_tables' in result:
-            print(f"Tables count: {len(result['processed_tables'])}")
+        # Process tables
+        if 'processed_tables' in result and result['processed_tables']:
             for i, table in enumerate(result['processed_tables']):
-                print(f"Table {i}: {type(table.get('structured_table', 'N/A'))}")
-                if isinstance(table.get('structured_table'), dict):
-                    print(f"Table {i} keys: {list(table['structured_table'].keys())}")
+                if table.get('structured_table') and not table['structured_table'].get('error'):
+                    table_data = table['structured_table']
+                    page = table.get('page', 'N/A')
+                    
+                    # Handle different table structures
+                    if isinstance(table_data, dict):
+                        if 'rows' in table_data:
+                            # Handle rows format
+                            for row_idx, row in enumerate(table_data['rows']):
+                                if isinstance(row, list):
+                                    for col_idx, cell in enumerate(row):
+                                        df_data.append({
+                                            'source': f'Table {i+1}',
+                                            'type': 'Table Data',
+                                            'field': f'Row {row_idx+1}, Col {col_idx+1}',
+                                            'value': str(cell) if cell else '',
+                                            'page': page
+                                        })
+                                elif isinstance(row, dict):
+                                    for key, value in row.items():
+                                        df_data.append({
+                                            'source': f'Table {i+1}',
+                                            'type': 'Table Data',
+                                            'field': f'{key}',
+                                            'value': str(value) if value else '',
+                                            'page': page
+                                        })
+                        else:
+                            # Handle key-value format
+                            for key, value in table_data.items():
+                                if key != 'error':
+                                    df_data.append({
+                                        'source': f'Table {i+1}',
+                                        'type': 'Table Data',
+                                        'field': key,
+                                        'value': str(value) if value else '',
+                                        'page': page
+                                    })
         
-        if 'processed_key_values' in result:
-            kv_data = result['processed_key_values']
-            print(f"Key-values type: {type(kv_data)}")
-            if isinstance(kv_data, dict) and 'structured_key_values' in kv_data:
-                print(f"Structured KV type: {type(kv_data['structured_key_values'])}")
+        # Process key-value pairs
+        if 'processed_key_values' in result and result['processed_key_values']:
+            kv_data = result['processed_key_values'].get('structured_key_values', {})
+            if kv_data and not kv_data.get('error'):
+                for key, value in kv_data.items():
+                    if key != 'error':
+                        df_data.append({
+                            'source': 'Key-Value Pairs',
+                            'type': 'Structured Data',
+                            'field': key,
+                            'value': str(value) if value else '',
+                            'page': 'N/A'
+                        })
         
-        if 'processed_document_text' in result:
-            print(f"Document text chunks: {len(result['processed_document_text'])}")
-            for i, chunk in enumerate(result['processed_document_text']):
-                if 'extracted_facts' in chunk:
-                    print(f"Chunk {i} facts type: {type(chunk['extracted_facts'])}")
+        # Process document text facts
+        if 'processed_document_text' in result and result['processed_document_text']:
+            for chunk_idx, chunk in enumerate(result['processed_document_text']):
+                if 'extracted_facts' in chunk and not chunk['extracted_facts'].get('error'):
+                    facts = chunk['extracted_facts']
+                    for key, value in facts.items():
+                        if key != 'error':
+                            df_data.append({
+                                'source': f'Text Chunk {chunk_idx+1}',
+                                'type': 'Financial Data',
+                                'field': key,
+                                'value': str(value) if value else '',
+                                'page': 'N/A'
+                            })
         
-        print("=== END DEBUG ===")
+        # Create DataFrame
+        if df_data:
+            df = pd.DataFrame(df_data)
+            # Clean up empty values
+            df = df[df['value'].str.strip() != '']
+            df = df[df['value'] != 'nan']
+            
+            # Convert back to list of dicts for JSON response
+            clean_data = df.to_dict('records')
+        else:
+            clean_data = []
         
-        return jsonify(result)
+        # Return both original result and clean DataFrame data
+        response = {
+            **result,
+            'dataframe_data': clean_data,
+            'total_rows': len(clean_data)
+        }
+        
+        return jsonify(response)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
