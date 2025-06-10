@@ -15,7 +15,15 @@ class TextractProcessor:
             self.s3_client.head_bucket(Bucket=self.bucket_name)
         except:
             try:
-                self.s3_client.create_bucket(Bucket=self.bucket_name)
+                # Get the current region
+                region = self.s3_client.meta.region_name
+                if region == 'us-east-1':
+                    self.s3_client.create_bucket(Bucket=self.bucket_name)
+                else:
+                    self.s3_client.create_bucket(
+                        Bucket=self.bucket_name,
+                        CreateBucketConfiguration={'LocationConstraint': region}
+                    )
             except Exception as e:
                 print(f"Warning: Could not create S3 bucket: {e}")
 
@@ -61,17 +69,36 @@ class TextractProcessor:
             while True:
                 result = self.textract_client.get_document_analysis(JobId=job_id)
                 status = result['JobStatus']
+                print(f"Job status: {status}")
                 
-                if status == 'SUCCEEDED':
+                if status in ['SUCCEEDED', 'FAILED']:
                     break
-                elif status == 'FAILED':
-                    raise Exception("Textract job failed")
+                
+                time.sleep(5)
+            
+            if status == 'FAILED':
+                raise Exception("Textract job failed")
+            
+            # Fetch full results (handle pagination)
+            pages = []
+            next_token = None
+            
+            while True:
+                if next_token:
+                    response = self.textract_client.get_document_analysis(JobId=job_id, NextToken=next_token)
                 else:
-                    print(f"Job status: {status}, waiting...")
-                    time.sleep(2)
+                    response = self.textract_client.get_document_analysis(JobId=job_id)
+                
+                pages.extend(response['Blocks'])
+                
+                next_token = response.get('NextToken')
+                if not next_token:
+                    break
+            
+            print(f"Total blocks extracted: {len(pages)}")
             
             # Parse the results
-            structured_data = self._parse_textract_response(result, start_time)
+            structured_data = self._parse_textract_blocks(pages, start_time)
             
             # Clean up S3 file
             try:
@@ -85,10 +112,9 @@ class TextractProcessor:
             print(f"Textract extraction failed: {e}")
             raise Exception(f"Failed to extract text using Amazon Textract: {str(e)}")
 
-    def _parse_textract_response(self, response: Dict[str, Any], start_time: float) -> Dict[str, Any]:
-        """Parse Textract response into the specified JSON format"""
+    def _parse_textract_blocks(self, blocks: List[Dict[str, Any]], start_time: float) -> Dict[str, Any]:
+        """Parse Textract blocks into the specified JSON format"""
         
-        blocks = response.get('Blocks', [])
         block_map = {block['Id']: block for block in blocks}
         
         # Extract document text (line by line)
