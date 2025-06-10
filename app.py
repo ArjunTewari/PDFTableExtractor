@@ -49,6 +49,32 @@ def process():
     try:
         # Process the structured JSON data with separate LLM calls
         result = process_structured_data_with_llm(data)
+        
+        # Add debug logging to understand the structure
+        print("=== DEBUG: AI Processing Result Structure ===")
+        print(f"Result keys: {list(result.keys()) if isinstance(result, dict) else 'Not a dict'}")
+        
+        if 'processed_tables' in result:
+            print(f"Tables count: {len(result['processed_tables'])}")
+            for i, table in enumerate(result['processed_tables']):
+                print(f"Table {i}: {type(table.get('structured_table', 'N/A'))}")
+                if isinstance(table.get('structured_table'), dict):
+                    print(f"Table {i} keys: {list(table['structured_table'].keys())}")
+        
+        if 'processed_key_values' in result:
+            kv_data = result['processed_key_values']
+            print(f"Key-values type: {type(kv_data)}")
+            if isinstance(kv_data, dict) and 'structured_key_values' in kv_data:
+                print(f"Structured KV type: {type(kv_data['structured_key_values'])}")
+        
+        if 'processed_document_text' in result:
+            print(f"Document text chunks: {len(result['processed_document_text'])}")
+            for i, chunk in enumerate(result['processed_document_text']):
+                if 'extracted_facts' in chunk:
+                    print(f"Chunk {i} facts type: {type(chunk['extracted_facts'])}")
+        
+        print("=== END DEBUG ===")
+        
         return jsonify(result)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
