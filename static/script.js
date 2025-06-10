@@ -259,47 +259,67 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `;
         
-        // Collect all data for CSV conversion
-        let allData = [];
+        // Create unified table with all data
+        const unifiedData = createUnifiedTable(data);
         
-        // Process tables and convert to readable format
-        if (data.processed_tables && data.processed_tables.length > 0) {
-            data.processed_tables.forEach((table, index) => {
-                if (table.structured_table && !table.structured_table.error) {
-                    html += `<h6>Table ${index + 1} (Page ${table.page})</h6>`;
-                    const tableData = convertTableToHTML(table.structured_table, index + 1, table.page);
-                    html += tableData.html;
-                    allData = allData.concat(tableData.csvData);
-                }
+        if (unifiedData.length > 0) {
+            html += `
+                <h5>Extracted Document Data</h5>
+                <div class="table-responsive mb-4">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Source</th>
+                                <th>Data Type</th>
+                                <th>Field</th>
+                                <th>Value</th>
+                                <th>Page</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            unifiedData.forEach(row => {
+                html += `
+                    <tr>
+                        <td><span class="badge bg-secondary">${row.source}</span></td>
+                        <td><span class="badge bg-info">${row.type}</span></td>
+                        <td><strong>${row.field}</strong></td>
+                        <td>${row.value}</td>
+                        <td>${row.page || 'N/A'}</td>
+                    </tr>
+                `;
             });
-        }
-        
-        // Process key-value pairs
-        if (data.processed_key_values && data.processed_key_values.structured_key_values && !data.processed_key_values.structured_key_values.error) {
-            html += '<h6>Key-Value Pairs</h6>';
-            const kvData = convertKeyValuesToHTML(data.processed_key_values.structured_key_values);
-            html += kvData.html;
-            allData = allData.concat(kvData.csvData);
-        }
-        
-        // Process extracted facts
-        if (data.processed_document_text && data.processed_document_text.length > 0) {
-            html += '<h6>Extracted Financial Data</h6>';
-            const factsData = convertFactsToHTML(data.processed_document_text);
-            html += factsData.html;
-            allData = allData.concat(factsData.csvData);
+            
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        } else {
+            html += `
+                <div class="alert alert-warning">
+                    <h6>No structured data found</h6>
+                    <p>The AI processing did not extract any meaningful data from the document. This could be due to:</p>
+                    <ul>
+                        <li>The document contains mostly images or non-text content</li>
+                        <li>The text is too fragmented or unclear</li>
+                        <li>The document format is not well-suited for data extraction</li>
+                    </ul>
+                </div>
+            `;
         }
         
         // Add export buttons
         html += `
             <div class="text-center mt-4">
-                <button id="export-csv-btn" class="btn btn-success me-2">
-                    <i class="bi bi-file-earmark-spreadsheet"></i> Export CSV
+                <button id="export-csv-btn" class="btn btn-success me-2" ${unifiedData.length === 0 ? 'disabled' : ''}>
+                    <i class="bi bi-file-earmark-spreadsheet"></i> Export CSV (${unifiedData.length} rows)
                 </button>
                 <button id="export-json-btn" class="btn btn-outline-primary me-2">
                     <i class="bi bi-file-earmark-code"></i> Export JSON
                 </button>
-                <button id="export-excel-btn" class="btn btn-outline-success">
+                <button id="export-excel-btn" class="btn btn-outline-success" ${unifiedData.length === 0 ? 'disabled' : ''}>
                     <i class="bi bi-file-earmark-excel"></i> Export Excel
                 </button>
             </div>
@@ -309,9 +329,15 @@ document.addEventListener('DOMContentLoaded', function() {
         resultsSection.classList.remove('d-none');
         
         // Add export event listeners
-        document.getElementById('export-csv-btn').addEventListener('click', () => {
-            exportToCSV(allData);
-        });
+        if (unifiedData.length > 0) {
+            document.getElementById('export-csv-btn').addEventListener('click', () => {
+                exportToCSV(unifiedData);
+            });
+            
+            document.getElementById('export-excel-btn').addEventListener('click', () => {
+                exportToExcel(unifiedData);
+            });
+        }
         
         document.getElementById('export-json-btn').addEventListener('click', () => {
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -325,14 +351,106 @@ document.addEventListener('DOMContentLoaded', function() {
             URL.revokeObjectURL(url);
         });
         
-        document.getElementById('export-excel-btn').addEventListener('click', () => {
-            exportToExcel(allData);
-        });
-        
         window.scrollTo({
             top: resultsSection.offsetTop - 20,
             behavior: 'smooth'
         });
+    }
+    
+    function createUnifiedTable(data) {
+        let unifiedData = [];
+        
+        // Helper function to extract values from nested objects
+        function extractValues(obj, source, type, page = null) {
+            if (!obj || typeof obj !== 'object') return [];
+            
+            let results = [];
+            
+            // Handle different data structures
+            if (Array.isArray(obj)) {
+                obj.forEach((item, index) => {
+                    if (typeof item === 'object' && item !== null) {
+                        Object.entries(item).forEach(([key, value]) => {
+                            if (value !== null && value !== undefined && value !== '') {
+                                results.push({
+                                    source: source,
+                                    type: type,
+                                    field: key,
+                                    value: String(value),
+                                    page: page
+                                });
+                            }
+                        });
+                    }
+                });
+            } else {
+                // Handle object with nested properties
+                function flattenObject(obj, prefix = '') {
+                    Object.entries(obj).forEach(([key, value]) => {
+                        if (value !== null && value !== undefined && value !== '') {
+                            const fieldName = prefix ? `${prefix}.${key}` : key;
+                            
+                            if (typeof value === 'object' && !Array.isArray(value)) {
+                                flattenObject(value, fieldName);
+                            } else {
+                                results.push({
+                                    source: source,
+                                    type: type,
+                                    field: fieldName,
+                                    value: String(value),
+                                    page: page
+                                });
+                            }
+                        }
+                    });
+                }
+                
+                flattenObject(obj);
+            }
+            
+            return results;
+        }
+        
+        // Process tables
+        if (data.processed_tables && data.processed_tables.length > 0) {
+            data.processed_tables.forEach((table, index) => {
+                if (table.structured_table && !table.structured_table.error) {
+                    const tableResults = extractValues(
+                        table.structured_table, 
+                        `Table ${index + 1}`, 
+                        'Table Data', 
+                        table.page
+                    );
+                    unifiedData = unifiedData.concat(tableResults);
+                }
+            });
+        }
+        
+        // Process key-value pairs
+        if (data.processed_key_values && data.processed_key_values.structured_key_values && !data.processed_key_values.structured_key_values.error) {
+            const kvResults = extractValues(
+                data.processed_key_values.structured_key_values,
+                'Key-Value Pairs',
+                'Structured Data'
+            );
+            unifiedData = unifiedData.concat(kvResults);
+        }
+        
+        // Process extracted facts from document text
+        if (data.processed_document_text && data.processed_document_text.length > 0) {
+            data.processed_document_text.forEach((chunk, chunkIndex) => {
+                if (chunk.extracted_facts && !chunk.extracted_facts.error) {
+                    const factsResults = extractValues(
+                        chunk.extracted_facts,
+                        `Text Chunk ${chunkIndex + 1}`,
+                        'Financial Data'
+                    );
+                    unifiedData = unifiedData.concat(factsResults);
+                }
+            });
+        }
+        
+        return unifiedData;
     }
     
     function convertTableToHTML(tableData, tableIndex, page) {
