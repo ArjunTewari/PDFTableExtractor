@@ -36,7 +36,12 @@ Return only valid JSON."""
             response_format={"type": "json_object"}
         )
         
-        result = json.loads(response.choices[0].message.content)
+        content = response.choices[0].message.content
+        if content:
+            result = json.loads(content)
+        else:
+            result = {"error": "No content received from OpenAI"}
+            
         return {
             "page": table_data.get("page", 1),
             "structured_table": result,
@@ -68,7 +73,12 @@ Return only valid JSON."""
             response_format={"type": "json_object"}
         )
         
-        result = json.loads(response.choices[0].message.content)
+        content = response.choices[0].message.content
+        if content:
+            result = json.loads(content)
+        else:
+            result = {"error": "No content received from OpenAI"}
+            
         return {
             "structured_key_values": result,
             "original_pairs": key_value_pairs
@@ -100,7 +110,12 @@ Return only valid JSON."""
             response_format={"type": "json_object"}
         )
         
-        result = json.loads(response.choices[0].message.content)
+        content = response.choices[0].message.content
+        if content:
+            result = json.loads(content)
+        else:
+            result = {"error": "No content received from OpenAI"}
+            
         return {
             "extracted_facts": result,
             "original_text": text_chunk

@@ -217,22 +217,19 @@ document.addEventListener('DOMContentLoaded', function() {
     processBtn.addEventListener('click', processText);
 
     function processText() {
-        if (!extractedText.trim()) {
-            showError('No text to process');
+        if (!currentStructuredData) {
+            showError('No structured data to process');
             return;
         }
 
-        showLoading('Processing text with AI...');
+        showLoading('Processing structured data with AI...');
 
         fetch('/process', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ 
-                text: extractedText,
-                mode: 'agentic'
-            })
+            body: JSON.stringify(currentStructuredData)
         })
         .then(response => {
             if (!response.ok) {
@@ -245,23 +242,128 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             hideLoading();
             
-            if (data.data && Array.isArray(data.data)) {
-                processedData = data.data;
-                displayResults(data.data);
-                
-                // Visualization removed for simpler interface
-                
-                // Show processing summary
-                if (data.metadata) {
-                    showProcessingSummary(data.metadata);
-                }
-            } else {
-                throw new Error('Invalid data format received from server');
-            }
+            // Display structured processing results
+            displayStructuredResults(data);
         })
         .catch(error => {
             hideLoading();
             showError(error.message);
+        });
+    }
+
+    function displayStructuredResults(data) {
+        const resultsSection = document.getElementById('results-section');
+        
+        // Clear previous results
+        resultsSection.innerHTML = '';
+        
+        let html = `
+            <div class="processing-summary alert alert-success mb-3">
+                <h5>Structured Data Processing Complete</h5>
+                <div class="row small">
+                    <div class="col-md-3">Tables: ${data.processed_tables?.length || 0}</div>
+                    <div class="col-md-3">Key-Values: ${data.processed_key_values ? 'Processed' : 'None'}</div>
+                    <div class="col-md-3">Text Chunks: ${data.processed_document_text?.length || 0}</div>
+                    <div class="col-md-3">Total Lines: ${data.summary?.total_text_lines || 0}</div>
+                </div>
+            </div>
+        `;
+        
+        // Display processed tables
+        if (data.processed_tables && data.processed_tables.length > 0) {
+            html += '<h6>Processed Tables</h6>';
+            data.processed_tables.forEach((table, index) => {
+                html += `
+                    <div class="card mb-3">
+                        <div class="card-header">Table ${index + 1} (Page ${table.page})</div>
+                        <div class="card-body">
+                            <pre class="bg-light p-2 rounded" style="max-height: 300px; overflow-y: auto;">
+                                ${JSON.stringify(table.structured_table, null, 2)}
+                            </pre>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        
+        // Display processed key-values
+        if (data.processed_key_values && data.processed_key_values.structured_key_values) {
+            html += `
+                <h6>Processed Key-Value Pairs</h6>
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <pre class="bg-light p-2 rounded" style="max-height: 300px; overflow-y: auto;">
+                            ${JSON.stringify(data.processed_key_values.structured_key_values, null, 2)}
+                        </pre>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Display processed document text chunks
+        if (data.processed_document_text && data.processed_document_text.length > 0) {
+            html += '<h6>Extracted Facts from Document Text</h6>';
+            data.processed_document_text.forEach((chunk, index) => {
+                if (chunk.extracted_facts && Object.keys(chunk.extracted_facts).length > 0) {
+                    html += `
+                        <div class="card mb-3">
+                            <div class="card-header">Text Chunk ${index + 1}</div>
+                            <div class="card-body">
+                                <pre class="bg-light p-2 rounded" style="max-height: 300px; overflow-y: auto;">
+                                    ${JSON.stringify(chunk.extracted_facts, null, 2)}
+                                </pre>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+        }
+        
+        // Add export buttons
+        html += `
+            <div class="text-center mt-4">
+                <button id="export-structured-json-btn" class="btn btn-primary me-2">Export Complete JSON</button>
+                <button id="export-summary-btn" class="btn btn-outline-primary">Export Summary</button>
+            </div>
+        `;
+        
+        resultsSection.innerHTML = html;
+        resultsSection.classList.remove('d-none');
+        
+        // Add export event listeners
+        document.getElementById('export-structured-json-btn').addEventListener('click', () => {
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'structured_processing_results.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+        
+        document.getElementById('export-summary-btn').addEventListener('click', () => {
+            const summary = {
+                processing_summary: data.summary,
+                tables_count: data.processed_tables?.length || 0,
+                key_values_processed: !!data.processed_key_values,
+                text_chunks_processed: data.processed_document_text?.length || 0
+            };
+            const blob = new Blob([JSON.stringify(summary, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'processing_summary.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+        
+        window.scrollTo({
+            top: resultsSection.offsetTop - 20,
+            behavior: 'smooth'
         });
     }
 
