@@ -162,51 +162,41 @@ document.addEventListener('DOMContentLoaded', function() {
             existingStructuredInfo.remove();
         }
         
-        // Update text content
-        extractedTextContent.textContent = text;
-        
-        // Add structured data display if available
+        // Show processing info and skip to AI processing
         if (structuredData) {
             const documentText = structuredData.document_text || [];
             const tables = structuredData.tables || [];
             const keyValues = structuredData.key_values || [];
             
             const structuredInfo = document.createElement('div');
-            structuredInfo.className = 'alert alert-info mb-3 structured-data-info';
+            structuredInfo.className = 'alert alert-success mb-3 structured-data-info';
             structuredInfo.innerHTML = `
-                <h6 class="mb-2">Amazon Textract Analysis</h6>
+                <h6 class="mb-2">📊 Document Processed Successfully</h6>
                 <div class="row small">
-                    <div class="col-md-3">Lines: ${documentText.length}</div>
+                    <div class="col-md-3">Text Lines: ${documentText.length}</div>
                     <div class="col-md-3">Tables: ${tables.length}</div>
                     <div class="col-md-3">Key-Values: ${keyValues.length}</div>
-                    <div class="col-md-3">Format: S3 Direct</div>
+                    <div class="col-md-3">Processing: Complete</div>
                 </div>
-                ${tables.length > 0 ? `
-                    <div class="mt-2">
-                        <strong>Tables Detected:</strong>
-                        ${tables.map((table, i) => 
-                            `<span class="badge bg-secondary me-1">Page ${table.page} (${table.rows.length}×${table.rows[0]?.length || 0})</span>`
-                        ).join('')}
-                    </div>
-                ` : ''}
-                ${keyValues.length > 0 ? `
-                    <div class="mt-2">
-                        <strong>Key-Value Pairs Found:</strong> 
-                        <span class="badge bg-info">${keyValues.length} pairs</span>
-                    </div>
-                ` : ''}
-                <div class="mt-3">
-                    <button class="btn btn-outline-primary btn-sm" onclick="showJsonModal()">
-                        View Complete JSON Structure
+                <div class="text-center mt-3">
+                    <button id="process-ai-btn" class="btn btn-primary btn-lg">
+                        <i class="bi bi-gear"></i> Process with AI
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm ms-2" onclick="showJsonModal()">
+                        View Raw JSON
                     </button>
                 </div>
             `;
             
-            // Insert at the beginning of the extracted text section
-            extractedTextSection.insertBefore(structuredInfo, extractedTextSection.firstChild);
+            // Replace extracted text section content
+            extractedTextSection.innerHTML = '';
+            extractedTextSection.appendChild(structuredInfo);
+            extractedTextSection.classList.remove('d-none');
+            
+            // Add event listener for AI processing
+            document.getElementById('process-ai-btn').addEventListener('click', processText);
         }
         
-        extractedTextSection.classList.remove('d-none');
         window.scrollTo({
             top: extractedTextSection.offsetTop - 20,
             behavior: 'smooth'
@@ -259,7 +249,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         let html = `
             <div class="processing-summary alert alert-success mb-3">
-                <h5>Structured Data Processing Complete</h5>
+                <h5>AI Processing Complete</h5>
                 <div class="row small">
                     <div class="col-md-3">Tables: ${data.processed_tables?.length || 0}</div>
                     <div class="col-md-3">Key-Values: ${data.processed_key_values ? 'Processed' : 'None'}</div>
@@ -269,61 +259,49 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `;
         
-        // Display processed tables
+        // Collect all data for CSV conversion
+        let allData = [];
+        
+        // Process tables and convert to readable format
         if (data.processed_tables && data.processed_tables.length > 0) {
-            html += '<h6>Processed Tables</h6>';
             data.processed_tables.forEach((table, index) => {
-                html += `
-                    <div class="card mb-3">
-                        <div class="card-header">Table ${index + 1} (Page ${table.page})</div>
-                        <div class="card-body">
-                            <pre class="bg-light p-2 rounded" style="max-height: 300px; overflow-y: auto;">
-                                ${JSON.stringify(table.structured_table, null, 2)}
-                            </pre>
-                        </div>
-                    </div>
-                `;
-            });
-        }
-        
-        // Display processed key-values
-        if (data.processed_key_values && data.processed_key_values.structured_key_values) {
-            html += `
-                <h6>Processed Key-Value Pairs</h6>
-                <div class="card mb-3">
-                    <div class="card-body">
-                        <pre class="bg-light p-2 rounded" style="max-height: 300px; overflow-y: auto;">
-                            ${JSON.stringify(data.processed_key_values.structured_key_values, null, 2)}
-                        </pre>
-                    </div>
-                </div>
-            `;
-        }
-        
-        // Display processed document text chunks
-        if (data.processed_document_text && data.processed_document_text.length > 0) {
-            html += '<h6>Extracted Facts from Document Text</h6>';
-            data.processed_document_text.forEach((chunk, index) => {
-                if (chunk.extracted_facts && Object.keys(chunk.extracted_facts).length > 0) {
-                    html += `
-                        <div class="card mb-3">
-                            <div class="card-header">Text Chunk ${index + 1}</div>
-                            <div class="card-body">
-                                <pre class="bg-light p-2 rounded" style="max-height: 300px; overflow-y: auto;">
-                                    ${JSON.stringify(chunk.extracted_facts, null, 2)}
-                                </pre>
-                            </div>
-                        </div>
-                    `;
+                if (table.structured_table && !table.structured_table.error) {
+                    html += `<h6>Table ${index + 1} (Page ${table.page})</h6>`;
+                    const tableData = convertTableToHTML(table.structured_table, index + 1, table.page);
+                    html += tableData.html;
+                    allData = allData.concat(tableData.csvData);
                 }
             });
+        }
+        
+        // Process key-value pairs
+        if (data.processed_key_values && data.processed_key_values.structured_key_values && !data.processed_key_values.structured_key_values.error) {
+            html += '<h6>Key-Value Pairs</h6>';
+            const kvData = convertKeyValuesToHTML(data.processed_key_values.structured_key_values);
+            html += kvData.html;
+            allData = allData.concat(kvData.csvData);
+        }
+        
+        // Process extracted facts
+        if (data.processed_document_text && data.processed_document_text.length > 0) {
+            html += '<h6>Extracted Financial Data</h6>';
+            const factsData = convertFactsToHTML(data.processed_document_text);
+            html += factsData.html;
+            allData = allData.concat(factsData.csvData);
         }
         
         // Add export buttons
         html += `
             <div class="text-center mt-4">
-                <button id="export-structured-json-btn" class="btn btn-primary me-2">Export Complete JSON</button>
-                <button id="export-summary-btn" class="btn btn-outline-primary">Export Summary</button>
+                <button id="export-csv-btn" class="btn btn-success me-2">
+                    <i class="bi bi-file-earmark-spreadsheet"></i> Export CSV
+                </button>
+                <button id="export-json-btn" class="btn btn-outline-primary me-2">
+                    <i class="bi bi-file-earmark-code"></i> Export JSON
+                </button>
+                <button id="export-excel-btn" class="btn btn-outline-success">
+                    <i class="bi bi-file-earmark-excel"></i> Export Excel
+                </button>
             </div>
         `;
         
@@ -331,40 +309,194 @@ document.addEventListener('DOMContentLoaded', function() {
         resultsSection.classList.remove('d-none');
         
         // Add export event listeners
-        document.getElementById('export-structured-json-btn').addEventListener('click', () => {
+        document.getElementById('export-csv-btn').addEventListener('click', () => {
+            exportToCSV(allData);
+        });
+        
+        document.getElementById('export-json-btn').addEventListener('click', () => {
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'structured_processing_results.json';
+            a.download = 'structured_data.json';
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
         });
         
-        document.getElementById('export-summary-btn').addEventListener('click', () => {
-            const summary = {
-                processing_summary: data.summary,
-                tables_count: data.processed_tables?.length || 0,
-                key_values_processed: !!data.processed_key_values,
-                text_chunks_processed: data.processed_document_text?.length || 0
-            };
-            const blob = new Blob([JSON.stringify(summary, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'processing_summary.json';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+        document.getElementById('export-excel-btn').addEventListener('click', () => {
+            exportToExcel(allData);
         });
         
         window.scrollTo({
             top: resultsSection.offsetTop - 20,
             behavior: 'smooth'
         });
+    }
+    
+    function convertTableToHTML(tableData, tableIndex, page) {
+        let html = `
+            <div class="table-responsive mb-4">
+                <table class="table table-striped table-hover">
+                    <thead class="table-dark">
+        `;
+        
+        let csvData = [];
+        let headers = [];
+        
+        // Handle different table structures
+        if (Array.isArray(tableData)) {
+            // Array of objects
+            if (tableData.length > 0 && typeof tableData[0] === 'object') {
+                headers = Object.keys(tableData[0]);
+                html += '<tr>';
+                headers.forEach(header => {
+                    html += `<th>${header}</th>`;
+                });
+                html += '</tr></thead><tbody>';
+                
+                tableData.forEach(row => {
+                    html += '<tr>';
+                    let csvRow = { source: `Table ${tableIndex} (Page ${page})`, type: 'Table Data' };
+                    headers.forEach(header => {
+                        const value = row[header] || '';
+                        html += `<td>${value}</td>`;
+                        csvRow[header] = value;
+                    });
+                    html += '</tr>';
+                    csvData.push(csvRow);
+                });
+            }
+        } else if (typeof tableData === 'object') {
+            // Object with key-value pairs
+            headers = ['Field', 'Value'];
+            html += '<tr><th>Field</th><th>Value</th></tr></thead><tbody>';
+            
+            Object.entries(tableData).forEach(([key, value]) => {
+                html += `<tr><td><strong>${key}</strong></td><td>${value}</td></tr>`;
+                csvData.push({
+                    source: `Table ${tableIndex} (Page ${page})`,
+                    type: 'Table Data',
+                    field: key,
+                    value: value
+                });
+            });
+        }
+        
+        html += '</tbody></table></div>';
+        
+        return { html, csvData };
+    }
+    
+    function convertKeyValuesToHTML(kvData) {
+        let html = `
+            <div class="table-responsive mb-4">
+                <table class="table table-striped">
+                    <thead class="table-dark">
+                        <tr><th>Field</th><th>Value</th></tr>
+                    </thead>
+                    <tbody>
+        `;
+        
+        let csvData = [];
+        
+        Object.entries(kvData).forEach(([key, value]) => {
+            html += `<tr><td><strong>${key}</strong></td><td>${value}</td></tr>`;
+            csvData.push({
+                source: 'Key-Value Pairs',
+                type: 'Structured Data',
+                field: key,
+                value: value
+            });
+        });
+        
+        html += '</tbody></table></div>';
+        
+        return { html, csvData };
+    }
+    
+    function convertFactsToHTML(factsArray) {
+        let html = `
+            <div class="table-responsive mb-4">
+                <table class="table table-striped">
+                    <thead class="table-dark">
+                        <tr><th>Metric</th><th>Value</th><th>Source</th></tr>
+                    </thead>
+                    <tbody>
+        `;
+        
+        let csvData = [];
+        
+        factsArray.forEach((chunk, chunkIndex) => {
+            if (chunk.extracted_facts && !chunk.extracted_facts.error) {
+                Object.entries(chunk.extracted_facts).forEach(([key, value]) => {
+                    if (typeof value === 'object' && value.field && value.value) {
+                        html += `<tr><td><strong>${value.field}</strong></td><td>${value.value}</td><td>Text Chunk ${chunkIndex + 1}</td></tr>`;
+                        csvData.push({
+                            source: `Text Chunk ${chunkIndex + 1}`,
+                            type: 'Financial Data',
+                            field: value.field,
+                            value: value.value
+                        });
+                    } else {
+                        html += `<tr><td><strong>${key}</strong></td><td>${value}</td><td>Text Chunk ${chunkIndex + 1}</td></tr>`;
+                        csvData.push({
+                            source: `Text Chunk ${chunkIndex + 1}`,
+                            type: 'Financial Data',
+                            field: key,
+                            value: value
+                        });
+                    }
+                });
+            }
+        });
+        
+        html += '</tbody></table></div>';
+        
+        return { html, csvData };
+    }
+    
+    function exportToCSV(data) {
+        if (!data || data.length === 0) {
+            alert('No data to export');
+            return;
+        }
+        
+        // Get all unique keys for CSV headers
+        const allKeys = new Set();
+        data.forEach(row => {
+            Object.keys(row).forEach(key => allKeys.add(key));
+        });
+        
+        const headers = Array.from(allKeys);
+        let csv = headers.join(',') + '\n';
+        
+        data.forEach(row => {
+            const values = headers.map(header => {
+                const value = row[header] || '';
+                // Escape commas and quotes in CSV
+                return `"${String(value).replace(/"/g, '""')}"`;
+            });
+            csv += values.join(',') + '\n';
+        });
+        
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'extracted_data.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+    
+    function exportToExcel(data) {
+        // For now, export as CSV with .xlsx extension
+        // In a real implementation, you'd use a library like SheetJS
+        exportToCSV(data);
+        alert('Excel export completed as CSV format. For true Excel format, please use the CSV file with Excel.');
     }
 
     function showProcessingSummary(metadata) {
