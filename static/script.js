@@ -154,6 +154,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function showExtractedText(text, structuredData = null) {
+        // Clear any existing structured info
+        const existingStructuredInfo = extractedTextSection.querySelector('.structured-data-info');
+        if (existingStructuredInfo) {
+            existingStructuredInfo.remove();
+        }
+        
         // Update text content
         extractedTextContent.textContent = text;
         
@@ -164,7 +170,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const keyValues = structuredData.key_values || [];
             
             const structuredInfo = document.createElement('div');
-            structuredInfo.className = 'alert alert-info mb-3';
+            structuredInfo.className = 'alert alert-info mb-3 structured-data-info';
             structuredInfo.innerHTML = `
                 <h6 class="mb-2">📊 Amazon Textract Analysis</h6>
                 <div class="row small">
@@ -189,7 +195,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 ` : ''}
             `;
             
-            extractedTextSection.insertBefore(structuredInfo, extractedTextContent.parentElement);
+            // Insert at the beginning of the extracted text section
+            extractedTextSection.insertBefore(structuredInfo, extractedTextSection.firstChild);
         }
         
         extractedTextSection.classList.remove('d-none');
