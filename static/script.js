@@ -259,53 +259,148 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `;
         
-        // Use DataFrame data if available, otherwise fall back to unified table
-        const tableData = data.dataframe_data || createUnifiedTable(data);
+        let allCsvData = [];
+        let hasData = false;
         
-        if (tableData.length > 0) {
+        // Display Tables
+        if (data.processed_tables && data.processed_tables.length > 0) {
+            html += '<h5>📊 Extracted Tables</h5>';
+            data.processed_tables.forEach((table, index) => {
+                if (table.structured_table && !table.structured_table.error) {
+                    hasData = true;
+                    html += `
+                        <div class="card mb-3">
+                            <div class="card-header bg-primary text-white">
+                                <h6 class="mb-0">Table ${index + 1} (Page ${table.page})</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-sm">
+                                        <thead class="table-light">
+                                            <tr><th>Field</th><th>Value</th></tr>
+                                        </thead>
+                                        <tbody>
+                    `;
+                    
+                    Object.entries(table.structured_table).forEach(([key, value]) => {
+                        if (key !== 'error') {
+                            html += `<tr><td><strong>${key}</strong></td><td>${value}</td></tr>`;
+                            allCsvData.push({
+                                source: `Table ${index + 1}`,
+                                type: 'Table Data',
+                                field: key,
+                                value: String(value),
+                                page: table.page
+                            });
+                        }
+                    });
+                    
+                    html += `
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+        }
+        
+        // Display Key-Value Pairs
+        if (data.processed_key_values && data.processed_key_values.structured_key_values && !data.processed_key_values.structured_key_values.error) {
+            hasData = true;
             html += `
-                <h5>Extracted Document Data</h5>
-                <div class="table-responsive mb-4">
-                    <table class="table table-striped table-hover">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>Source</th>
-                                <th>Data Type</th>
-                                <th>Field</th>
-                                <th>Value</th>
-                                <th>Page</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                <h5>🔑 Key-Value Pairs</h5>
+                <div class="card mb-3">
+                    <div class="card-header bg-info text-white">
+                        <h6 class="mb-0">Document Metadata</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-sm">
+                                <thead class="table-light">
+                                    <tr><th>Field</th><th>Value</th></tr>
+                                </thead>
+                                <tbody>
             `;
             
-            tableData.forEach(row => {
-                html += `
-                    <tr>
-                        <td><span class="badge bg-secondary">${row.source}</span></td>
-                        <td><span class="badge bg-info">${row.type}</span></td>
-                        <td><strong>${row.field}</strong></td>
-                        <td>${row.value}</td>
-                        <td>${row.page || 'N/A'}</td>
-                    </tr>
-                `;
+            Object.entries(data.processed_key_values.structured_key_values).forEach(([key, value]) => {
+                if (key !== 'error') {
+                    html += `<tr><td><strong>${key}</strong></td><td>${value}</td></tr>`;
+                    allCsvData.push({
+                        source: 'Key-Value Pairs',
+                        type: 'Structured Data',
+                        field: key,
+                        value: String(value),
+                        page: 'N/A'
+                    });
+                }
             });
             
             html += `
-                        </tbody>
-                    </table>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             `;
-        } else {
+        }
+        
+        // Display Financial Data
+        if (data.processed_document_text && data.processed_document_text.length > 0) {
+            const validChunks = data.processed_document_text.filter(chunk => 
+                chunk.extracted_facts && !chunk.extracted_facts.error && 
+                Object.keys(chunk.extracted_facts).length > 0
+            );
+            
+            if (validChunks.length > 0) {
+                hasData = true;
+                html += '<h5>💰 Financial & Business Data</h5>';
+                
+                validChunks.forEach((chunk, index) => {
+                    html += `
+                        <div class="card mb-3">
+                            <div class="card-header bg-success text-white">
+                                <h6 class="mb-0">Text Segment ${index + 1}</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-sm">
+                                        <thead class="table-light">
+                                            <tr><th>Metric</th><th>Value</th></tr>
+                                        </thead>
+                                        <tbody>
+                    `;
+                    
+                    Object.entries(chunk.extracted_facts).forEach(([key, value]) => {
+                        if (key !== 'error') {
+                            html += `<tr><td><strong>${key}</strong></td><td>${value}</td></tr>`;
+                            allCsvData.push({
+                                source: `Text Segment ${index + 1}`,
+                                type: 'Financial Data',
+                                field: key,
+                                value: String(value),
+                                page: 'N/A'
+                            });
+                        }
+                    });
+                    
+                    html += `
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+        }
+        
+        if (!hasData) {
             html += `
                 <div class="alert alert-warning">
                     <h6>No structured data found</h6>
-                    <p>The AI processing did not extract any meaningful data from the document. This could be due to:</p>
-                    <ul>
-                        <li>The document contains mostly images or non-text content</li>
-                        <li>The text is too fragmented or unclear</li>
-                        <li>The document format is not well-suited for data extraction</li>
-                    </ul>
+                    <p>The AI processing did not extract meaningful data from the document.</p>
                 </div>
             `;
         }
@@ -313,13 +408,13 @@ document.addEventListener('DOMContentLoaded', function() {
         // Add export buttons
         html += `
             <div class="text-center mt-4">
-                <button id="export-csv-btn" class="btn btn-success me-2" ${tableData.length === 0 ? 'disabled' : ''}>
-                    <i class="bi bi-file-earmark-spreadsheet"></i> Export CSV (${tableData.length} rows)
+                <button id="export-csv-btn" class="btn btn-success me-2" ${!hasData ? 'disabled' : ''}>
+                    <i class="bi bi-file-earmark-spreadsheet"></i> Export CSV (${allCsvData.length} rows)
                 </button>
                 <button id="export-json-btn" class="btn btn-outline-primary me-2">
                     <i class="bi bi-file-earmark-code"></i> Export JSON
                 </button>
-                <button id="export-excel-btn" class="btn btn-outline-success" ${tableData.length === 0 ? 'disabled' : ''}>
+                <button id="export-excel-btn" class="btn btn-outline-success" ${!hasData ? 'disabled' : ''}>
                     <i class="bi bi-file-earmark-excel"></i> Export Excel
                 </button>
             </div>
@@ -329,13 +424,13 @@ document.addEventListener('DOMContentLoaded', function() {
         resultsSection.classList.remove('d-none');
         
         // Add export event listeners
-        if (tableData.length > 0) {
+        if (hasData) {
             document.getElementById('export-csv-btn').addEventListener('click', () => {
-                exportToCSV(tableData);
+                exportToCSV(allCsvData);
             });
             
             document.getElementById('export-excel-btn').addEventListener('click', () => {
-                exportToExcel(tableData);
+                exportToExcel(allCsvData);
             });
         }
         

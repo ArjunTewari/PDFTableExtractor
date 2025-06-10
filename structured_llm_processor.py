@@ -23,12 +23,12 @@ async def process_table_data(table_data: Dict[str, Any]) -> Dict[str, Any]:
     """Process table data with GPT-4o asynchronously"""
     prompt = f"""You are a data analyst. The following table data has been extracted from a document.
 
-Your task is to convert this into structured JSON format. Use the headers if present, and infer meaningful field names if not. Ensure the result is consistent and each row is a dictionary of field-value pairs.
+Analyze this table and extract the actual data values. Create a clean, structured representation where each meaningful piece of information is clearly identified with appropriate field names.
 
 Table data:
 {json.dumps(table_data, indent=2)}
 
-Return only valid JSON."""
+Return the result as a simple JSON object with field-value pairs. Extract actual numbers, dates, percentages, and text values. Do not return nested arrays or complex structures."""
 
     try:
         loop = asyncio.get_event_loop()
@@ -62,14 +62,14 @@ Return only valid JSON."""
 
 async def process_key_value_data(key_value_pairs: List[Dict[str, Any]]) -> Dict[str, Any]:
     """Process key-value pairs with GPT-4o asynchronously"""
-    prompt = f"""You are a data structuring assistant. Below is a list of key-value pairs extracted from a document.
+    prompt = f"""You are a data extraction specialist. Below are key-value pairs extracted from a document.
 
-Your job is to tabulate this data into a clean JSON format. Normalize similar keys if needed, but do not lose any data.
+Extract and organize this information into clear field-value pairs. Focus on extracting actual data values like company names, dates, amounts, percentages, and other factual information.
 
 Key-Value pairs:
 {json.dumps(key_value_pairs, indent=2)}
 
-Return only valid JSON."""
+Return a simple JSON object where each key is a descriptive field name and each value is the actual extracted data. Do not create nested structures or arrays."""
 
     try:
         loop = asyncio.get_event_loop()
@@ -103,14 +103,22 @@ async def process_text_chunk(text_chunk: List[str]) -> Dict[str, Any]:
     """Process a text chunk with GPT-4o asynchronously"""
     text_content = '\n'.join(text_chunk)
     
-    prompt = f"""You are a financial document interpreter. The following is a segment from a business report.
+    prompt = f"""You are a financial document analyst. Extract specific measurable data from this text segment.
 
-Extract all measurable facts, statistics, and financial KPIs as structured JSON. Each entry should have a 'field' and a 'value'. Do not guess or infer anything beyond what's stated.
+Focus on extracting concrete facts such as:
+- Company names and dates
+- Financial figures (revenue, profit, growth rates)
+- User metrics (MAU, DAU, subscriber counts)
+- Percentages and ratios
+- Market data and statistics
 
 Text:
 {text_content}
 
-Return only valid JSON."""
+Return a simple JSON object with descriptive field names and actual values. Example:
+{{"Company_Name": "Life360", "Q4_Revenue": "$115.5 million", "MAU_Growth": "33%"}}
+
+Do not create nested objects or arrays."""
 
     try:
         loop = asyncio.get_event_loop()
