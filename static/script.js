@@ -848,11 +848,18 @@ document.addEventListener('DOMContentLoaded', function() {
         tableHeader.innerHTML = '';
         tableBody.innerHTML = '';
 
-        // Create table header
-        const headers = Object.keys(data[0]);
+        // Check if any row has commentary
+        const hasCommentary = data.some(row => row.commentary && row.commentary.trim());
+
+        // Create table header with conditional commentary column
+        const headers = ['source', 'type', 'field', 'value', 'page'];
+        if (hasCommentary) {
+            headers.push('commentary');
+        }
+        
         headers.forEach(header => {
             const th = document.createElement('th');
-            th.textContent = header;
+            th.textContent = header.charAt(0).toUpperCase() + header.slice(1);
             tableHeader.appendChild(th);
         });
 
@@ -860,11 +867,43 @@ document.addEventListener('DOMContentLoaded', function() {
         data.forEach(row => {
             const tr = document.createElement('tr');
             
-            headers.forEach(header => {
-                const td = document.createElement('td');
-                td.textContent = row[header] || '';
-                tr.appendChild(td);
-            });
+            // Add source column with badge
+            const sourceTd = document.createElement('td');
+            sourceTd.innerHTML = `<span class="badge bg-secondary">${row.source || ''}</span>`;
+            tr.appendChild(sourceTd);
+            
+            // Add type column with badge
+            const typeTd = document.createElement('td');
+            typeTd.innerHTML = `<span class="badge bg-info">${row.type || ''}</span>`;
+            tr.appendChild(typeTd);
+            
+            // Add field column with bold text
+            const fieldTd = document.createElement('td');
+            fieldTd.innerHTML = `<strong>${row.field || ''}</strong>`;
+            tr.appendChild(fieldTd);
+            
+            // Add value column
+            const valueTd = document.createElement('td');
+            valueTd.textContent = row.value || '';
+            tr.appendChild(valueTd);
+            
+            // Add page column
+            const pageTd = document.createElement('td');
+            pageTd.textContent = row.page || '';
+            tr.appendChild(pageTd);
+            
+            // Add commentary column if needed
+            if (hasCommentary) {
+                const commentaryTd = document.createElement('td');
+                commentaryTd.className = 'commentary-cell';
+                if (row.commentary && row.commentary.trim()) {
+                    commentaryTd.innerHTML = `<span class="text-muted small">${row.commentary}</span>`;
+                    tr.classList.add('has-commentary');
+                } else {
+                    commentaryTd.innerHTML = '<span class="text-muted">-</span>';
+                }
+                tr.appendChild(commentaryTd);
+            }
             
             tableBody.appendChild(tr);
         });
