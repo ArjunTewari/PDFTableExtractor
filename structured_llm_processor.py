@@ -23,12 +23,20 @@ async def process_table_data(table_data: Dict[str, Any]) -> Dict[str, Any]:
     """Process table data with GPT-4o asynchronously"""
     prompt = f"""You are a data analyst. The following table data has been extracted from a document.
 
-Analyze this table and extract the actual data values. Create a clean, structured representation where each meaningful piece of information is clearly identified with appropriate field names.
+Analyze this table and extract ALL data values. Create a comprehensive, structured representation where EVERY piece of information is captured with appropriate field names.
 
 Table data:
 {json.dumps(table_data, indent=2)}
 
-Return the result as a simple JSON object with field-value pairs. Extract actual numbers, dates, percentages, and text values. Do not return nested arrays or complex structures."""
+Requirements:
+1. Extract ALL cell values, not just some
+2. Create descriptive field names for each data point
+3. Include row headers, column headers, and all cell values
+4. Preserve numerical values, percentages, dates, and text
+5. If there are multiple rows, create separate entries for each row
+
+Return as a JSON object with all extracted data points. Example structure:
+{{"Row_1_Company": "ABC Corp", "Row_1_Revenue": "$100M", "Row_2_Company": "XYZ Inc", "Row_2_Revenue": "$85M"}}"""
 
     try:
         loop = asyncio.get_event_loop()
@@ -148,6 +156,49 @@ Do not create nested objects or arrays."""
             "original_text": text_chunk
         }
 
+async def match_commentary_to_data(row_data: str, text_chunks: List[str]) -> Dict[str, Any]:
+    """Match document text commentary to table row data"""
+    text_content = '\n'.join(text_chunks)
+    
+    prompt = f"""You are analyzing a document to find commentary that explains or relates to specific data.
+
+Given this table row data: {row_data}
+
+Check if any part of this text commentary explains or relates to the row data:
+{text_content}
+
+Task:
+1. If you find text that explains, provides context, or relates to the row data, summarize how it relates
+2. If no relevant commentary is found, return null
+3. Focus on finding explanations, trends, analysis, or context about the data
+
+Return a JSON object with:
+{{"commentary": "brief summary of how the text relates to the data", "relevant": true}}
+OR
+{{"commentary": null, "relevant": false}}"""
+
+    try:
+        loop = asyncio.get_event_loop()
+        response = await loop.run_in_executor(
+            None,
+            lambda: openai_client.chat.completions.create(
+                model="gpt-4o",
+                messages=[{"role": "user", "content": prompt}],
+                response_format={"type": "json_object"}
+            )
+        )
+        
+        content = response.choices[0].message.content
+        if content:
+            result = json.loads(content)
+            return result
+        else:
+            return {"commentary": None, "relevant": False}
+            
+    except Exception as e:
+        print(f"Error matching commentary: {e}")
+        return {"commentary": None, "relevant": False}
+
 async def process_structured_data_with_llm_async(structured_data: Dict[str, Any]) -> Dict[str, Any]:
     """Process all sections of structured data with asynchronous LLM calls"""
     
@@ -159,11 +210,14 @@ async def process_structured_data_with_llm_async(structured_data: Dict[str, Any]
         "processed_tables": [],
         "processed_key_values": {},
         "processed_document_text": [],
+        "enhanced_data_with_commentary": [],
+        "general_commentary": "",
         "summary": {
             "total_tables": len(tables),
             "total_key_values": len(key_values),
             "total_text_lines": len(document_text),
-            "text_chunks_processed": 0
+            "text_chunks_processed": 0,
+            "commentary_matches": 0
         }
     }
     
@@ -228,7 +282,119 @@ async def process_structured_data_with_llm_async(structured_data: Dict[str, Any]
                 results["processed_document_text"].append(result)
                 task_index += 1
     
+    # Phase 2: Enhanced data processing with commentary matching
+    print("Starting commentary matching phase...")
+    await process_commentary_matching(results, document_text)
+    
     return results
+
+async def process_commentary_matching(results: Dict[str, Any], document_text: List[str]) -> None:
+    """Process commentary matching for all extracted data"""
+    enhanced_data = []
+    used_text_indices = set()
+    
+    # Collect all structured data points
+    all_data_points = []
+    
+    # From tables
+    for table_result in results.get("processed_tables", []):
+        if "structured_table" in table_result and not table_result["structured_table"].get("error"):
+            structured_table = table_result["structured_table"]
+            page = table_result.get("page", "N/A")
+            
+            for field, value in structured_table.items():
+                if field != "error" and value:
+                    all_data_points.append({
+                        "source": "Table",
+                        "type": "Table Data",
+                        "field": field,
+                        "value": str(value),
+                        "page": page,
+                        "raw_data": f"{field}: {value}"
+                    })
+    
+    # From key-values
+    if "processed_key_values" in results and results["processed_key_values"]:
+        kv_data = results["processed_key_values"].get("structured_key_values", {})
+        if kv_data and not kv_data.get("error"):
+            for field, value in kv_data.items():
+                if field != "error" and value:
+                    all_data_points.append({
+                        "source": "Key-Value Pairs",
+                        "type": "Structured Data",
+                        "field": field,
+                        "value": str(value),
+                        "page": "N/A",
+                        "raw_data": f"{field}: {value}"
+                    })
+    
+    # From document text facts
+    for chunk_idx, chunk in enumerate(results.get("processed_document_text", [])):
+        if "extracted_facts" in chunk and not chunk["extracted_facts"].get("error"):
+            facts = chunk["extracted_facts"]
+            for field, value in facts.items():
+                if field != "error" and value:
+                    all_data_points.append({
+                        "source": f"Text Chunk {chunk_idx+1}",
+                        "type": "Financial Data",
+                        "field": field,
+                        "value": str(value),
+                        "page": "N/A",
+                        "raw_data": f"{field}: {value}"
+                    })
+    
+    # Process commentary matching for each data point
+    text_chunks = split_text_section(document_text, max_lines=10)
+    
+    # Process each data point for commentary matching
+    for data_point in all_data_points:
+        best_commentary = ""
+        found_match = False
+        
+        # Try to find commentary for this data point in each text chunk
+        for chunk_idx, text_chunk in enumerate(text_chunks):
+            if chunk_idx not in used_text_indices:
+                try:
+                    commentary_result = await match_commentary_to_data(data_point["raw_data"], text_chunk)
+                    
+                    if isinstance(commentary_result, dict) and commentary_result.get("relevant"):
+                        used_text_indices.add(chunk_idx)
+                        best_commentary = commentary_result.get("commentary", "")
+                        found_match = True
+                        results["summary"]["commentary_matches"] += 1
+                        break  # Found a match, stop looking
+                except Exception as e:
+                    print(f"Error matching commentary for {data_point['field']}: {e}")
+                    continue
+        
+        # Add the data point with or without commentary
+        enhanced_data_point = {
+            **data_point,
+            "commentary": best_commentary,
+            "has_commentary": found_match
+        }
+        enhanced_data.append(enhanced_data_point)
+    
+    # Create general commentary from unmatched text
+    unmatched_text_chunks = []
+    for i, chunk in enumerate(text_chunks):
+        if i not in used_text_indices:
+            unmatched_text_chunks.extend(chunk)
+    
+    if unmatched_text_chunks:
+        general_commentary = '\n'.join(unmatched_text_chunks[:50])  # Limit length
+        results["general_commentary"] = general_commentary
+    
+    # Remove duplicates and clean data
+    seen_data = set()
+    clean_enhanced_data = []
+    for item in enhanced_data:
+        key = f"{item['field']}_{item['value']}"
+        if key not in seen_data:
+            seen_data.add(key)
+            clean_enhanced_data.append(item)
+    
+    results["enhanced_data_with_commentary"] = clean_enhanced_data
 
 def process_structured_data_with_llm(structured_data: Dict[str, Any]) -> Dict[str, Any]:
     """Synchronous wrapper for asynchronous processing"""

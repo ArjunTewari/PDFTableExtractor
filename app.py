@@ -48,44 +48,37 @@ def process():
     try:
         import pandas as pd
         
-        # Process the structured JSON data with separate LLM calls
+        # Process the structured JSON data with separate LLM calls and commentary matching
         result = process_structured_data_with_llm(data)
         
-        # Convert to DataFrame format for better structure
-        df_data = []
-        
-        # Process tables
-        if 'processed_tables' in result and result['processed_tables']:
-            for i, table in enumerate(result['processed_tables']):
-                if table.get('structured_table') and not table['structured_table'].get('error'):
-                    table_data = table['structured_table']
-                    page = table.get('page', 'N/A')
-                    
-                    # Handle different table structures
-                    if isinstance(table_data, dict):
-                        if 'rows' in table_data:
-                            # Handle rows format
-                            for row_idx, row in enumerate(table_data['rows']):
-                                if isinstance(row, list):
-                                    for col_idx, cell in enumerate(row):
-                                        df_data.append({
-                                            'source': f'Table {i+1}',
-                                            'type': 'Table Data',
-                                            'field': f'Row {row_idx+1}, Col {col_idx+1}',
-                                            'value': str(cell) if cell else '',
-                                            'page': page
-                                        })
-                                elif isinstance(row, dict):
-                                    for key, value in row.items():
-                                        df_data.append({
-                                            'source': f'Table {i+1}',
-                                            'type': 'Table Data',
-                                            'field': f'{key}',
-                                            'value': str(value) if value else '',
-                                            'page': page
-                                        })
-                        else:
-                            # Handle key-value format
+        # Use the enhanced data with commentary if available
+        if 'enhanced_data_with_commentary' in result and result['enhanced_data_with_commentary']:
+            clean_data = result['enhanced_data_with_commentary']
+            
+            # Add general commentary as a separate row if it exists
+            if result.get('general_commentary'):
+                clean_data.append({
+                    'source': 'Document Text',
+                    'type': 'General Commentary',
+                    'field': 'Unmatched Commentary',
+                    'value': result['general_commentary'][:500] + '...' if len(result['general_commentary']) > 500 else result['general_commentary'],
+                    'page': 'N/A',
+                    'commentary': '',
+                    'has_commentary': False
+                })
+        else:
+            # Fallback to original processing if enhanced data is not available
+            df_data = []
+            
+            # Process tables
+            if 'processed_tables' in result and result['processed_tables']:
+                for i, table in enumerate(result['processed_tables']):
+                    if table.get('structured_table') and not table['structured_table'].get('error'):
+                        table_data = table['structured_table']
+                        page = table.get('page', 'N/A')
+                        
+                        # Handle different table structures
+                        if isinstance(table_data, dict):
                             for key, value in table_data.items():
                                 if key != 'error':
                                     df_data.append({
@@ -93,49 +86,55 @@ def process():
                                         'type': 'Table Data',
                                         'field': key,
                                         'value': str(value) if value else '',
-                                        'page': page
+                                        'page': page,
+                                        'commentary': '',
+                                        'has_commentary': False
                                     })
-        
-        # Process key-value pairs
-        if 'processed_key_values' in result and result['processed_key_values']:
-            kv_data = result['processed_key_values'].get('structured_key_values', {})
-            if kv_data and not kv_data.get('error'):
-                for key, value in kv_data.items():
-                    if key != 'error':
-                        df_data.append({
-                            'source': 'Key-Value Pairs',
-                            'type': 'Structured Data',
-                            'field': key,
-                            'value': str(value) if value else '',
-                            'page': 'N/A'
-                        })
-        
-        # Process document text facts
-        if 'processed_document_text' in result and result['processed_document_text']:
-            for chunk_idx, chunk in enumerate(result['processed_document_text']):
-                if 'extracted_facts' in chunk and not chunk['extracted_facts'].get('error'):
-                    facts = chunk['extracted_facts']
-                    for key, value in facts.items():
+            
+            # Process key-value pairs
+            if 'processed_key_values' in result and result['processed_key_values']:
+                kv_data = result['processed_key_values'].get('structured_key_values', {})
+                if kv_data and not kv_data.get('error'):
+                    for key, value in kv_data.items():
                         if key != 'error':
                             df_data.append({
-                                'source': f'Text Chunk {chunk_idx+1}',
-                                'type': 'Financial Data',
+                                'source': 'Key-Value Pairs',
+                                'type': 'Structured Data',
                                 'field': key,
                                 'value': str(value) if value else '',
-                                'page': 'N/A'
+                                'page': 'N/A',
+                                'commentary': '',
+                                'has_commentary': False
                             })
-        
-        # Create DataFrame
-        if df_data:
-            df = pd.DataFrame(df_data)
-            # Clean up empty values
-            df = df[df['value'].str.strip() != '']
-            df = df[df['value'] != 'nan']
             
-            # Convert back to list of dicts for JSON response
-            clean_data = df.to_dict('records')
-        else:
-            clean_data = []
+            # Process document text facts
+            if 'processed_document_text' in result and result['processed_document_text']:
+                for chunk_idx, chunk in enumerate(result['processed_document_text']):
+                    if 'extracted_facts' in chunk and not chunk['extracted_facts'].get('error'):
+                        facts = chunk['extracted_facts']
+                        for key, value in facts.items():
+                            if key != 'error':
+                                df_data.append({
+                                    'source': f'Text Chunk {chunk_idx+1}',
+                                    'type': 'Financial Data',
+                                    'field': key,
+                                    'value': str(value) if value else '',
+                                    'page': 'N/A',
+                                    'commentary': '',
+                                    'has_commentary': False
+                                })
+            
+            # Create DataFrame and clean
+            if df_data:
+                df = pd.DataFrame(df_data)
+                # Clean up empty values
+                df = df[df['value'].str.strip() != '']
+                df = df[df['value'] != 'nan']
+                
+                # Convert back to list of dicts for JSON response
+                clean_data = df.to_dict('records')
+            else:
+                clean_data = []
         
         # Return both original result and clean DataFrame data
         response = {
