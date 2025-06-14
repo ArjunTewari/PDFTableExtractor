@@ -212,46 +212,6 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        showLoading('Starting AI processing...');
-
-        // Try streaming first, fallback to regular processing
-        processWithStreaming();
-    }
-
-    function processWithStreaming() {
-        // Skip streaming for now, use regular processing for reliability
-        console.log('Using regular processing for better reliability');
-        processRegular();
-    }
-
-    function handleStreamingData(data) {
-        const loadingMsg = document.getElementById('loading-message');
-        
-        if (data.status === 'starting' || data.status === 'processing' || data.status === 'enhancing') {
-            if (loadingMsg) {
-                loadingMsg.textContent = data.message;
-            }
-        } else if (data.status === 'complete') {
-            if (loadingMsg) {
-                loadingMsg.textContent = 'Finalizing results...';
-            }
-        } else if (data.status === 'success') {
-            hideLoading();
-            console.log('Processing result:', data);
-            
-            processedData = data.dataframe_data || [];
-            displayResultsWithTables(processedData);
-            
-            if (data.summary) {
-                showProcessingSummary(data.summary);
-            }
-        } else if (data.status === 'error') {
-            hideLoading();
-            showError('Processing failed: ' + data.error);
-        }
-    }
-
-    function processRegular() {
         showLoading('Processing structured data with AI...');
 
         fetch('/process', {
@@ -272,12 +232,8 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             hideLoading();
             
-            processedData = data.dataframe_data || [];
-            displayResultsWithTables(processedData);
-            
-            if (data.summary) {
-                showProcessingSummary(data.summary);
-            }
+            // Display structured processing results
+            displayStructuredResults(data);
         })
         .catch(error => {
             hideLoading();
@@ -883,151 +839,35 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function displayResults(data) {
-        displayResultsWithTables(data);
-    }
-
-    function displayResultsWithTables(data) {
         if (!data.length) {
             showError('No structured data could be extracted');
             return;
         }
 
         // Clear previous results
-        resultsSection.innerHTML = `
-            <h4>Extracted Data with Commentary</h4>
-            <div id="tables-container"></div>
-            <div id="data-table-container">
-                <h5>All Data Points</h5>
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover">
-                        <thead id="data-table-header" class="table-dark"></thead>
-                        <tbody id="data-table-body"></tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="mt-3">
-                <button class="btn btn-outline-primary" id="export-json-btn">Export as JSON</button>
-                <button class="btn btn-outline-success" id="export-csv-btn">Export as CSV</button>
-                <button class="btn btn-outline-danger" id="export-pdf-btn">Export as PDF</button>
-            </div>
-        `;
+        tableHeader.innerHTML = '';
+        tableBody.innerHTML = '';
 
-        const tablesContainer = document.getElementById('tables-container');
-        const dataTableHeader = document.getElementById('data-table-header');
-        const dataTableBody = document.getElementById('data-table-body');
-
-        // Reconstruct and display actual tables
-        const tableStructures = data.filter(row => row.is_table_header && row.headers && row.rows);
-        
-        tableStructures.forEach((tableHeader, index) => {
-            const tableDiv = document.createElement('div');
-            tableDiv.className = 'card mb-4';
-            
-            const headers = tableHeader.headers;
-            const rows = tableHeader.rows;
-            
-            tableDiv.innerHTML = `
-                <div class="card-header bg-primary text-white">
-                    <h6 class="mb-0">Reconstructed Table ${index + 1} (Page ${tableHeader.page})</h6>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover table-sm">
-                            <thead class="table-light">
-                                <tr>
-                                    ${headers.map(header => `<th>${header}</th>`).join('')}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${rows.map(row => `
-                                    <tr>
-                                        ${row.map(cell => `<td>${cell || '-'}</td>`).join('')}
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                    <small class="text-muted">
-                        Original table reconstructed from extracted data points
-                    </small>
-                </div>
-            `;
-            
-            tablesContainer.appendChild(tableDiv);
+        // Create table header
+        const headers = Object.keys(data[0]);
+        headers.forEach(header => {
+            const th = document.createElement('th');
+            th.textContent = header;
+            tableHeader.appendChild(th);
         });
 
-        // Check if any row has commentary
-        const hasCommentary = data.some(row => row.commentary && row.commentary.trim());
-
-        // Create data table header with conditional commentary column
-        const headers = ['Source', 'Type', 'Field', 'Value', 'Page'];
-        if (hasCommentary) {
-            headers.push('Commentary');
-        }
-        
-        dataTableHeader.innerHTML = `
-            <tr>
-                ${headers.map(header => `<th>${header}</th>`).join('')}
-            </tr>
-        `;
-
-        // Create data table rows
+        // Create table rows
         data.forEach(row => {
-            // Skip table header rows in the detailed view
-            if (row.is_table_header) return;
-            
             const tr = document.createElement('tr');
             
-            // Add source column with badge
-            const sourceTd = document.createElement('td');
-            sourceTd.innerHTML = `<span class="badge bg-secondary">${row.source || ''}</span>`;
-            tr.appendChild(sourceTd);
+            headers.forEach(header => {
+                const td = document.createElement('td');
+                td.textContent = row[header] || '';
+                tr.appendChild(td);
+            });
             
-            // Add type column with badge
-            const typeTd = document.createElement('td');
-            const badgeClass = row.type === 'General Commentary' ? 'bg-warning' : 
-                              row.type === 'Table Data' ? 'bg-success' : 'bg-info';
-            typeTd.innerHTML = `<span class="badge ${badgeClass}">${row.type || ''}</span>`;
-            tr.appendChild(typeTd);
-            
-            // Add field column with bold text
-            const fieldTd = document.createElement('td');
-            fieldTd.innerHTML = `<strong>${row.field || ''}</strong>`;
-            tr.appendChild(fieldTd);
-            
-            // Add value column
-            const valueTd = document.createElement('td');
-            valueTd.textContent = row.value || '';
-            tr.appendChild(valueTd);
-            
-            // Add page column
-            const pageTd = document.createElement('td');
-            pageTd.textContent = row.page || '';
-            tr.appendChild(pageTd);
-            
-            // Add commentary column if needed
-            if (hasCommentary) {
-                const commentaryTd = document.createElement('td');
-                commentaryTd.className = 'commentary-cell';
-                if (row.commentary && row.commentary.trim()) {
-                    commentaryTd.innerHTML = `<span class="text-muted small">${row.commentary}</span>`;
-                    tr.classList.add('has-commentary');
-                } else {
-                    commentaryTd.innerHTML = '<span class="text-muted">-</span>';
-                }
-                tr.appendChild(commentaryTd);
-            }
-            
-            dataTableBody.appendChild(tr);
+            tableBody.appendChild(tr);
         });
-
-        // Re-attach export event listeners
-        document.getElementById('export-json-btn').addEventListener('click', exportJson);
-        document.getElementById('export-csv-btn').addEventListener('click', exportCsv);
-        document.getElementById('export-pdf-btn').addEventListener('click', exportPdf);
-
-        // Store processed data globally
-        processedData = data;
 
         // Show results section
         resultsSection.classList.remove('d-none');

@@ -80,16 +80,6 @@ The deployment uses Nix packaging to ensure all dependencies are properly manage
 ## Development Notes
 
 1. The application uses GPT-4o (released May 2024) as the default language model
-2. Amazon Textract provides advanced PDF processing with table and key-value extraction
-3. Commentary matching feature temporarily disabled for performance optimization
-4. Table reconstruction algorithm displays proper tables with headers and data rows
-5. Export functionality supports JSON, CSV, and PDF formats
-6. All processed data is session-based and not persisted between sessions
-
-## Recent Changes (June 2025)
-
-- Enhanced table data extraction to capture complete table structures
-- Implemented table reconstruction algorithm for proper display
-- Added streaming processing capability (currently using fallback for reliability)
-- Optimized processing speed by temporarily disabling commentary matching
-- Fixed output delivery issues and improved user experience
+2. The PDF processing is basic text extraction without OCR capabilities
+3. The export functionality currently supports PDF format
+4. All processed data is session-based and not persisted between sessions

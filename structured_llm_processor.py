@@ -23,31 +23,20 @@ async def process_table_data(table_data: Dict[str, Any]) -> Dict[str, Any]:
     """Process table data with GPT-4o asynchronously"""
     prompt = f"""You are a data analyst. The following table data has been extracted from a document.
 
-Analyze this table and reconstruct it as a proper table structure with headers and data rows.
+Analyze this table and extract ALL data values. Create a comprehensive, structured representation where EVERY piece of information is captured with appropriate field names.
 
 Table data:
 {json.dumps(table_data, indent=2)}
 
 Requirements:
-1. Identify which row contains the headers (usually first row)
-2. Organize remaining rows as data rows under those headers
-3. Return both the structured table AND individual field-value pairs
-4. Preserve all numerical values, percentages, dates, and text exactly
-5. Handle empty cells appropriately
+1. Extract ALL cell values, not just some
+2. Create descriptive field names for each data point
+3. Include row headers, column headers, and all cell values
+4. Preserve numerical values, percentages, dates, and text
+5. If there are multiple rows, create separate entries for each row
 
-Return as JSON with this structure:
-{{
-  "table_headers": ["Column1", "Column2", "Column3"],
-  "table_rows": [
-    ["Value1", "Value2", "Value3"],
-    ["Value4", "Value5", "Value6"]
-  ],
-  "field_value_pairs": {{
-    "Row_1_Column1": "Value1",
-    "Row_1_Column2": "Value2",
-    "Row_2_Column1": "Value4"
-  }}
-}}"""
+Return as a JSON object with all extracted data points. Example structure:
+{{"Row_1_Company": "ABC Corp", "Row_1_Revenue": "$100M", "Row_2_Company": "XYZ Inc", "Row_2_Revenue": "$85M"}}"""
 
     try:
         loop = asyncio.get_event_loop()
@@ -293,10 +282,9 @@ async def process_structured_data_with_llm_async(structured_data: Dict[str, Any]
                 results["processed_document_text"].append(result)
                 task_index += 1
     
-    # Phase 2: Skip commentary matching for now to avoid timeout
-    print("Skipping commentary matching to speed up processing...")
-    results["enhanced_data_with_commentary"] = []
-    results["general_commentary"] = ""
+    # Phase 2: Enhanced data processing with commentary matching
+    print("Starting commentary matching phase...")
+    await process_commentary_matching(results, document_text)
     
     return results
 
@@ -358,17 +346,13 @@ async def process_commentary_matching(results: Dict[str, Any], document_text: Li
     # Process commentary matching for each data point
     text_chunks = split_text_section(document_text, max_lines=10)
     
-    # Simplified and faster commentary matching
-    # Limit to first 5 data points for commentary matching to avoid timeout
-    limited_data_points = all_data_points[:5] if len(all_data_points) > 5 else all_data_points
-    
-    # Process limited data points for commentary matching
-    for data_point in limited_data_points:
+    # Process each data point for commentary matching
+    for data_point in all_data_points:
         best_commentary = ""
         found_match = False
         
-        # Try to find commentary for this data point in first 3 text chunks only
-        for chunk_idx, text_chunk in enumerate(text_chunks[:3]):
+        # Try to find commentary for this data point in each text chunk
+        for chunk_idx, text_chunk in enumerate(text_chunks):
             if chunk_idx not in used_text_indices:
                 try:
                     commentary_result = await match_commentary_to_data(data_point["raw_data"], text_chunk)
@@ -388,15 +372,6 @@ async def process_commentary_matching(results: Dict[str, Any], document_text: Li
             **data_point,
             "commentary": best_commentary,
             "has_commentary": found_match
-        }
-        enhanced_data.append(enhanced_data_point)
-    
-    # Add remaining data points without commentary matching to speed up processing
-    for data_point in all_data_points[5:]:
-        enhanced_data_point = {
-            **data_point,
-            "commentary": "",
-            "has_commentary": False
         }
         enhanced_data.append(enhanced_data_point)
     
