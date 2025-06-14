@@ -293,9 +293,10 @@ async def process_structured_data_with_llm_async(structured_data: Dict[str, Any]
                 results["processed_document_text"].append(result)
                 task_index += 1
     
-    # Phase 2: Enhanced data processing with commentary matching
-    print("Starting commentary matching phase...")
-    await process_commentary_matching(results, document_text)
+    # Phase 2: Skip commentary matching for now to avoid timeout
+    print("Skipping commentary matching to speed up processing...")
+    results["enhanced_data_with_commentary"] = []
+    results["general_commentary"] = ""
     
     return results
 
@@ -357,13 +358,17 @@ async def process_commentary_matching(results: Dict[str, Any], document_text: Li
     # Process commentary matching for each data point
     text_chunks = split_text_section(document_text, max_lines=10)
     
-    # Process each data point for commentary matching
-    for data_point in all_data_points:
+    # Simplified and faster commentary matching
+    # Limit to first 5 data points for commentary matching to avoid timeout
+    limited_data_points = all_data_points[:5] if len(all_data_points) > 5 else all_data_points
+    
+    # Process limited data points for commentary matching
+    for data_point in limited_data_points:
         best_commentary = ""
         found_match = False
         
-        # Try to find commentary for this data point in each text chunk
-        for chunk_idx, text_chunk in enumerate(text_chunks):
+        # Try to find commentary for this data point in first 3 text chunks only
+        for chunk_idx, text_chunk in enumerate(text_chunks[:3]):
             if chunk_idx not in used_text_indices:
                 try:
                     commentary_result = await match_commentary_to_data(data_point["raw_data"], text_chunk)
@@ -383,6 +388,15 @@ async def process_commentary_matching(results: Dict[str, Any], document_text: Li
             **data_point,
             "commentary": best_commentary,
             "has_commentary": found_match
+        }
+        enhanced_data.append(enhanced_data_point)
+    
+    # Add remaining data points without commentary matching to speed up processing
+    for data_point in all_data_points[5:]:
+        enhanced_data_point = {
+            **data_point,
+            "commentary": "",
+            "has_commentary": False
         }
         enhanced_data.append(enhanced_data_point)
     

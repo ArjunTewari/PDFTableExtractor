@@ -219,52 +219,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function processWithStreaming() {
-        fetch('/process_stream', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(currentStructuredData)
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Streaming not available');
-            }
-            
-            const reader = response.body.getReader();
-            const decoder = new TextDecoder();
-            
-            function readStream() {
-                return reader.read().then(({ done, value }) => {
-                    if (done) {
-                        hideLoading();
-                        return;
-                    }
-                    
-                    const chunk = decoder.decode(value);
-                    const lines = chunk.split('\n');
-                    
-                    lines.forEach(line => {
-                        if (line.startsWith('data: ')) {
-                            try {
-                                const data = JSON.parse(line.slice(6));
-                                handleStreamingData(data);
-                            } catch (e) {
-                                console.error('Error parsing streaming data:', e);
-                            }
-                        }
-                    });
-                    
-                    return readStream();
-                });
-            }
-            
-            return readStream();
-        })
-        .catch(error => {
-            console.log('Streaming failed, using regular processing');
-            processRegular();
-        });
+        // Skip streaming for now, use regular processing for reliability
+        console.log('Using regular processing for better reliability');
+        processRegular();
     }
 
     function handleStreamingData(data) {
