@@ -233,6 +233,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const reader = response.body.getReader();
             const decoder = new TextDecoder();
+            let buffer = '';
             
             function readStream() {
                 return reader.read().then(({ done, value }) => {
@@ -241,16 +242,22 @@ document.addEventListener('DOMContentLoaded', function() {
                         return;
                     }
                     
-                    const chunk = decoder.decode(value);
-                    const lines = chunk.split('\n');
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    
+                    // Keep the last incomplete line in buffer
+                    buffer = lines.pop() || '';
                     
                     lines.forEach(line => {
-                        if (line.startsWith('data: ')) {
+                        if (line.trim().startsWith('data: ')) {
                             try {
-                                const data = JSON.parse(line.slice(6));
-                                handleStreamingData(data);
+                                const jsonStr = line.slice(6).trim();
+                                if (jsonStr && jsonStr !== '{}') {
+                                    const data = JSON.parse(jsonStr);
+                                    handleStreamingData(data);
+                                }
                             } catch (e) {
-                                console.error('Error parsing streaming data:', e);
+                                console.error('Error parsing streaming data:', e, 'Line:', line);
                             }
                         }
                     });
@@ -278,12 +285,19 @@ document.addEventListener('DOMContentLoaded', function() {
             if (loadingMsg) {
                 loadingMsg.textContent = 'Finalizing results...';
             }
-        } else if (data.status === 'success') {
+        } else if (data.status === 'success' || data.dataframe_data) {
             hideLoading();
             console.log('Processing result:', data);
             
             processedData = data.dataframe_data || [];
-            displayResultsWithTables(processedData);
+            
+            // Always display results even if empty to show what was processed
+            if (processedData.length > 0) {
+                displayResultsWithTables(processedData);
+            } else {
+                // Show processing summary even without data
+                displayProcessingSummary(data);
+            }
             
             if (data.summary) {
                 showProcessingSummary(data.summary);
@@ -292,6 +306,31 @@ document.addEventListener('DOMContentLoaded', function() {
             hideLoading();
             showError('Processing failed: ' + data.error);
         }
+    }
+
+    function displayProcessingSummary(data) {
+        resultsSection.innerHTML = `
+            <div class="alert alert-info">
+                <h5>Processing Complete</h5>
+                <p>The document was analyzed successfully but no structured data could be extracted in the expected format.</p>
+                <div class="mt-3">
+                    <h6>Processing Details:</h6>
+                    <ul>
+                        <li>Tables processed: ${data.summary?.total_tables || 0}</li>
+                        <li>Key-value pairs: ${data.summary?.total_key_values || 0}</li>
+                        <li>Text chunks: ${data.summary?.text_chunks_processed || 0}</li>
+                        <li>Commentary matches: ${data.summary?.commentary_matches || 0}</li>
+                    </ul>
+                </div>
+                ${data.processed_tables ? `
+                    <div class="mt-3">
+                        <h6>Raw Processing Results:</h6>
+                        <pre class="bg-light p-3 small">${JSON.stringify(data.processed_tables, null, 2)}</pre>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+        resultsSection.classList.remove('d-none');
     }
 
     function processRegular() {

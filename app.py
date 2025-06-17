@@ -56,9 +56,13 @@ def process_stream():
             # Process the structured JSON data with separate LLM calls and commentary matching
             yield f"data: {json.dumps({'status': 'processing', 'message': 'Analyzing document structure...'})}\n\n"
             
-            result = process_structured_data_with_llm(data)
-            
-            yield f"data: {json.dumps({'status': 'enhancing', 'message': 'Adding commentary matching...'})}\n\n"
+            try:
+                result = process_structured_data_with_llm(data)
+                yield f"data: {json.dumps({'status': 'enhancing', 'message': 'Processing complete, organizing results...'})}\n\n"
+            except Exception as e:
+                print(f"Processing error: {e}")
+                yield f"data: {json.dumps({'status': 'error', 'error': f'Processing failed: {str(e)}'})}\n\n"
+                return
             
             # Process data as before but with streaming updates
             if 'enhanced_data_with_commentary' in result and result['enhanced_data_with_commentary']:
@@ -231,7 +235,8 @@ def process_stream():
         'Cache-Control': 'no-cache',
         'Connection': 'keep-alive',
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Cache-Control'
+        'Access-Control-Allow-Headers': 'Cache-Control',
+        'X-Accel-Buffering': 'no'
     })
 
 @app.route('/process', methods=['POST'])

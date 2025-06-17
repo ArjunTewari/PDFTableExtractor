@@ -33,11 +33,11 @@ Requirements:
 2. Preserve the FULL table structure with ALL columns
 3. Create meaningful headers for each column based on content
 4. Include ALL data rows under those headers
-5. Return both the complete table structure AND comprehensive field-value pairs
+5. Return both the complete table structure AND comprehensive field-value pairs as a JSON object
 6. Preserve all numerical values, percentages, dates, and text exactly
 7. Handle empty cells as empty strings
 
-Example for a financial table:
+Example JSON response for a financial table:
 {{
   "table_headers": ["Company", "Q4 Revenue", "Growth Rate", "MAU", "Geographic Region"],
   "table_rows": [
@@ -55,7 +55,7 @@ Example for a financial table:
   }}
 }}
 
-IMPORTANT: Do not reduce columns to just 2. Extract ALL columns present in the data."""
+IMPORTANT: Do not reduce columns to just 2. Extract ALL columns present in the data. Return as valid JSON."""
 
     try:
         loop = asyncio.get_event_loop()
@@ -96,7 +96,7 @@ Extract and organize this information into clear field-value pairs. Focus on ext
 Key-Value pairs:
 {json.dumps(key_value_pairs, indent=2)}
 
-Return a simple JSON object where each key is a descriptive field name and each value is the actual extracted data. Do not create nested structures or arrays."""
+Return a simple JSON object where each key is a descriptive field name and each value is the actual extracted data. Do not create nested structures or arrays. Provide the response as valid JSON format."""
 
     try:
         loop = asyncio.get_event_loop()
@@ -160,7 +160,7 @@ Return JSON with BOTH table structure AND individual facts:
   }}
 }}
 
-Extract comprehensive data - do not limit to just a few items."""
+Extract comprehensive data - do not limit to just a few items. Return the response as valid JSON format."""
 
     try:
         loop = asyncio.get_event_loop()
@@ -180,7 +180,9 @@ Extract comprehensive data - do not limit to just a few items."""
             result = {"error": "No content received from OpenAI"}
             
         return {
-            "extracted_facts": result,
+            "table_headers": result.get("table_headers", []),
+            "table_rows": result.get("table_rows", []),
+            "extracted_facts": result.get("extracted_facts", {}),
             "original_text": text_chunk
         }
     except Exception as e:
