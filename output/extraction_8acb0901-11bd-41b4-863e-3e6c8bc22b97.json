@@ -1,0 +1,4010 @@
+{
+  "tables_extracted": [
+    {
+      "row_id": 1,
+      "column": "description",
+      "value": "(in millions, except ARPPC, ARPPS, ASP, and percentages)",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "row_id": 1,
+      "column": "Q4_2024",
+      "value": "Q4 2024",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "row_id": 1,
+      "column": "Q4_2023",
+      "value": "Q4 2023",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "row_id": 1,
+      "column": "percent_YoY",
+      "value": "% YoY",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "row_id": 2,
+      "column": "description",
+      "value": "Core4",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "row_id": 2,
+      "column": "Q4_2024",
+      "value": "",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "row_id": 2,
+      "column": "Q4_2023",
+      "value": "",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "row_id": 2,
+      "column": "percent_YoY",
+      "value": "",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "row_id": 3,
+      "column": "description",
+      "value": "Monthly Active Users (MAU) - Global5",
+      "unit": "",
+      "context": "Core4"
+    },
+    {
+      "row_id": 3,
+      "column": "Q4_2024",
+      "value": "79.6",
+      "unit": "millions",
+      "context": "Core4"
+    },
+    {
+      "row_id": 3,
+      "column": "Q4_2023",
+      "value": "61.4",
+      "unit": "millions",
+      "context": "Core4"
+    },
+    {
+      "row_id": 3,
+      "column": "percent_YoY",
+      "value": "30",
+      "unit": "%",
+      "context": "Core4"
+    },
+    {
+      "row_id": 4,
+      "column": "description",
+      "value": "U.S.",
+      "unit": "",
+      "context": "Core4"
+    },
+    {
+      "row_id": 4,
+      "column": "Q4_2024",
+      "value": "43.7",
+      "unit": "millions",
+      "context": "Core4"
+    },
+    {
+      "row_id": 4,
+      "column": "Q4_2023",
+      "value": "36.8",
+      "unit": "millions",
+      "context": "Core4"
+    },
+    {
+      "row_id": 4,
+      "column": "percent_YoY",
+      "value": "19",
+      "unit": "%",
+      "context": "Core4"
+    },
+    {
+      "row_id": 5,
+      "column": "description",
+      "value": "International",
+      "unit": "",
+      "context": "Core4"
+    },
+    {
+      "row_id": 5,
+      "column": "Q4_2024",
+      "value": "36.0",
+      "unit": "millions",
+      "context": "Core4"
+    },
+    {
+      "row_id": 5,
+      "column": "Q4_2023",
+      "value": "24.6",
+      "unit": "millions",
+      "context": "Core4"
+    },
+    {
+      "row_id": 5,
+      "column": "percent_YoY",
+      "value": "46",
+      "unit": "%",
+      "context": "Core4"
+    },
+    {
+      "row_id": 6,
+      "column": "description",
+      "value": "ANZ",
+      "unit": "",
+      "context": "Core4"
+    },
+    {
+      "row_id": 6,
+      "column": "Q4_2024",
+      "value": "2.7",
+      "unit": "millions",
+      "context": "Core4"
+    },
+    {
+      "row_id": 6,
+      "column": "Q4_2023",
+      "value": "2.0",
+      "unit": "millions",
+      "context": "Core4"
+    },
+    {
+      "row_id": 6,
+      "column": "percent_YoY",
+      "value": "35",
+      "unit": "%",
+      "context": "Core4"
+    },
+    {
+      "row_id": 7,
+      "column": "description",
+      "value": "Paying Circles - Global6",
+      "unit": "",
+      "context": "Core4"
+    },
+    {
+      "row_id": 7,
+      "column": "Q4_2024",
+      "value": "2.3",
+      "unit": "millions",
+      "context": "Core4"
+    },
+    {
+      "row_id": 7,
+      "column": "Q4_2023",
+      "value": "1.8",
+      "unit": "millions",
+      "context": "Core4"
+    },
+    {
+      "row_id": 7,
+      "column": "percent_YoY",
+      "value": "25",
+      "unit": "%",
+      "context": "Core4"
+    },
+    {
+      "row_id": 8,
+      "column": "description",
+      "value": "U.S.",
+      "unit": "",
+      "context": "Core4"
+    },
+    {
+      "row_id": 8,
+      "column": "Q4_2024",
+      "value": "1.6",
+      "unit": "millions",
+      "context": "Core4"
+    },
+    {
+      "row_id": 8,
+      "column": "Q4_2023",
+      "value": "1.3",
+      "unit": "millions",
+      "context": "Core4"
+    },
+    {
+      "row_id": 8,
+      "column": "percent_YoY",
+      "value": "23",
+      "unit": "%",
+      "context": "Core4"
+    },
+    {
+      "row_id": 9,
+      "column": "description",
+      "value": "International",
+      "unit": "",
+      "context": "Core4"
+    },
+    {
+      "row_id": 9,
+      "column": "Q4_2024",
+      "value": "0.6",
+      "unit": "millions",
+      "context": "Core4"
+    },
+    {
+      "row_id": 9,
+      "column": "Q4_2023",
+      "value": "0.5",
+      "unit": "millions",
+      "context": "Core4"
+    },
+    {
+      "row_id": 9,
+      "column": "percent_YoY",
+      "value": "33",
+      "unit": "%",
+      "context": "Core4"
+    },
+    {
+      "row_id": 10,
+      "column": "description",
+      "value": "Average Revenue per Paying Circle (ARPPC)7,8",
+      "unit": "",
+      "context": "Core4"
+    },
+    {
+      "row_id": 10,
+      "column": "Q4_2024",
+      "value": "131.76",
+      "unit": "USD",
+      "context": "Core4"
+    },
+    {
+      "row_id": 10,
+      "column": "Q4_2023",
+      "value": "124.17",
+      "unit": "USD",
+      "context": "Core4"
+    },
+    {
+      "row_id": 10,
+      "column": "percent_YoY",
+      "value": "6",
+      "unit": "%",
+      "context": "Core4"
+    },
+    {
+      "row_id": 11,
+      "column": "description",
+      "value": "Life360 Consolidated",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "row_id": 11,
+      "column": "Q4_2024",
+      "value": "",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "row_id": 11,
+      "column": "Q4_2023",
+      "value": "",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "row_id": 11,
+      "column": "percent_YoY",
+      "value": "",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "row_id": 12,
+      "column": "description",
+      "value": "Subscriptions",
+      "unit": "",
+      "context": "Life360 Consolidated"
+    },
+    {
+      "row_id": 12,
+      "column": "Q4_2024",
+      "value": "2.9",
+      "unit": "millions",
+      "context": "Life360 Consolidated"
+    },
+    {
+      "row_id": 12,
+      "column": "Q4_2023",
+      "value": "2.4",
+      "unit": "millions",
+      "context": "Life360 Consolidated"
+    },
+    {
+      "row_id": 12,
+      "column": "percent_YoY",
+      "value": "19",
+      "unit": "%",
+      "context": "Life360 Consolidated"
+    },
+    {
+      "row_id": 13,
+      "column": "description",
+      "value": "Average Revenue per Paying Subscription (ARPPS)8,1",
+      "unit": "",
+      "context": "Life360 Consolidated"
+    },
+    {
+      "row_id": 13,
+      "column": "Q4_2024",
+      "value": "110.43",
+      "unit": "USD",
+      "context": "Life360 Consolidated"
+    },
+    {
+      "row_id": 13,
+      "column": "Q4_2023",
+      "value": "102.17",
+      "unit": "USD",
+      "context": "Life360 Consolidated"
+    },
+    {
+      "row_id": 13,
+      "column": "percent_YoY",
+      "value": "8",
+      "unit": "%",
+      "context": "Life360 Consolidated"
+    },
+    {
+      "row_id": 14,
+      "column": "description",
+      "value": "Net hardware units shipped11 11",
+      "unit": "",
+      "context": "Life360 Consolidated"
+    },
+    {
+      "row_id": 14,
+      "column": "Q4_2024",
+      "value": "1.9",
+      "unit": "millions",
+      "context": "Life360 Consolidated"
+    },
+    {
+      "row_id": 14,
+      "column": "Q4_2023",
+      "value": "1.7",
+      "unit": "millions",
+      "context": "Life360 Consolidated"
+    },
+    {
+      "row_id": 14,
+      "column": "percent_YoY",
+      "value": "8",
+      "unit": "%",
+      "context": "Life360 Consolidated"
+    },
+    {
+      "row_id": 15,
+      "column": "description",
+      "value": "Average Selling Price (ASP) 12,13",
+      "unit": "",
+      "context": "Life360 Consolidated"
+    },
+    {
+      "row_id": 15,
+      "column": "Q4_2024",
+      "value": "12.56",
+      "unit": "USD",
+      "context": "Life360 Consolidated"
+    },
+    {
+      "row_id": 15,
+      "column": "Q4_2023",
+      "value": "11.50",
+      "unit": "USD",
+      "context": "Life360 Consolidated"
+    },
+    {
+      "row_id": 15,
+      "column": "percent_YoY",
+      "value": "9",
+      "unit": "%",
+      "context": "Life360 Consolidated"
+    },
+    {
+      "row_id": 16,
+      "column": "description",
+      "value": "Annualized Monthly Revenue (AMR)",
+      "unit": "",
+      "context": "Life360 Consolidated"
+    },
+    {
+      "row_id": 16,
+      "column": "Q4_2024",
+      "value": "367.6",
+      "unit": "USD",
+      "context": "Life360 Consolidated"
+    },
+    {
+      "row_id": 16,
+      "column": "Q4_2023",
+      "value": "274.1",
+      "unit": "USD",
+      "context": "Life360 Consolidated"
+    },
+    {
+      "row_id": 16,
+      "column": "percent_YoY",
+      "value": "34",
+      "unit": "%",
+      "context": "Life360 Consolidated"
+    },
+    {
+      "table_data": [
+        {
+          "page": 2,
+          "section": "page_2_table_2",
+          "row_id": 1,
+          "column": "header",
+          "value": "FY 2024",
+          "unit": "",
+          "context": "Financial Year"
+        },
+        {
+          "page": 2,
+          "section": "page_2_table_2",
+          "row_id": 1,
+          "column": "header",
+          "value": "FY 2023",
+          "unit": "",
+          "context": "Financial Year"
+        },
+        {
+          "page": 2,
+          "section": "page_2_table_2",
+          "row_id": 1,
+          "column": "header",
+          "value": "% YoY",
+          "unit": "",
+          "context": "Year-over-Year Percentage"
+        },
+        {
+          "page": 2,
+          "section": "page_2_table_2",
+          "row_id": 2,
+          "column": "Metric",
+          "value": "Core4",
+          "unit": "",
+          "context": "Category"
+        },
+        {
+          "page": 2,
+          "section": "page_2_table_2",
+          "row_id": 3,
+          "column": "Metric",
+          "value": "Average Revenue per Paying Circle (ARPPC)7,8",
+          "unit": "",
+          "context": "Category"
+        },
+        {
+          "page": 2,
+          "section": "page_2_table_2",
+          "row_id": 3,
+          "column": "FY 2024",
+          "value": "128.00",
+          "unit": "USD",
+          "context": "Average Revenue per Paying Circle (ARPPC)7,8"
+        },
+        {
+          "page": 2,
+          "section": "page_2_table_2",
+          "row_id": 3,
+          "column": "FY 2023",
+          "value": "121.09",
+          "unit": "USD",
+          "context": "Average Revenue per Paying Circle (ARPPC)7,8"
+        },
+        {
+          "page": 2,
+          "section": "page_2_table_2",
+          "row_id": 3,
+          "column": "% YoY",
+          "value": "6",
+          "unit": "%",
+          "context": "Average Revenue per Paying Circle (ARPPC)7,8"
+        },
+        {
+          "page": 2,
+          "section": "page_2_table_2",
+          "row_id": 4,
+          "column": "Metric",
+          "value": "Life360 Consolidated",
+          "unit": "",
+          "context": "Category"
+        },
+        {
+          "page": 2,
+          "section": "page_2_table_2",
+          "row_id": 5,
+          "column": "Metric",
+          "value": "Average Revenue per Paying Subscription (ARPPS)8,1",
+          "unit": "",
+          "context": "Category"
+        },
+        {
+          "page": 2,
+          "section": "page_2_table_2",
+          "row_id": 5,
+          "column": "FY 2024",
+          "value": "106.16",
+          "unit": "USD",
+          "context": "Average Revenue per Paying Subscription (ARPPS)8,1"
+        },
+        {
+          "page": 2,
+          "section": "page_2_table_2",
+          "row_id": 5,
+          "column": "FY 2023",
+          "value": "99.53",
+          "unit": "USD",
+          "context": "Average Revenue per Paying Subscription (ARPPS)8,1"
+        },
+        {
+          "page": 2,
+          "section": "page_2_table_2",
+          "row_id": 5,
+          "column": "% YoY",
+          "value": "7",
+          "unit": "%",
+          "context": "Average Revenue per Paying Subscription (ARPPS)8,1"
+        },
+        {
+          "page": 2,
+          "section": "page_2_table_2",
+          "row_id": 6,
+          "column": "Metric",
+          "value": "Net hardware units shipped 11",
+          "unit": "",
+          "context": "Category"
+        },
+        {
+          "page": 2,
+          "section": "page_2_table_2",
+          "row_id": 6,
+          "column": "FY 2024",
+          "value": "3.9",
+          "unit": "",
+          "context": "Net hardware units shipped 11"
+        },
+        {
+          "page": 2,
+          "section": "page_2_table_2",
+          "row_id": 6,
+          "column": "FY 2023",
+          "value": "4.0",
+          "unit": "",
+          "context": "Net hardware units shipped 11"
+        },
+        {
+          "page": 2,
+          "section": "page_2_table_2",
+          "row_id": 6,
+          "column": "% YoY",
+          "value": "-4",
+          "unit": "%",
+          "context": "Net hardware units shipped 11"
+        },
+        {
+          "page": 2,
+          "section": "page_2_table_2",
+          "row_id": 7,
+          "column": "Metric",
+          "value": "Average Selling Price (ASP) 12,13",
+          "unit": "",
+          "context": "Category"
+        },
+        {
+          "page": 2,
+          "section": "page_2_table_2",
+          "row_id": 7,
+          "column": "FY 2024",
+          "value": "13.72",
+          "unit": "USD",
+          "context": "Average Selling Price (ASP) 12,13"
+        },
+        {
+          "page": 2,
+          "section": "page_2_table_2",
+          "row_id": 7,
+          "column": "FY 2023",
+          "value": "13.48",
+          "unit": "USD",
+          "context": "Average Selling Price (ASP) 12,13"
+        },
+        {
+          "page": 2,
+          "section": "page_2_table_2",
+          "row_id": 7,
+          "column": "% YoY",
+          "value": "2",
+          "unit": "%",
+          "context": "Average Selling Price (ASP) 12,13"
+        }
+      ]
+    }
+  ],
+  "keyvalues_extracted": [],
+  "narrative_extracted": [
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 1,
+      "column": "text",
+      "value": "Life360",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 1,
+      "column": "text",
+      "value": "As we enter 2025, we are laser-focused on achieving our longer term strategic goals: reaching 150 million",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 2,
+      "column": "text",
+      "value": "MAU, surpassing $1 billion in annual revenue, and exceeding a 35% Adjusted EBITDA margin. By keeping",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 3,
+      "column": "text",
+      "value": "families safe, connected to the people, pets, and things they love, and helping make everyday life better, we",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 4,
+      "column": "text",
+      "value": "are uniquely positioned to tap into vast global market potential and drive sustained growth for years",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 5,
+      "column": "text",
+      "value": "to",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 6,
+      "column": "text",
+      "value": "come.",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 7,
+      "column": "text",
+      "value": "Life360 Chief Financial Officer Russell Burke added: \"On top of exceptional revenue growth, we continued",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 8,
+      "column": "text",
+      "value": "to make significant progress toward profitability during the quarter and the year. In Q4 2024, we achieved",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 9,
+      "column": "text",
+      "value": "positive Net Income of $8.5 million, and our ninth consecutive quarter of positive Adjusted EBITDA1 and",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 10,
+      "column": "text",
+      "value": "seventh consecutive quarter of positive Operating Cash Flow. For the full year, we generated total revenue",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 11,
+      "column": "text",
+      "value": "of $371 million, up 22% year-over-year, while keeping total operating expenses growth at 14% YoY, which",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 12,
+      "column": "text",
+      "value": "drove our EBITDA and Adjusted EBITDA results above the high end of our guidance ranges. Looking",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 13,
+      "column": "text",
+      "value": "ahead, we are confident in our ability to keep growing positive Adjusted EBITDA throughout 2025 as we",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 14,
+      "column": "text",
+      "value": "continue balancing robust revenue growth with expanding profitability.",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 15,
+      "column": "text",
+      "value": "Q4'24 Financial Highlights",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 16,
+      "column": "text",
+      "value": "Total Q4'24 revenue of $115.5 million, a YoY increase of 33%, with total subscription revenue of",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 17,
+      "column": "text",
+      "value": "$78.8 million, up 32% YoY and Core subscription revenue of $73.1 million, up 36% YoY.",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 18,
+      "column": "text",
+      "value": "Annualized Monthly Revenue (AMR) of $367.6 million, up 34% YoY.",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 19,
+      "column": "text",
+      "value": "Q4'24 Net Income of $8.5 million, which includes other income of $0.6 million and a benefit from income",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 20,
+      "column": "text",
+      "value": "tax of $2.2 million.",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 1,
+      "column": "text",
+      "value": "Positive Adjusted EBITDA 1 of $21.2 million and EBITDA 1 of $8.4 million compared to positive Adjusted",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 2,
+      "column": "text",
+      "value": "EBITDA 1 of $8.9 million and an EBITDA 1 loss of $(2.0) million, respectively, in Q4'23.",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 3,
+      "column": "text",
+      "value": "Positive Operating Cash Flow of $12.3 million, up 38% YoY.",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 4,
+      "column": "text",
+      "value": "Quarter-end cash, cash equivalents and restricted cash of $160.5 million, an increase of $89.7 million",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 5,
+      "column": "text",
+      "value": "from Q4'23, which was primarily the result of net capital raised from the U.S. IPO in Q2'24.",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 6,
+      "column": "text",
+      "value": "Q4'24 Operating Highlights and 2025 Outlook",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 7,
+      "column": "text",
+      "value": "Q4'24 global MAU net additions were 2.8 million, which slowed seasonally after a very strong Q3'24.",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 8,
+      "column": "text",
+      "value": "Total MAU increased 30% YoY to approximately 79.6 million, with significant contribution from organic",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 9,
+      "column": "text",
+      "value": "growth.",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 10,
+      "column": "text",
+      "value": "Note: The financial information in this announcement may not add or recalculate due to rounding. All references to $ are to U.S. dollars.",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 11,
+      "column": "text",
+      "value": "Life360, Inc.",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 12,
+      "column": "text",
+      "value": "I",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 13,
+      "column": "text",
+      "value": "ARBN",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 14,
+      "column": "text",
+      "value": "629",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 15,
+      "column": "text",
+      "value": "412",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 16,
+      "column": "text",
+      "value": "942",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 17,
+      "column": "text",
+      "value": "1900 South Norfolk St, Suite 310 San Mateo, CA 94403 investors.life360.com",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 18,
+      "column": "text",
+      "value": "1",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 2,
+      "section": "Narrative",
+      "row_id": 1,
+      "column": "text",
+      "value": "Q4'24 global Paying Circle net additions of 69 thousand were up 27% YoY. Total Paying Circles grew",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "result": [
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 1,
+          "column": "text",
+          "value": "rate be determined and such annual effective rate be applied to year to date income (loss) in interim periods. The effective tax rate in any quarter",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 2,
+          "column": "text",
+          "value": "may be subject to fluctuations during the year as new information is obtained, which may positively or negatively affect the assumptions used to",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 3,
+          "column": "text",
+          "value": "estimate the annual effective tax rate, including factors such as valuation allowances against deferred tax assets, the recognition or de-recognition",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 4,
+          "column": "text",
+          "value": "of",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 5,
+          "column": "text",
+          "value": "tax benefits related to uncertain tax position, if any, and changes in or the interpretation of tax laws in jurisdictions where the Company conducts",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 6,
+          "column": "text",
+          "value": "business.",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 7,
+          "column": "text",
+          "value": "Key Performance Indicators",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 8,
+          "column": "text",
+          "value": "Q4",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 9,
+          "column": "text",
+          "value": "Q4",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 10,
+          "column": "text",
+          "value": "(in millions, except ARPPC, ARPPS, ASP, and percentages)",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 11,
+          "column": "text",
+          "value": "2024",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 12,
+          "column": "text",
+          "value": "2023",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 13,
+          "column": "text",
+          "value": "% YoY",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 14,
+          "column": "text",
+          "value": "Core4",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 15,
+          "column": "text",
+          "value": "Monthly Active Users (MAU) - Global5",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 16,
+          "column": "text",
+          "value": "79.6",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 17,
+          "column": "text",
+          "value": "61.4",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 18,
+          "column": "text",
+          "value": "30 %",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 19,
+          "column": "text",
+          "value": "U.S.",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 20,
+          "column": "text",
+          "value": "43.7",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 21,
+          "column": "text",
+          "value": "36.8",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 22,
+          "column": "text",
+          "value": "19 %",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 23,
+          "column": "text",
+          "value": "International",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 24,
+          "column": "text",
+          "value": "36.0",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 25,
+          "column": "text",
+          "value": "24.6",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 26,
+          "column": "text",
+          "value": "46 %",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 27,
+          "column": "text",
+          "value": "ANZ",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 28,
+          "column": "text",
+          "value": "2.7",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 29,
+          "column": "text",
+          "value": "2.0",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 30,
+          "column": "text",
+          "value": "35 %",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 31,
+          "column": "text",
+          "value": "Paying Circles - Global6",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 32,
+          "column": "text",
+          "value": "2.3",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 33,
+          "column": "text",
+          "value": "1.8",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 34,
+          "column": "text",
+          "value": "25 %",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 35,
+          "column": "text",
+          "value": "U.S.",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 36,
+          "column": "text",
+          "value": "1.6",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 37,
+          "column": "text",
+          "value": "1.3",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 38,
+          "column": "text",
+          "value": "23 %",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 39,
+          "column": "text",
+          "value": "International",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 40,
+          "column": "text",
+          "value": "0.6",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 41,
+          "column": "text",
+          "value": "0.5",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 42,
+          "column": "text",
+          "value": "33 %",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 43,
+          "column": "text",
+          "value": "Average Revenue per Paying Circle (ARPPC)7,8",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 44,
+          "column": "text",
+          "value": "$ 131.76",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 45,
+          "column": "text",
+          "value": "$",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 46,
+          "column": "text",
+          "value": "124.17",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 47,
+          "column": "text",
+          "value": "6 %",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 48,
+          "column": "text",
+          "value": "Life360 Consolidated",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 49,
+          "column": "text",
+          "value": "Subscriptions",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 50,
+          "column": "text",
+          "value": "2.9",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 51,
+          "column": "text",
+          "value": "2.4",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 52,
+          "column": "text",
+          "value": "19 %",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 53,
+          "column": "text",
+          "value": "Average Revenue per Paying Subscription (ARPPS)8,1",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 54,
+          "column": "text",
+          "value": "$",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 55,
+          "column": "text",
+          "value": "110.43 $",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 56,
+          "column": "text",
+          "value": "102.17",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 57,
+          "column": "text",
+          "value": "8 %",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 58,
+          "column": "text",
+          "value": "Net hardware units shipped11 11",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 59,
+          "column": "text",
+          "value": "1.9",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 60,
+          "column": "text",
+          "value": "1.7",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 61,
+          "column": "text",
+          "value": "8%",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 62,
+          "column": "text",
+          "value": "Average Selling Price (ASP) 12,13",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 63,
+          "column": "text",
+          "value": "$",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 64,
+          "column": "text",
+          "value": "12.56 $",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 65,
+          "column": "text",
+          "value": "11.50",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 66,
+          "column": "text",
+          "value": "9 %",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 67,
+          "column": "text",
+          "value": "Annualized Monthly Revenue (AMR)",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 68,
+          "column": "text",
+          "value": "$",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 69,
+          "column": "text",
+          "value": "367.6 $",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 70,
+          "column": "text",
+          "value": "274.1",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 71,
+          "column": "text",
+          "value": "34 %",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 72,
+          "column": "text",
+          "value": "FY",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 73,
+          "column": "text",
+          "value": "FY",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 74,
+          "column": "text",
+          "value": "2024",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 75,
+          "column": "text",
+          "value": "2023",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 76,
+          "column": "text",
+          "value": "% YoY",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 77,
+          "column": "text",
+          "value": "Core4",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 78,
+          "column": "text",
+          "value": "Average Revenue per Paying Circle (ARPPC)7,8",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 79,
+          "column": "text",
+          "value": "$",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 80,
+          "column": "text",
+          "value": "128.00",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 81,
+          "column": "text",
+          "value": "$",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 82,
+          "column": "text",
+          "value": "121.09",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 83,
+          "column": "text",
+          "value": "6%",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 84,
+          "column": "text",
+          "value": "Life360 Consolidated",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 85,
+          "column": "text",
+          "value": "Average Revenue per Paying Subscription (ARPPS)8,1",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 86,
+          "column": "text",
+          "value": "$ 106.16 $",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 87,
+          "column": "text",
+          "value": "99.53",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 88,
+          "column": "text",
+          "value": "7%",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 89,
+          "column": "text",
+          "value": "Net hardware units shipped 11",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 90,
+          "column": "text",
+          "value": "3.9",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 91,
+          "column": "text",
+          "value": "4.0",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 92,
+          "column": "text",
+          "value": "(4)%",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 93,
+          "column": "text",
+          "value": "Average Selling Price (ASP) 12,13",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 94,
+          "column": "text",
+          "value": "$",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 95,
+          "column": "text",
+          "value": "13.72 $",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 96,
+          "column": "text",
+          "value": "13.48",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 97,
+          "column": "text",
+          "value": "2%",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 98,
+          "column": "text",
+          "value": "Note: The financial information in this announcement may not add or recalculate due to rounding. All references to $ are to U.S. dollars.",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 99,
+          "column": "text",
+          "value": "Life360, Inc.",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 100,
+          "column": "text",
+          "value": "I",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 101,
+          "column": "text",
+          "value": "ARBN 629 412 942",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 102,
+          "column": "text",
+          "value": "I 1900 South Norfolk St, Suite 310 San Mateo, CA 94403 I investors.life360.com",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 103,
+          "column": "text",
+          "value": "2",
+          "unit": "",
+          "context": ""
+        }
+      ]
+    }
+  ],
+  "total_extracted_items": 116,
+  "processing_stats": {
+    "tables_processed": 2,
+    "kvs_processed": 10,
+    "narrative_chunks_processed": 5,
+    "extraction_errors": 0
+  },
+  "kvs_extracted": [
+    {
+      "page": 1,
+      "section": "KeyValue",
+      "row_id": 1,
+      "column": "Q4'24 Financial Highlights",
+      "value": "Total Q4'24 revenue of 115.5",
+      "unit": "million",
+      "context": "a YoY increase of 33%"
+    },
+    {
+      "page": 1,
+      "section": "KeyValue",
+      "row_id": 1,
+      "column": "ARBN",
+      "value": "629 412 942",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "extracted_data": [
+        {
+          "page": 2,
+          "section": "KeyValue",
+          "row_id": 1,
+          "column": "Average Selling Price (ASP)",
+          "value": "12,13",
+          "unit": "",
+          "context": ""
+        }
+      ]
+    },
+    {
+      "page": 2,
+      "section": "KeyValue",
+      "row_id": 1,
+      "column": "ARBN",
+      "value": "629 412 942",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "error": "No valid key-value pairs found in the provided data."
+    },
+    {
+      "page": 2,
+      "section": "KeyValue",
+      "row_id": 1,
+      "column": "Note",
+      "value": "The financial information in this announcement may not add or recalculate due to rounding. All references to $ are to U.S. dollars.",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 2,
+      "section": "KeyValue",
+      "row_id": 1,
+      "column": "Average Selling Price (ASP)",
+      "value": "12,13",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 2,
+      "section": "KeyValue",
+      "row_id": 1,
+      "column": "key",
+      "value": "65",
+      "unit": "million",
+      "context": ""
+    },
+    {
+      "page": 2,
+      "section": "KeyValue",
+      "row_id": 1,
+      "column": "Average Revenue per Paying Subscription (ARPPS)",
+      "value": "8,1",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 2,
+      "section": "KeyValue",
+      "row_id": 1,
+      "column": "Average Revenue per Paying Circle (ARPPC)7,8",
+      "value": "131.76",
+      "unit": "$",
+      "context": ""
+    }
+  ],
+  "combined_extracted_data": [
+    {
+      "row_id": 1,
+      "column": "description",
+      "value": "(in millions, except ARPPC, ARPPS, ASP, and percentages)",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "row_id": 1,
+      "column": "Q4_2024",
+      "value": "Q4 2024",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "row_id": 1,
+      "column": "Q4_2023",
+      "value": "Q4 2023",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "row_id": 1,
+      "column": "percent_YoY",
+      "value": "% YoY",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "row_id": 2,
+      "column": "description",
+      "value": "Core4",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "row_id": 2,
+      "column": "Q4_2024",
+      "value": "",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "row_id": 2,
+      "column": "Q4_2023",
+      "value": "",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "row_id": 2,
+      "column": "percent_YoY",
+      "value": "",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "row_id": 3,
+      "column": "description",
+      "value": "Monthly Active Users (MAU) - Global5",
+      "unit": "",
+      "context": "Core4"
+    },
+    {
+      "row_id": 3,
+      "column": "Q4_2024",
+      "value": "79.6",
+      "unit": "millions",
+      "context": "Core4"
+    },
+    {
+      "row_id": 3,
+      "column": "Q4_2023",
+      "value": "61.4",
+      "unit": "millions",
+      "context": "Core4"
+    },
+    {
+      "row_id": 3,
+      "column": "percent_YoY",
+      "value": "30",
+      "unit": "%",
+      "context": "Core4"
+    },
+    {
+      "row_id": 4,
+      "column": "description",
+      "value": "U.S.",
+      "unit": "",
+      "context": "Core4"
+    },
+    {
+      "row_id": 4,
+      "column": "Q4_2024",
+      "value": "43.7",
+      "unit": "millions",
+      "context": "Core4"
+    },
+    {
+      "row_id": 4,
+      "column": "Q4_2023",
+      "value": "36.8",
+      "unit": "millions",
+      "context": "Core4"
+    },
+    {
+      "row_id": 4,
+      "column": "percent_YoY",
+      "value": "19",
+      "unit": "%",
+      "context": "Core4"
+    },
+    {
+      "row_id": 5,
+      "column": "description",
+      "value": "International",
+      "unit": "",
+      "context": "Core4"
+    },
+    {
+      "row_id": 5,
+      "column": "Q4_2024",
+      "value": "36.0",
+      "unit": "millions",
+      "context": "Core4"
+    },
+    {
+      "row_id": 5,
+      "column": "Q4_2023",
+      "value": "24.6",
+      "unit": "millions",
+      "context": "Core4"
+    },
+    {
+      "row_id": 5,
+      "column": "percent_YoY",
+      "value": "46",
+      "unit": "%",
+      "context": "Core4"
+    },
+    {
+      "row_id": 6,
+      "column": "description",
+      "value": "ANZ",
+      "unit": "",
+      "context": "Core4"
+    },
+    {
+      "row_id": 6,
+      "column": "Q4_2024",
+      "value": "2.7",
+      "unit": "millions",
+      "context": "Core4"
+    },
+    {
+      "row_id": 6,
+      "column": "Q4_2023",
+      "value": "2.0",
+      "unit": "millions",
+      "context": "Core4"
+    },
+    {
+      "row_id": 6,
+      "column": "percent_YoY",
+      "value": "35",
+      "unit": "%",
+      "context": "Core4"
+    },
+    {
+      "row_id": 7,
+      "column": "description",
+      "value": "Paying Circles - Global6",
+      "unit": "",
+      "context": "Core4"
+    },
+    {
+      "row_id": 7,
+      "column": "Q4_2024",
+      "value": "2.3",
+      "unit": "millions",
+      "context": "Core4"
+    },
+    {
+      "row_id": 7,
+      "column": "Q4_2023",
+      "value": "1.8",
+      "unit": "millions",
+      "context": "Core4"
+    },
+    {
+      "row_id": 7,
+      "column": "percent_YoY",
+      "value": "25",
+      "unit": "%",
+      "context": "Core4"
+    },
+    {
+      "row_id": 8,
+      "column": "description",
+      "value": "U.S.",
+      "unit": "",
+      "context": "Core4"
+    },
+    {
+      "row_id": 8,
+      "column": "Q4_2024",
+      "value": "1.6",
+      "unit": "millions",
+      "context": "Core4"
+    },
+    {
+      "row_id": 8,
+      "column": "Q4_2023",
+      "value": "1.3",
+      "unit": "millions",
+      "context": "Core4"
+    },
+    {
+      "row_id": 8,
+      "column": "percent_YoY",
+      "value": "23",
+      "unit": "%",
+      "context": "Core4"
+    },
+    {
+      "row_id": 9,
+      "column": "description",
+      "value": "International",
+      "unit": "",
+      "context": "Core4"
+    },
+    {
+      "row_id": 9,
+      "column": "Q4_2024",
+      "value": "0.6",
+      "unit": "millions",
+      "context": "Core4"
+    },
+    {
+      "row_id": 9,
+      "column": "Q4_2023",
+      "value": "0.5",
+      "unit": "millions",
+      "context": "Core4"
+    },
+    {
+      "row_id": 9,
+      "column": "percent_YoY",
+      "value": "33",
+      "unit": "%",
+      "context": "Core4"
+    },
+    {
+      "row_id": 10,
+      "column": "description",
+      "value": "Average Revenue per Paying Circle (ARPPC)7,8",
+      "unit": "",
+      "context": "Core4"
+    },
+    {
+      "row_id": 10,
+      "column": "Q4_2024",
+      "value": "131.76",
+      "unit": "USD",
+      "context": "Core4"
+    },
+    {
+      "row_id": 10,
+      "column": "Q4_2023",
+      "value": "124.17",
+      "unit": "USD",
+      "context": "Core4"
+    },
+    {
+      "row_id": 10,
+      "column": "percent_YoY",
+      "value": "6",
+      "unit": "%",
+      "context": "Core4"
+    },
+    {
+      "row_id": 11,
+      "column": "description",
+      "value": "Life360 Consolidated",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "row_id": 11,
+      "column": "Q4_2024",
+      "value": "",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "row_id": 11,
+      "column": "Q4_2023",
+      "value": "",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "row_id": 11,
+      "column": "percent_YoY",
+      "value": "",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "row_id": 12,
+      "column": "description",
+      "value": "Subscriptions",
+      "unit": "",
+      "context": "Life360 Consolidated"
+    },
+    {
+      "row_id": 12,
+      "column": "Q4_2024",
+      "value": "2.9",
+      "unit": "millions",
+      "context": "Life360 Consolidated"
+    },
+    {
+      "row_id": 12,
+      "column": "Q4_2023",
+      "value": "2.4",
+      "unit": "millions",
+      "context": "Life360 Consolidated"
+    },
+    {
+      "row_id": 12,
+      "column": "percent_YoY",
+      "value": "19",
+      "unit": "%",
+      "context": "Life360 Consolidated"
+    },
+    {
+      "row_id": 13,
+      "column": "description",
+      "value": "Average Revenue per Paying Subscription (ARPPS)8,1",
+      "unit": "",
+      "context": "Life360 Consolidated"
+    },
+    {
+      "row_id": 13,
+      "column": "Q4_2024",
+      "value": "110.43",
+      "unit": "USD",
+      "context": "Life360 Consolidated"
+    },
+    {
+      "row_id": 13,
+      "column": "Q4_2023",
+      "value": "102.17",
+      "unit": "USD",
+      "context": "Life360 Consolidated"
+    },
+    {
+      "row_id": 13,
+      "column": "percent_YoY",
+      "value": "8",
+      "unit": "%",
+      "context": "Life360 Consolidated"
+    },
+    {
+      "row_id": 14,
+      "column": "description",
+      "value": "Net hardware units shipped11 11",
+      "unit": "",
+      "context": "Life360 Consolidated"
+    },
+    {
+      "row_id": 14,
+      "column": "Q4_2024",
+      "value": "1.9",
+      "unit": "millions",
+      "context": "Life360 Consolidated"
+    },
+    {
+      "row_id": 14,
+      "column": "Q4_2023",
+      "value": "1.7",
+      "unit": "millions",
+      "context": "Life360 Consolidated"
+    },
+    {
+      "row_id": 14,
+      "column": "percent_YoY",
+      "value": "8",
+      "unit": "%",
+      "context": "Life360 Consolidated"
+    },
+    {
+      "row_id": 15,
+      "column": "description",
+      "value": "Average Selling Price (ASP) 12,13",
+      "unit": "",
+      "context": "Life360 Consolidated"
+    },
+    {
+      "row_id": 15,
+      "column": "Q4_2024",
+      "value": "12.56",
+      "unit": "USD",
+      "context": "Life360 Consolidated"
+    },
+    {
+      "row_id": 15,
+      "column": "Q4_2023",
+      "value": "11.50",
+      "unit": "USD",
+      "context": "Life360 Consolidated"
+    },
+    {
+      "row_id": 15,
+      "column": "percent_YoY",
+      "value": "9",
+      "unit": "%",
+      "context": "Life360 Consolidated"
+    },
+    {
+      "row_id": 16,
+      "column": "description",
+      "value": "Annualized Monthly Revenue (AMR)",
+      "unit": "",
+      "context": "Life360 Consolidated"
+    },
+    {
+      "row_id": 16,
+      "column": "Q4_2024",
+      "value": "367.6",
+      "unit": "USD",
+      "context": "Life360 Consolidated"
+    },
+    {
+      "row_id": 16,
+      "column": "Q4_2023",
+      "value": "274.1",
+      "unit": "USD",
+      "context": "Life360 Consolidated"
+    },
+    {
+      "row_id": 16,
+      "column": "percent_YoY",
+      "value": "34",
+      "unit": "%",
+      "context": "Life360 Consolidated"
+    },
+    {
+      "table_data": [
+        {
+          "page": 2,
+          "section": "page_2_table_2",
+          "row_id": 1,
+          "column": "header",
+          "value": "FY 2024",
+          "unit": "",
+          "context": "Financial Year"
+        },
+        {
+          "page": 2,
+          "section": "page_2_table_2",
+          "row_id": 1,
+          "column": "header",
+          "value": "FY 2023",
+          "unit": "",
+          "context": "Financial Year"
+        },
+        {
+          "page": 2,
+          "section": "page_2_table_2",
+          "row_id": 1,
+          "column": "header",
+          "value": "% YoY",
+          "unit": "",
+          "context": "Year-over-Year Percentage"
+        },
+        {
+          "page": 2,
+          "section": "page_2_table_2",
+          "row_id": 2,
+          "column": "Metric",
+          "value": "Core4",
+          "unit": "",
+          "context": "Category"
+        },
+        {
+          "page": 2,
+          "section": "page_2_table_2",
+          "row_id": 3,
+          "column": "Metric",
+          "value": "Average Revenue per Paying Circle (ARPPC)7,8",
+          "unit": "",
+          "context": "Category"
+        },
+        {
+          "page": 2,
+          "section": "page_2_table_2",
+          "row_id": 3,
+          "column": "FY 2024",
+          "value": "128.00",
+          "unit": "USD",
+          "context": "Average Revenue per Paying Circle (ARPPC)7,8"
+        },
+        {
+          "page": 2,
+          "section": "page_2_table_2",
+          "row_id": 3,
+          "column": "FY 2023",
+          "value": "121.09",
+          "unit": "USD",
+          "context": "Average Revenue per Paying Circle (ARPPC)7,8"
+        },
+        {
+          "page": 2,
+          "section": "page_2_table_2",
+          "row_id": 3,
+          "column": "% YoY",
+          "value": "6",
+          "unit": "%",
+          "context": "Average Revenue per Paying Circle (ARPPC)7,8"
+        },
+        {
+          "page": 2,
+          "section": "page_2_table_2",
+          "row_id": 4,
+          "column": "Metric",
+          "value": "Life360 Consolidated",
+          "unit": "",
+          "context": "Category"
+        },
+        {
+          "page": 2,
+          "section": "page_2_table_2",
+          "row_id": 5,
+          "column": "Metric",
+          "value": "Average Revenue per Paying Subscription (ARPPS)8,1",
+          "unit": "",
+          "context": "Category"
+        },
+        {
+          "page": 2,
+          "section": "page_2_table_2",
+          "row_id": 5,
+          "column": "FY 2024",
+          "value": "106.16",
+          "unit": "USD",
+          "context": "Average Revenue per Paying Subscription (ARPPS)8,1"
+        },
+        {
+          "page": 2,
+          "section": "page_2_table_2",
+          "row_id": 5,
+          "column": "FY 2023",
+          "value": "99.53",
+          "unit": "USD",
+          "context": "Average Revenue per Paying Subscription (ARPPS)8,1"
+        },
+        {
+          "page": 2,
+          "section": "page_2_table_2",
+          "row_id": 5,
+          "column": "% YoY",
+          "value": "7",
+          "unit": "%",
+          "context": "Average Revenue per Paying Subscription (ARPPS)8,1"
+        },
+        {
+          "page": 2,
+          "section": "page_2_table_2",
+          "row_id": 6,
+          "column": "Metric",
+          "value": "Net hardware units shipped 11",
+          "unit": "",
+          "context": "Category"
+        },
+        {
+          "page": 2,
+          "section": "page_2_table_2",
+          "row_id": 6,
+          "column": "FY 2024",
+          "value": "3.9",
+          "unit": "",
+          "context": "Net hardware units shipped 11"
+        },
+        {
+          "page": 2,
+          "section": "page_2_table_2",
+          "row_id": 6,
+          "column": "FY 2023",
+          "value": "4.0",
+          "unit": "",
+          "context": "Net hardware units shipped 11"
+        },
+        {
+          "page": 2,
+          "section": "page_2_table_2",
+          "row_id": 6,
+          "column": "% YoY",
+          "value": "-4",
+          "unit": "%",
+          "context": "Net hardware units shipped 11"
+        },
+        {
+          "page": 2,
+          "section": "page_2_table_2",
+          "row_id": 7,
+          "column": "Metric",
+          "value": "Average Selling Price (ASP) 12,13",
+          "unit": "",
+          "context": "Category"
+        },
+        {
+          "page": 2,
+          "section": "page_2_table_2",
+          "row_id": 7,
+          "column": "FY 2024",
+          "value": "13.72",
+          "unit": "USD",
+          "context": "Average Selling Price (ASP) 12,13"
+        },
+        {
+          "page": 2,
+          "section": "page_2_table_2",
+          "row_id": 7,
+          "column": "FY 2023",
+          "value": "13.48",
+          "unit": "USD",
+          "context": "Average Selling Price (ASP) 12,13"
+        },
+        {
+          "page": 2,
+          "section": "page_2_table_2",
+          "row_id": 7,
+          "column": "% YoY",
+          "value": "2",
+          "unit": "%",
+          "context": "Average Selling Price (ASP) 12,13"
+        }
+      ]
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 1,
+      "column": "text",
+      "value": "Life360",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 1,
+      "column": "text",
+      "value": "As we enter 2025, we are laser-focused on achieving our longer term strategic goals: reaching 150 million",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 2,
+      "column": "text",
+      "value": "MAU, surpassing $1 billion in annual revenue, and exceeding a 35% Adjusted EBITDA margin. By keeping",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 3,
+      "column": "text",
+      "value": "families safe, connected to the people, pets, and things they love, and helping make everyday life better, we",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 4,
+      "column": "text",
+      "value": "are uniquely positioned to tap into vast global market potential and drive sustained growth for years",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 5,
+      "column": "text",
+      "value": "to",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 6,
+      "column": "text",
+      "value": "come.",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 7,
+      "column": "text",
+      "value": "Life360 Chief Financial Officer Russell Burke added: \"On top of exceptional revenue growth, we continued",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 8,
+      "column": "text",
+      "value": "to make significant progress toward profitability during the quarter and the year. In Q4 2024, we achieved",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 9,
+      "column": "text",
+      "value": "positive Net Income of $8.5 million, and our ninth consecutive quarter of positive Adjusted EBITDA1 and",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 10,
+      "column": "text",
+      "value": "seventh consecutive quarter of positive Operating Cash Flow. For the full year, we generated total revenue",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 11,
+      "column": "text",
+      "value": "of $371 million, up 22% year-over-year, while keeping total operating expenses growth at 14% YoY, which",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 12,
+      "column": "text",
+      "value": "drove our EBITDA and Adjusted EBITDA results above the high end of our guidance ranges. Looking",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 13,
+      "column": "text",
+      "value": "ahead, we are confident in our ability to keep growing positive Adjusted EBITDA throughout 2025 as we",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 14,
+      "column": "text",
+      "value": "continue balancing robust revenue growth with expanding profitability.",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 15,
+      "column": "text",
+      "value": "Q4'24 Financial Highlights",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 16,
+      "column": "text",
+      "value": "Total Q4'24 revenue of $115.5 million, a YoY increase of 33%, with total subscription revenue of",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 17,
+      "column": "text",
+      "value": "$78.8 million, up 32% YoY and Core subscription revenue of $73.1 million, up 36% YoY.",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 18,
+      "column": "text",
+      "value": "Annualized Monthly Revenue (AMR) of $367.6 million, up 34% YoY.",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 19,
+      "column": "text",
+      "value": "Q4'24 Net Income of $8.5 million, which includes other income of $0.6 million and a benefit from income",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 20,
+      "column": "text",
+      "value": "tax of $2.2 million.",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 1,
+      "column": "text",
+      "value": "Positive Adjusted EBITDA 1 of $21.2 million and EBITDA 1 of $8.4 million compared to positive Adjusted",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 2,
+      "column": "text",
+      "value": "EBITDA 1 of $8.9 million and an EBITDA 1 loss of $(2.0) million, respectively, in Q4'23.",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 3,
+      "column": "text",
+      "value": "Positive Operating Cash Flow of $12.3 million, up 38% YoY.",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 4,
+      "column": "text",
+      "value": "Quarter-end cash, cash equivalents and restricted cash of $160.5 million, an increase of $89.7 million",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 5,
+      "column": "text",
+      "value": "from Q4'23, which was primarily the result of net capital raised from the U.S. IPO in Q2'24.",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 6,
+      "column": "text",
+      "value": "Q4'24 Operating Highlights and 2025 Outlook",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 7,
+      "column": "text",
+      "value": "Q4'24 global MAU net additions were 2.8 million, which slowed seasonally after a very strong Q3'24.",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 8,
+      "column": "text",
+      "value": "Total MAU increased 30% YoY to approximately 79.6 million, with significant contribution from organic",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 9,
+      "column": "text",
+      "value": "growth.",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 10,
+      "column": "text",
+      "value": "Note: The financial information in this announcement may not add or recalculate due to rounding. All references to $ are to U.S. dollars.",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 11,
+      "column": "text",
+      "value": "Life360, Inc.",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 12,
+      "column": "text",
+      "value": "I",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 13,
+      "column": "text",
+      "value": "ARBN",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 14,
+      "column": "text",
+      "value": "629",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 15,
+      "column": "text",
+      "value": "412",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 16,
+      "column": "text",
+      "value": "942",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 17,
+      "column": "text",
+      "value": "1900 South Norfolk St, Suite 310 San Mateo, CA 94403 investors.life360.com",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 18,
+      "column": "text",
+      "value": "1",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 2,
+      "section": "Narrative",
+      "row_id": 1,
+      "column": "text",
+      "value": "Q4'24 global Paying Circle net additions of 69 thousand were up 27% YoY. Total Paying Circles grew",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "result": [
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 1,
+          "column": "text",
+          "value": "rate be determined and such annual effective rate be applied to year to date income (loss) in interim periods. The effective tax rate in any quarter",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 2,
+          "column": "text",
+          "value": "may be subject to fluctuations during the year as new information is obtained, which may positively or negatively affect the assumptions used to",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 3,
+          "column": "text",
+          "value": "estimate the annual effective tax rate, including factors such as valuation allowances against deferred tax assets, the recognition or de-recognition",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 4,
+          "column": "text",
+          "value": "of",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 5,
+          "column": "text",
+          "value": "tax benefits related to uncertain tax position, if any, and changes in or the interpretation of tax laws in jurisdictions where the Company conducts",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 6,
+          "column": "text",
+          "value": "business.",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 7,
+          "column": "text",
+          "value": "Key Performance Indicators",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 8,
+          "column": "text",
+          "value": "Q4",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 9,
+          "column": "text",
+          "value": "Q4",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 10,
+          "column": "text",
+          "value": "(in millions, except ARPPC, ARPPS, ASP, and percentages)",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 11,
+          "column": "text",
+          "value": "2024",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 12,
+          "column": "text",
+          "value": "2023",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 13,
+          "column": "text",
+          "value": "% YoY",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 14,
+          "column": "text",
+          "value": "Core4",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 15,
+          "column": "text",
+          "value": "Monthly Active Users (MAU) - Global5",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 16,
+          "column": "text",
+          "value": "79.6",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 17,
+          "column": "text",
+          "value": "61.4",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 18,
+          "column": "text",
+          "value": "30 %",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 19,
+          "column": "text",
+          "value": "U.S.",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 20,
+          "column": "text",
+          "value": "43.7",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 21,
+          "column": "text",
+          "value": "36.8",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 22,
+          "column": "text",
+          "value": "19 %",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 23,
+          "column": "text",
+          "value": "International",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 24,
+          "column": "text",
+          "value": "36.0",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 25,
+          "column": "text",
+          "value": "24.6",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 26,
+          "column": "text",
+          "value": "46 %",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 27,
+          "column": "text",
+          "value": "ANZ",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 28,
+          "column": "text",
+          "value": "2.7",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 29,
+          "column": "text",
+          "value": "2.0",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 30,
+          "column": "text",
+          "value": "35 %",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 31,
+          "column": "text",
+          "value": "Paying Circles - Global6",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 32,
+          "column": "text",
+          "value": "2.3",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 33,
+          "column": "text",
+          "value": "1.8",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 34,
+          "column": "text",
+          "value": "25 %",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 35,
+          "column": "text",
+          "value": "U.S.",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 36,
+          "column": "text",
+          "value": "1.6",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 37,
+          "column": "text",
+          "value": "1.3",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 38,
+          "column": "text",
+          "value": "23 %",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 39,
+          "column": "text",
+          "value": "International",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 40,
+          "column": "text",
+          "value": "0.6",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 41,
+          "column": "text",
+          "value": "0.5",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 42,
+          "column": "text",
+          "value": "33 %",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 43,
+          "column": "text",
+          "value": "Average Revenue per Paying Circle (ARPPC)7,8",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 44,
+          "column": "text",
+          "value": "$ 131.76",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 45,
+          "column": "text",
+          "value": "$",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 46,
+          "column": "text",
+          "value": "124.17",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 47,
+          "column": "text",
+          "value": "6 %",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 48,
+          "column": "text",
+          "value": "Life360 Consolidated",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 49,
+          "column": "text",
+          "value": "Subscriptions",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 50,
+          "column": "text",
+          "value": "2.9",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 51,
+          "column": "text",
+          "value": "2.4",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 52,
+          "column": "text",
+          "value": "19 %",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 53,
+          "column": "text",
+          "value": "Average Revenue per Paying Subscription (ARPPS)8,1",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 54,
+          "column": "text",
+          "value": "$",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 55,
+          "column": "text",
+          "value": "110.43 $",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 56,
+          "column": "text",
+          "value": "102.17",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 57,
+          "column": "text",
+          "value": "8 %",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 58,
+          "column": "text",
+          "value": "Net hardware units shipped11 11",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 59,
+          "column": "text",
+          "value": "1.9",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 60,
+          "column": "text",
+          "value": "1.7",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 61,
+          "column": "text",
+          "value": "8%",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 62,
+          "column": "text",
+          "value": "Average Selling Price (ASP) 12,13",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 63,
+          "column": "text",
+          "value": "$",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 64,
+          "column": "text",
+          "value": "12.56 $",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 65,
+          "column": "text",
+          "value": "11.50",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 66,
+          "column": "text",
+          "value": "9 %",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 67,
+          "column": "text",
+          "value": "Annualized Monthly Revenue (AMR)",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 68,
+          "column": "text",
+          "value": "$",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 69,
+          "column": "text",
+          "value": "367.6 $",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 70,
+          "column": "text",
+          "value": "274.1",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 71,
+          "column": "text",
+          "value": "34 %",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 72,
+          "column": "text",
+          "value": "FY",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 73,
+          "column": "text",
+          "value": "FY",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 74,
+          "column": "text",
+          "value": "2024",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 75,
+          "column": "text",
+          "value": "2023",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 76,
+          "column": "text",
+          "value": "% YoY",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 77,
+          "column": "text",
+          "value": "Core4",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 78,
+          "column": "text",
+          "value": "Average Revenue per Paying Circle (ARPPC)7,8",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 79,
+          "column": "text",
+          "value": "$",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 80,
+          "column": "text",
+          "value": "128.00",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 81,
+          "column": "text",
+          "value": "$",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 82,
+          "column": "text",
+          "value": "121.09",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 83,
+          "column": "text",
+          "value": "6%",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 84,
+          "column": "text",
+          "value": "Life360 Consolidated",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 85,
+          "column": "text",
+          "value": "Average Revenue per Paying Subscription (ARPPS)8,1",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 86,
+          "column": "text",
+          "value": "$ 106.16 $",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 87,
+          "column": "text",
+          "value": "99.53",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 88,
+          "column": "text",
+          "value": "7%",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 89,
+          "column": "text",
+          "value": "Net hardware units shipped 11",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 90,
+          "column": "text",
+          "value": "3.9",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 91,
+          "column": "text",
+          "value": "4.0",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 92,
+          "column": "text",
+          "value": "(4)%",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 93,
+          "column": "text",
+          "value": "Average Selling Price (ASP) 12,13",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 94,
+          "column": "text",
+          "value": "$",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 95,
+          "column": "text",
+          "value": "13.72 $",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 96,
+          "column": "text",
+          "value": "13.48",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 97,
+          "column": "text",
+          "value": "2%",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 98,
+          "column": "text",
+          "value": "Note: The financial information in this announcement may not add or recalculate due to rounding. All references to $ are to U.S. dollars.",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 99,
+          "column": "text",
+          "value": "Life360, Inc.",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 100,
+          "column": "text",
+          "value": "I",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 101,
+          "column": "text",
+          "value": "ARBN 629 412 942",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 102,
+          "column": "text",
+          "value": "I 1900 South Norfolk St, Suite 310 San Mateo, CA 94403 I investors.life360.com",
+          "unit": "",
+          "context": ""
+        },
+        {
+          "page": 2,
+          "section": "Narrative",
+          "row_id": 103,
+          "column": "text",
+          "value": "2",
+          "unit": "",
+          "context": ""
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "total_pages": 2,
+    "job_id": "8acb0901-11bd-41b4-863e-3e6c8bc22b97",
+    "processing_time": 19.96863842010498
+  },
+  "schema": {
+    "type": "array",
+    "items": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "type": "integer"
+        },
+        "section": {
+          "type": "string"
+        },
+        "row_id": {
+          "type": "integer"
+        },
+        "column": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        },
+        "unit": {
+          "type": "string"
+        },
+        "context": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "page",
+        "section",
+        "column",
+        "value"
+      ]
+    }
+  }
+}
