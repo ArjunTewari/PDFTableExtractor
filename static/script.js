@@ -481,21 +481,42 @@ document.addEventListener('DOMContentLoaded', function() {
             top: resultsSection.offsetTop - 20,
             behavior: 'smooth'
         });
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'structured_data.json';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        });
+    }
+
+    // Export functions
+    function exportToCsv(data) {
+        const headers = Object.keys(data[0] || {});
+        const csvContent = [
+            headers.join(','),
+            ...data.map(row => headers.map(header => `"${row[header] || ''}"`).join(','))
+        ].join('\n');
         
-        window.scrollTo({
-            top: resultsSection.offsetTop - 20,
-            behavior: 'smooth'
-        });
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'extracted_data.csv';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    function exportToJson(data) {
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'structured_data.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    function exportToExcel(data) {
+        // For now, export as CSV since Excel requires additional libraries
+        exportToCsv(data);
     }
     
     function createUnifiedTable(data) {
