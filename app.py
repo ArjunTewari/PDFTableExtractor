@@ -13,6 +13,7 @@ from export_utils import export_to_pdf
 from schema_validator import SchemaValidator
 from chunking_processor import ChunkingProcessor
 from llm_structured_extractor import LLMStructuredExtractor, extract_structured_data_from_payload
+from merge_normalize_qa import MergeNormalizeQA, merge_normalize_qa_from_extraction
 
 app = Flask(__name__)
 
@@ -24,6 +25,7 @@ os.makedirs('static', exist_ok=True)
 schema_validator = SchemaValidator()
 chunking_processor = ChunkingProcessor()
 llm_extractor = LLMStructuredExtractor()
+merge_qa_processor = MergeNormalizeQA()
 
 @app.route('/')
 def index():
@@ -120,10 +122,14 @@ def complete_extraction_pipeline():
         print("Starting Phase 3: LLM Structured Extraction...")
         extraction_results = asyncio.run(llm_extractor.process_structured_extraction(payload))
         
-        # Phase 4: Schema Validation & Canonical Transformation
-        print("Starting Phase 4: Schema Validation & Canonical Transformation...")
+        # Phase 4: Merge, Normalize & QA
+        print("Starting Phase 4: Merge, Normalize & QA...")
+        qa_results = asyncio.run(merge_qa_processor.process_merge_normalize_qa(extraction_results))
+        
+        # Phase 5: Schema Validation & Canonical Transformation
+        print("Starting Phase 5: Schema Validation & Canonical Transformation...")
         canonical_data = schema_validator.transform_to_canonical(
-            extraction_results.get('combined_extracted_data', [])
+            qa_results.get('final_data', [])
         )
         validation_result = schema_validator.validate_data(canonical_data)
         
@@ -139,6 +145,10 @@ def complete_extraction_pipeline():
         extraction_path = f'output/extraction_{job_id}.json'
         llm_extractor.save_extraction_results(extraction_results, extraction_path)
         
+        # Save QA results
+        qa_path = f'output/qa_results_{job_id}.json'
+        merge_qa_processor.save_results(qa_results, qa_path)
+        
         # Save canonical data
         canonical_path = f'output/canonical_{job_id}.json'
         schema_validator.save_canonical_data(canonical_data, canonical_path)
@@ -147,7 +157,7 @@ def complete_extraction_pipeline():
         complete_results = {
             'success': True,
             'job_id': job_id,
-            'phases_completed': 4,
+            'phases_completed': 5,
             'phase_1_textract': {
                 'total_pages': textract_result.get('total_pages', 0),
                 'processing_time': textract_result.get('processing_time', 0),
@@ -166,7 +176,14 @@ def complete_extraction_pipeline():
                 'total_extracted_items': extraction_results.get('total_extracted_items', 0),
                 'processing_stats': extraction_results.get('processing_stats', {})
             },
-            'phase_4_validation': {
+            'phase_4_merge_qa': {
+                'original_items': qa_results.get('processing_stats', {}).get('original_items', 0),
+                'final_items': qa_results.get('processing_stats', {}).get('final_items', 0),
+                'duplicates_removed': qa_results.get('processing_stats', {}).get('duplicates_removed', 0),
+                'qa_success_rate': qa_results.get('qa_results', {}).get('summary', {}).get('success_rate', 0),
+                'qa_failures': qa_results.get('qa_results', {}).get('summary', {}).get('total_failed', 0)
+            },
+            'phase_5_validation': {
                 'canonical_items': len(canonical_data),
                 'validation_valid': validation_result.get('valid', False),
                 'validation_errors': len(validation_result.get('errors', [])),
@@ -175,10 +192,13 @@ def complete_extraction_pipeline():
             'saved_files': {
                 'payload': payload_path,
                 'extraction_results': extraction_path,
+                'qa_results': qa_path,
                 'canonical_data': canonical_path
             },
+            'final_data': qa_results.get('final_data', []),
             'canonical_data': canonical_data,
-            'validation_result': validation_result
+            'validation_result': validation_result,
+            'qa_results': qa_results.get('qa_results', {})
         }
         
         print(f"Complete extraction pipeline finished: {len(canonical_data)} items extracted and validated")
@@ -444,6 +464,38 @@ def llm_structured_extraction():
             'validation_result': validation_result,
             'processing_stats': extraction_results.get('processing_stats', {}),
             'total_extracted_items': extraction_results.get('total_extracted_items', 0)
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/merge_normalize_qa', methods=['POST'])
+def merge_normalize_qa():
+    """Phase 5: Merge, Normalize & QA"""
+    data = request.json
+    if not data or 'extraction_results' not in data:
+        return jsonify({'error': 'No extraction_results provided'}), 400
+    
+    try:
+        import asyncio
+        
+        # Process merge, normalize and QA
+        qa_results = asyncio.run(merge_qa_processor.process_merge_normalize_qa(data['extraction_results']))
+        
+        # Save results if requested
+        if data.get('save_results', False):
+            job_id = qa_results.get('metadata', {}).get('job_id', 'unknown')
+            filename = data.get('filename', f'merged_qa_{job_id}_{int(time.time())}.json')
+            output_path = f'output/{filename}'
+            os.makedirs('output', exist_ok=True)
+            merge_qa_processor.save_results(qa_results, output_path)
+        
+        return jsonify({
+            'success': True,
+            'qa_results': qa_results,
+            'processing_stats': qa_results.get('processing_stats', {}),
+            'qa_summary': qa_results.get('qa_results', {}).get('summary', {}),
+            'final_data_count': len(qa_results.get('final_data', []))
         })
         
     except Exception as e:

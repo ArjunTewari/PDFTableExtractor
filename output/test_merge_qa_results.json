@@ -1,0 +1,124 @@
+{
+  "success": true,
+  "phase": "Phase 5: Merge, Normalize & QA",
+  "processing_stats": {
+    "original_items": 7,
+    "normalized_items": 7,
+    "final_items": 6,
+    "duplicates_removed": 1
+  },
+  "final_data": [
+    {
+      "page": 1,
+      "section": "KeyValue",
+      "row_id": 1,
+      "column": "Total Users",
+      "value": "66.9",
+      "unit": "million",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "KeyValue",
+      "row_id": 2,
+      "column": "MAU Growth",
+      "value": "33",
+      "unit": "percent",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 1,
+      "column": "text",
+      "value": "Life360 is a leading family safety company.",
+      "unit": "",
+      "context": ""
+    },
+    {
+      "page": 1,
+      "section": "Table",
+      "row_id": 1,
+      "column": "Company",
+      "value": "Life360",
+      "unit": "",
+      "context": "header"
+    },
+    {
+      "page": 1,
+      "section": "Table",
+      "row_id": 2,
+      "column": "Revenue",
+      "value": "$115.5",
+      "unit": "million",
+      "context": "data"
+    },
+    {
+      "page": 1,
+      "section": "Table",
+      "row_id": 3,
+      "column": "Growth",
+      "value": "35",
+      "unit": "percent",
+      "context": "data"
+    }
+  ],
+  "qa_results": {
+    "total_items": 6,
+    "checks": {
+      "unit_present": {
+        "passed": 4,
+        "failed": 2,
+        "failed_items": [
+          {
+            "item_id": "Item 3 (Page 1, Narrative)",
+            "value": "Life360 is a leading family safety company.",
+            "issue": "Missing unit for numeric value"
+          },
+          {
+            "item_id": "Item 4 (Page 1, Table)",
+            "value": "Life360",
+            "issue": "Missing unit for numeric value"
+          }
+        ]
+      },
+      "numeric_parseable": {
+        "passed": 5,
+        "failed": 1,
+        "failed_items": [
+          {
+            "item_id": "Item 5 (Page 1, Table)",
+            "value": "$115.5",
+            "unit": "million",
+            "issue": "Value not parseable as number despite having numeric unit"
+          }
+        ]
+      },
+      "known_context": {
+        "passed": 6,
+        "failed": 0,
+        "failed_items": []
+      },
+      "required_fields": {
+        "passed": 6,
+        "failed": 0,
+        "failed_items": []
+      }
+    },
+    "warnings": [],
+    "errors": [
+      "unit_present: 2 failures",
+      "numeric_parseable: 1 failures"
+    ],
+    "summary": {
+      "total_checks": 24,
+      "total_passed": 21,
+      "total_failed": 3,
+      "success_rate": 87.5
+    }
+  },
+  "metadata": {
+    "job_id": "test-merge-qa-123",
+    "total_pages": 1
+  }
+}

@@ -71,7 +71,17 @@ Phase 4 advanced LLM processing with optimized prompts:
 - Maps narrative chunks to (page, section="Narrative", row_id, column="text", value=line, unit="", context="")
 - Comprehensive error handling and validation for all extraction types
 
-### 7. Export Utilities (`export_utils.py`)
+### 7. Merge, Normalize & QA (`merge_normalize_qa.py`)
+Phase 5 data consolidation and quality assurance:
+- Concatenates the three extraction arrays (tables, key-values, narrative)
+- Normalizes units using regex patterns and GPT-3.5-turbo for complex cases
+- Converts "457 thousand" → value=457, unit="thousand"
+- Converts "$115.5 million" → value=115.5, unit="million USD"
+- Deduplicates and sorts by (page, section, row_id)
+- Runs comprehensive QA checks: unit presence, numeric parseability, known context
+- Provides detailed failure logging and success rate metrics
+
+### 8. Export Utilities (`export_utils.py`)
 Provides functionality to:
 - Export processed data to PDF format using ReportLab
 - Create downloadable links for the exported data
