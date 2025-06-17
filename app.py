@@ -3,6 +3,7 @@ import os
 import tempfile
 import base64
 import json
+import time
 from io import BytesIO
 
 from textract_processor import extract_text_from_pdf, extract_text_from_pdf_bytes, extract_structured_data_from_pdf_bytes, TextractProcessor
@@ -158,11 +159,20 @@ def process():
             else:
                 clean_data = []
         
-        # Return both original result and clean DataFrame data
+        # Transform to canonical schema format
+        canonical_data = schema_validator.transform_to_canonical(clean_data)
+        
+        # Validate canonical data
+        validation_result = schema_validator.validate_data(canonical_data)
+        
+        # Return enhanced response with canonical data and validation
         response = {
             **result,
             'dataframe_data': clean_data,
-            'total_rows': len(clean_data)
+            'canonical_data': canonical_data,
+            'validation_result': validation_result,
+            'total_rows': len(clean_data),
+            'canonical_rows': len(canonical_data)
         }
         
         return jsonify(response)
@@ -192,6 +202,63 @@ def extract_structured():
             'structured_data': structured_data
         })
         
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/validate_schema', methods=['POST'])
+def validate_schema():
+    """Validate data against canonical schema"""
+    data = request.json
+    if not data:
+        return jsonify({'error': 'No data provided'}), 400
+    
+    try:
+        validation_result = schema_validator.validate_data(data)
+        return jsonify(validation_result)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/transform_to_canonical', methods=['POST'])
+def transform_to_canonical():
+    """Transform extracted data to canonical schema format"""
+    data = request.json
+    if not data or 'extracted_data' not in data:
+        return jsonify({'error': 'No extracted_data provided'}), 400
+    
+    try:
+        canonical_data = schema_validator.transform_to_canonical(data['extracted_data'])
+        validation_result = schema_validator.validate_data(canonical_data)
+        
+        return jsonify({
+            'canonical_data': canonical_data,
+            'validation_result': validation_result,
+            'total_items': len(canonical_data)
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/save_canonical', methods=['POST'])
+def save_canonical():
+    """Save canonical data to file after validation"""
+    data = request.json
+    if not data or 'canonical_data' not in data:
+        return jsonify({'error': 'No canonical_data provided'}), 400
+    
+    try:
+        filename = data.get('filename', f'canonical_data_{int(time.time())}.json')
+        output_path = f'output/{filename}'
+        os.makedirs('output', exist_ok=True)
+        
+        success = schema_validator.save_canonical_data(data['canonical_data'], output_path)
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'filename': filename,
+                'path': output_path
+            })
+        else:
+            return jsonify({'error': 'Failed to save canonical data'}), 500
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

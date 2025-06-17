@@ -44,22 +44,38 @@ Enhanced OpenAI GPT-4o processing with commentary matching:
 - Comprehensive data extraction with ALL table values preserved
 - General commentary collection for unmatched text segments
 
-### 4. Export Utilities (`export_utils.py`)
+### 4. Schema Validation System (`schema_validator.py` & `schema.json`)
+Canonical data validation and transformation:
+- `schema.json`: Defines the canonical JSON schema for all extracted data
+- `SchemaValidator`: Python utility for validation and transformation
+- Ensures data consistency across all processing stages
+- Transforms extracted data to standardized format with page, section, column, value structure
+- Validates required fields and provides detailed error reporting
+
+### 5. Export Utilities (`export_utils.py`)
 Provides functionality to:
 - Export processed data to PDF format using ReportLab
 - Create downloadable links for the exported data
 - Handle enhanced data structures with commentary fields
+- Support canonical format exports
 
 ## Data Flow
 
-1. **Input**: User uploads a PDF document through the Streamlit interface
-2. **Processing**:
-   - PDF text is extracted using PyPDF2
-   - Extracted text is sent to OpenAI's GPT-4o model
-   - The LLM analyzes the text and structures it into tabular format
-3. **Output**:
-   - Structured data is displayed as a table in the interface
-   - User can download the data in various formats
+1. **Input**: User uploads a PDF document through the Flask web interface
+2. **Enhanced Processing**:
+   - PDF is processed page-by-page using Amazon Textract with S3 storage
+   - Structured data (tables, key-values) and OCR text are extracted
+   - Raw JSON results saved to S3 for audit and reprocessing
+   - Data sent to OpenAI GPT-4o for intelligent structuring and commentary matching
+3. **Schema Validation & Transformation**:
+   - Extracted data transformed to canonical JSON schema format
+   - Schema validation ensures data integrity and consistency
+   - Commentary matching relates document text to specific data points
+4. **Output**:
+   - Structured data displayed with commentary context
+   - Canonical format ensures consistent data structure
+   - Export options available in multiple formats
+   - Validated data can be saved for downstream processing
 
 ## External Dependencies
 
