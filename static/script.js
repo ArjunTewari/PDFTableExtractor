@@ -170,39 +170,82 @@ document.addEventListener('DOMContentLoaded', function() {
             existingStructuredInfo.remove();
         }
         
-        // Show processing info and skip to AI processing
+        // Show processing info for complete pipeline or structured data
         if (structuredData) {
-            const documentText = structuredData.document_text || [];
-            const tables = structuredData.tables || [];
-            const keyValues = structuredData.key_values || [];
-            
             const structuredInfo = document.createElement('div');
             structuredInfo.className = 'alert alert-success mb-3 structured-data-info';
-            structuredInfo.innerHTML = `
-                <h6 class="mb-2">📊 Document Processed Successfully</h6>
-                <div class="row small">
-                    <div class="col-md-3">Text Lines: ${documentText.length}</div>
-                    <div class="col-md-3">Tables: ${tables.length}</div>
-                    <div class="col-md-3">Key-Values: ${keyValues.length}</div>
-                    <div class="col-md-3">Processing: Complete</div>
-                </div>
-                <div class="text-center mt-3">
-                    <button id="process-ai-btn" class="btn btn-primary btn-lg">
-                        <i class="bi bi-gear"></i> Process with AI
-                    </button>
-                    <button class="btn btn-outline-secondary btn-sm ms-2" onclick="showJsonModal()">
-                        View Raw JSON
-                    </button>
-                </div>
-            `;
+            
+            if (structuredData.success && structuredData.phases_completed) {
+                // Complete 5-phase pipeline results
+                const phase1 = structuredData.phase_1_textract || {};
+                const phase2 = structuredData.phase_2_chunking || {};
+                const phase3 = structuredData.phase_3_extraction || {};
+                const phase4 = structuredData.phase_4_merge_qa || {};
+                const phase5 = structuredData.phase_5_validation || {};
+                
+                structuredInfo.innerHTML = `
+                    <h6 class="mb-2">📊 Document Processed Successfully</h6>
+                    <div class="row small mb-2">
+                        <div class="col-md-3">Pages: ${phase1.total_pages || 0}</div>
+                        <div class="col-md-3">Tables: ${phase2.total_tables || 0}</div>
+                        <div class="col-md-3">Key-Values: ${phase2.total_kvs || 0}</div>
+                        <div class="col-md-3">Processing: Complete</div>
+                    </div>
+                    <div class="row small mb-2">
+                        <div class="col-md-3">Extracted Items: ${phase3.total_extracted_items || 0}</div>
+                        <div class="col-md-3">Final Items: ${phase4.final_items || 0}</div>
+                        <div class="col-md-3">QA Success: ${Math.round((phase4.qa_success_rate || 0) * 100)}%</div>
+                        <div class="col-md-3">Phases: ${structuredData.phases_completed}/5</div>
+                    </div>
+                    <div class="text-center mt-3">
+                        <button class="btn btn-outline-secondary btn-sm" onclick="showJsonModal()">
+                            View Results JSON
+                        </button>
+                    </div>
+                `;
+                
+                // Auto-process since it's already complete
+                setTimeout(() => {
+                    processText();
+                }, 500);
+                
+            } else {
+                // Legacy structured data format
+                const documentText = structuredData.document_text || [];
+                const tables = structuredData.tables || [];
+                const keyValues = structuredData.key_values || [];
+                
+                structuredInfo.innerHTML = `
+                    <h6 class="mb-2">📊 Document Processed Successfully</h6>
+                    <div class="row small">
+                        <div class="col-md-3">Text Lines: ${documentText.length}</div>
+                        <div class="col-md-3">Tables: ${tables.length}</div>
+                        <div class="col-md-3">Key-Values: ${keyValues.length}</div>
+                        <div class="col-md-3">Processing: Complete</div>
+                    </div>
+                    <div class="text-center mt-3">
+                        <button id="process-ai-btn" class="btn btn-primary btn-lg">
+                            <i class="bi bi-gear"></i> Process with AI
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm ms-2" onclick="showJsonModal()">
+                            View Raw JSON
+                        </button>
+                    </div>
+                `;
+                
+                // Add event listener for AI processing
+                setTimeout(() => {
+                    const processAiBtn = document.getElementById('process-ai-btn');
+                    if (processAiBtn) {
+                        processAiBtn.addEventListener('click', processText);
+                    }
+                }, 100);
+            }
             
             // Replace extracted text section content
             extractedTextSection.innerHTML = '';
             extractedTextSection.appendChild(structuredInfo);
             extractedTextSection.classList.remove('d-none');
-            
-            // Add event listener for AI processing
-            document.getElementById('process-ai-btn').addEventListener('click', processText);
         }
         
         window.scrollTo({
@@ -217,6 +260,13 @@ document.addEventListener('DOMContentLoaded', function() {
     function processText() {
         if (!currentStructuredData) {
             showError('No structured data to process');
+            return;
+        }
+
+        // Check if this is already a complete 5-phase pipeline result
+        if (currentStructuredData.success && currentStructuredData.phases_completed === 5) {
+            // Already processed - display the final results directly
+            displayStructuredResults(currentStructuredData);
             return;
         }
 
@@ -255,6 +305,29 @@ document.addEventListener('DOMContentLoaded', function() {
         // Clear previous results
         resultsSection.innerHTML = '';
         
+        // Check if this is complete 5-phase pipeline data
+        if (data.success && data.phases_completed === 5 && data.final_data) {
+            // Display complete pipeline results
+            const qaResults = data.qa_results || {};
+            const phase4 = data.phase_4_merge_qa || {};
+            
+            let html = `
+                <div class="processing-summary alert alert-success mb-3">
+                    <h5>5-Phase Processing Complete</h5>
+                    <div class="row small">
+                        <div class="col-md-3">Final Items: ${phase4.final_items || 0}</div>
+                        <div class="col-md-3">QA Success: ${Math.round((phase4.qa_success_rate || 0) * 100)}%</div>
+                        <div class="col-md-3">Duplicates Removed: ${phase4.duplicates_removed || 0}</div>
+                        <div class="col-md-3">Validation: ${data.phase_5_validation?.validation_valid ? 'Pass' : 'Fail'}</div>
+                    </div>
+                </div>
+            `;
+            
+            displayCanonicalData(data.final_data, html);
+            return;
+        }
+        
+        // Legacy format display
         let html = `
             <div class="processing-summary alert alert-success mb-3">
                 <h5>AI Processing Complete</h5>
@@ -269,35 +342,124 @@ document.addEventListener('DOMContentLoaded', function() {
         
         let allCsvData = [];
         let hasData = false;
+    }
+
+    function displayCanonicalData(finalData, summaryHtml) {
+        const resultsSection = document.getElementById('results-section');
         
-        // Display Tables
-        if (data.processed_tables && data.processed_tables.length > 0) {
-            html += '<h5>📊 Extracted Tables</h5>';
-            data.processed_tables.forEach((table, index) => {
-                if (table.structured_table && !table.structured_table.error) {
-                    hasData = true;
+        // Group data by section type
+        const groupedData = {
+            'Table': [],
+            'KeyValue': [],
+            'Narrative': []
+        };
+        
+        finalData.forEach(item => {
+            if (groupedData[item.section]) {
+                groupedData[item.section].push(item);
+            }
+        });
+        
+        let html = summaryHtml;
+        let allCsvData = [];
+        
+        // Display each section
+        Object.entries(groupedData).forEach(([sectionType, items]) => {
+            if (items.length > 0) {
+                html += `<h5>📊 ${sectionType} Data</h5>`;
+                html += `
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped table-sm">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Page</th>
+                                            <th>Row</th>
+                                            <th>Column</th>
+                                            <th>Value</th>
+                                            <th>Unit</th>
+                                            <th>Context</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                `;
+                
+                items.forEach(item => {
                     html += `
-                        <div class="card mb-3">
-                            <div class="card-header bg-primary text-white">
-                                <h6 class="mb-0">Table ${index + 1} (Page ${table.page})</h6>
-                            </div>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table table-striped table-sm">
-                                        <thead class="table-light">
-                                            <tr><th>Field</th><th>Value</th></tr>
-                                        </thead>
-                                        <tbody>
+                        <tr>
+                            <td>${item.page}</td>
+                            <td>${item.row_id}</td>
+                            <td>${item.column}</td>
+                            <td>${item.value}</td>
+                            <td>${item.unit || ''}</td>
+                            <td>${item.context || ''}</td>
+                        </tr>
                     `;
                     
-                    Object.entries(table.structured_table).forEach(([key, value]) => {
-                        if (key !== 'error') {
-                            html += `<tr><td><strong>${key}</strong></td><td>${value}</td></tr>`;
-                            allCsvData.push({
-                                source: `Table ${index + 1}`,
-                                type: 'Table Data',
-                                field: key,
-                                value: String(value),
+                    allCsvData.push({
+                        page: item.page,
+                        section: item.section,
+                        row_id: item.row_id,
+                        column: item.column,
+                        value: item.value,
+                        unit: item.unit || '',
+                        context: item.context || ''
+                    });
+                });
+                
+                html += `
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+        
+        if (allCsvData.length === 0) {
+            html += `
+                <div class="alert alert-warning">
+                    <h6>No structured data found</h6>
+                    <p>The AI processing did not extract meaningful data from the document.</p>
+                </div>
+            `;
+        } else {
+            // Add export buttons
+            html += `
+                <div class="text-center mt-4">
+                    <button id="export-csv-btn" class="btn btn-success me-2">
+                        📄 Export CSV (${allCsvData.length} rows)
+                    </button>
+                    <button id="export-json-btn" class="btn btn-primary me-2">
+                        📋 Export JSON
+                    </button>
+                    <button id="export-excel-btn" class="btn btn-info">
+                        📊 Export Excel
+                    </button>
+                </div>
+            `;
+        }
+        
+        resultsSection.innerHTML = html;
+        resultsSection.classList.remove('d-none');
+        
+        // Store processed data for export
+        processedData = allCsvData;
+        
+        // Add export event listeners
+        if (allCsvData.length > 0) {
+            document.getElementById('export-csv-btn').addEventListener('click', () => exportToCsv(allCsvData));
+            document.getElementById('export-json-btn').addEventListener('click', () => exportToJson(currentStructuredData));
+            document.getElementById('export-excel-btn').addEventListener('click', () => exportToExcel(allCsvData));
+        }
+        
+        // Scroll to results
+        window.scrollTo({
+            top: resultsSection.offsetTop - 20,
+            behavior: 'smooth'
+        });
                                 page: table.page
                             });
                         }

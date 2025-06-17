@@ -15,7 +15,10 @@ class TextractProcessor:
     def extract_pages_from_pdf(self, pdf_bytes: bytes) -> List[bytes]:
         """Extract pages from PDF, converting to PNG for Textract compatibility"""
         try:
-            import fitz  # PyMuPDF
+            try:
+                import fitz  # Try standard import first
+            except ImportError:
+                import pymupdf as fitz  # Fallback to pymupdf alias
             
             # Open the PDF document
             pdf_doc = fitz.open(stream=pdf_bytes, filetype="pdf")
