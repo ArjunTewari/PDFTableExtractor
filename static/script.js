@@ -122,8 +122,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }, 100);
 
-        // Send file to server
-        fetch('/extract', {
+        // Send file to server using complete 5-phase pipeline
+        fetch('/complete_extraction_pipeline', {
             method: 'POST',
             body: formData
         })
@@ -141,12 +141,20 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             hideLoading();
             
-            if (data.document_text) {
+            if (data.success && data.final_data) {
+                // Handle complete 5-phase pipeline response
+                extractedText = data.final_data.map(item => 
+                    `Page ${item.page}, ${item.section}: ${item.column} = ${item.value} ${item.unit || ''}`
+                ).join('\n');
+                currentStructuredData = data;
+                showExtractedText(extractedText, data);
+            } else if (data.document_text) {
+                // Handle legacy response format
                 extractedText = data.document_text.join('\n');
                 currentStructuredData = data;
                 showExtractedText(extractedText, data);
             } else {
-                throw new Error('No text was extracted from the PDF');
+                throw new Error('No data was extracted from the PDF');
             }
         })
         .catch(error => {

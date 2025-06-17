@@ -13,9 +13,29 @@ class TextractProcessor:
         self.bucket_name = 'textract-bucket-lk'
 
     def extract_pages_from_pdf(self, pdf_bytes: bytes) -> List[bytes]:
-        """For now, return the full PDF as a single page until PyMuPDF is properly configured"""
-        # Temporary implementation - process entire PDF as one page
-        return [pdf_bytes]
+        """Extract pages from PDF, converting to PNG for Textract compatibility"""
+        try:
+            import fitz  # PyMuPDF
+            
+            # Open the PDF document
+            pdf_doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+            pages = []
+            
+            for page_num in range(len(pdf_doc)):
+                page = pdf_doc[page_num]
+                # Convert page to PNG for better Textract compatibility
+                mat = fitz.Matrix(2, 2)  # 2x zoom for better quality
+                pix = page.get_pixmap(matrix=mat)
+                png_bytes = pix.tobytes("png")
+                pages.append(png_bytes)
+            
+            pdf_doc.close()
+            return pages
+            
+        except Exception as e:
+            print(f"Error extracting pages with PyMuPDF: {e}")
+            # Fallback: return the full PDF as a single page
+            return [pdf_bytes]
     
     def analyze_page_with_textract(self, page_bytes: bytes, job_id: str, page_num: int) -> Dict[str, Any]:
         """Analyze a single page with Textract synchronously"""
