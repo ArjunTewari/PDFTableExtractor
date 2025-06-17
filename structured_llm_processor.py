@@ -20,42 +20,24 @@ def split_text_section(text_lines, max_lines=20):
     return chunks
 
 async def process_table_data(table_data: Dict[str, Any]) -> Dict[str, Any]:
-    """Process table data with GPT-4o asynchronously"""
-    prompt = f"""You are a data analyst. The following table data has been extracted from a document.
-
-Analyze this table and reconstruct it as a proper multi-column table structure. DO NOT simplify to just 2 columns - preserve ALL columns found in the data.
+    """Process table data with GPT-4o asynchronously - simple format"""
+    prompt = f"""Extract key data points from this table as simple field-value pairs.
 
 Table data:
 {json.dumps(table_data, indent=2)}
 
-Requirements:
-1. Identify ALL columns in the table (usually from the first row)
-2. Preserve the FULL table structure with ALL columns
-3. Create meaningful headers for each column based on content
-4. Include ALL data rows under those headers
-5. Return both the complete table structure AND comprehensive field-value pairs as a JSON object
-6. Preserve all numerical values, percentages, dates, and text exactly
-7. Handle empty cells as empty strings
+Instructions:
+1. Extract important data points as field-value pairs
+2. Use clear, descriptive field names
+3. Focus on financial figures, dates, and key metrics
+4. Keep it simple and straightforward
 
-Example JSON response for a financial table:
+Return JSON with field-value pairs:
 {{
-  "table_headers": ["Company", "Q4 Revenue", "Growth Rate", "MAU", "Geographic Region"],
-  "table_rows": [
-    ["Life360", "$115.5M", "33%", "65.8M", "Global"],
-    ["Competitor A", "$98.2M", "15%", "42.1M", "US/EU"]
-  ],
-  "field_value_pairs": {{
-    "Row_1_Company": "Life360",
-    "Row_1_Q4_Revenue": "$115.5M",
-    "Row_1_Growth_Rate": "33%",
-    "Row_1_MAU": "65.8M",
-    "Row_1_Geographic_Region": "Global",
-    "Row_2_Company": "Competitor A",
-    "Row_2_Q4_Revenue": "$98.2M"
-  }}
-}}
-
-IMPORTANT: Do not reduce columns to just 2. Extract ALL columns present in the data. Return as valid JSON."""
+  "Revenue": "value",
+  "Growth_Rate": "value",
+  "Date": "value"
+}}"""
 
     try:
         loop = asyncio.get_event_loop()

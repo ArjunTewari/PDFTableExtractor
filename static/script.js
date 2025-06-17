@@ -274,38 +274,119 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    let streamedRows = [];
+    let tableInitialized = false;
+
     function handleStreamingData(data) {
-        const loadingMsg = document.getElementById('loading-message');
-        
-        if (data.status === 'starting' || data.status === 'processing' || data.status === 'enhancing') {
-            if (loadingMsg) {
-                loadingMsg.textContent = data.message;
-            }
-        } else if (data.status === 'complete') {
-            if (loadingMsg) {
-                loadingMsg.textContent = 'Finalizing results...';
-            }
-        } else if (data.status === 'success' || data.dataframe_data) {
+        if (data.type === 'row') {
+            // Add new row to streaming results
+            streamedRows.push(data.data);
+            displayStreamingRow(data.data);
+        } else if (data.type === 'row_update') {
+            // Update existing row with commentary
+            updateStreamingRow(data.data);
+        } else if (data.type === 'complete') {
             hideLoading();
-            console.log('Processing result:', data);
-            
-            processedData = data.dataframe_data || [];
-            
-            // Always display results even if empty to show what was processed
-            if (processedData.length > 0) {
-                displayResultsWithTables(processedData);
-            } else {
-                // Show processing summary even without data
-                displayProcessingSummary(data);
-            }
-            
-            if (data.summary) {
-                showProcessingSummary(data.summary);
-            }
+            console.log('Streaming complete. Total rows:', data.total_rows);
+            processedData = streamedRows;
+            finalizeStreamingDisplay();
         } else if (data.status === 'error') {
             hideLoading();
             showError('Processing failed: ' + data.error);
         }
+    }
+
+    function displayStreamingRow(rowData) {
+        if (!tableInitialized) {
+            initializeStreamingTable();
+            tableInitialized = true;
+        }
+        
+        const tableBody = document.getElementById('streaming-table-body');
+        const tr = document.createElement('tr');
+        tr.id = `row-${streamedRows.length - 1}`;
+        
+        tr.innerHTML = `
+            <td><span class="badge bg-secondary">${rowData.source}</span></td>
+            <td><span class="badge bg-info">${rowData.type}</span></td>
+            <td><strong>${rowData.field}</strong></td>
+            <td>${rowData.value}</td>
+            <td>${rowData.page}</td>
+            <td class="commentary-cell">${rowData.commentary || '<span class="text-muted">-</span>'}</td>
+        `;
+        
+        if (rowData.commentary) {
+            tr.classList.add('has-commentary');
+        }
+        
+        tableBody.appendChild(tr);
+    }
+
+    function updateStreamingRow(rowData) {
+        const rowIndex = streamedRows.findIndex(row => 
+            row.field === rowData.field && row.source === rowData.source
+        );
+        
+        if (rowIndex >= 0) {
+            streamedRows[rowIndex] = rowData;
+            const tr = document.getElementById(`row-${rowIndex}`);
+            if (tr) {
+                const commentaryCell = tr.querySelector('.commentary-cell');
+                if (commentaryCell) {
+                    commentaryCell.innerHTML = rowData.commentary ? 
+                        `<span class="text-muted small">${rowData.commentary}</span>` : 
+                        '<span class="text-muted">-</span>';
+                }
+                if (rowData.commentary) {
+                    tr.classList.add('has-commentary');
+                }
+            }
+        }
+    }
+
+    function initializeStreamingTable() {
+        hideLoading();
+        resultsSection.innerHTML = `
+            <h4>Extracted Data with Commentary</h4>
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Source</th>
+                            <th>Type</th>
+                            <th>Field</th>
+                            <th>Value</th>
+                            <th>Page</th>
+                            <th>Commentary</th>
+                        </tr>
+                    </thead>
+                    <tbody id="streaming-table-body"></tbody>
+                </table>
+            </div>
+            <div class="mt-3">
+                <button class="btn btn-outline-primary" id="export-json-btn">Export as JSON</button>
+                <button class="btn btn-outline-success" id="export-csv-btn">Export as CSV</button>
+                <button class="btn btn-outline-danger" id="export-pdf-btn">Export as PDF</button>
+            </div>
+        `;
+        
+        resultsSection.classList.remove('d-none');
+    }
+
+    function finalizeStreamingDisplay() {
+        // Re-attach export event listeners
+        document.getElementById('export-json-btn').addEventListener('click', exportJson);
+        document.getElementById('export-csv-btn').addEventListener('click', exportCsv);
+        document.getElementById('export-pdf-btn').addEventListener('click', exportPdf);
+        
+        // Add summary
+        const summaryDiv = document.createElement('div');
+        summaryDiv.className = 'alert alert-success mt-3';
+        summaryDiv.innerHTML = `
+            <h6>Processing Complete</h6>
+            <small>Total rows extracted: ${streamedRows.length} | Commentary from document text only</small>
+        `;
+        resultsSection.appendChild(summaryDiv);
     }
 
     function displayProcessingSummary(data) {
