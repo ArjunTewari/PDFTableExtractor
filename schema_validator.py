@@ -87,29 +87,60 @@ class SchemaValidator:
         Transform extracted data to canonical schema format
         
         Args:
-            extracted_data: Raw extracted data from PDF processing
+            extracted_data: Raw extracted data from PDF processing (from QA phase)
             
         Returns:
             List of objects conforming to canonical schema
         """
         canonical_data = []
-        row_counter = 1
         
+        # Handle the QA results format with nested output arrays
         for item in extracted_data:
-            canonical_item = {
-                "page": item.get("page", 1),
-                "section": item.get("source", "Unknown"),
-                "row_id": row_counter,
-                "column": item.get("field", ""),
-                "value": str(item.get("value", "")),
-                "unit": self._extract_unit(str(item.get("value", ""))),
-                "context": item.get("commentary", "")
-            }
-            
-            canonical_data.append(canonical_item)
-            row_counter += 1
+            if isinstance(item, dict):
+                # Check if this is a QA result with nested output
+                if "output" in item and isinstance(item["output"], list):
+                    # Process the nested output array
+                    for output_item in item["output"]:
+                        canonical_item = {
+                            "page": output_item.get("page", 1),
+                            "section": self._normalize_section(output_item.get("section", "Unknown")),
+                            "row_id": output_item.get("row_id", 1),
+                            "column": output_item.get("column", ""),
+                            "value": str(output_item.get("value", "")),
+                            "unit": output_item.get("unit", "") or self._extract_unit(str(output_item.get("value", ""))),
+                            "context": output_item.get("context", "")
+                        }
+                        canonical_data.append(canonical_item)
+                else:
+                    # Handle direct format (legacy)
+                    canonical_item = {
+                        "page": item.get("page", 1),
+                        "section": self._normalize_section(item.get("section", item.get("source", "Unknown"))),
+                        "row_id": item.get("row_id", len(canonical_data) + 1),
+                        "column": item.get("column", item.get("field", "")),
+                        "value": str(item.get("value", "")),
+                        "unit": item.get("unit", "") or self._extract_unit(str(item.get("value", ""))),
+                        "context": item.get("context", item.get("commentary", ""))
+                    }
+                    canonical_data.append(canonical_item)
         
         return canonical_data
+    
+    def _normalize_section(self, section: str) -> str:
+        """Normalize section names to standard format"""
+        if not section or section == "Unknown":
+            return "Unknown"
+        
+        # Convert detailed section names to standard categories
+        section_lower = section.lower()
+        if "table" in section_lower:
+            return "Table"
+        elif "key" in section_lower and "value" in section_lower:
+            return "KeyValue"
+        elif "narrative" in section_lower or "text" in section_lower:
+            return "Narrative"
+        else:
+            return section
     
     def _extract_unit(self, value: str) -> str:
         """Extract unit from value string (e.g., '$100M' -> 'USD', '25%' -> 'percent')"""

@@ -131,6 +131,7 @@ def complete_extraction_pipeline():
         canonical_data = schema_validator.transform_to_canonical(
             qa_results.get('final_data', [])
         )
+        print(f"Transformed {len(canonical_data)} items to canonical format")
         validation_result = schema_validator.validate_data(canonical_data)
         
         # Save all results for audit
