@@ -5,7 +5,7 @@ import base64
 import json
 from io import BytesIO
 
-from textract_processor import extract_text_from_pdf, extract_text_from_pdf_bytes, extract_structured_data_from_pdf_bytes
+from textract_processor import extract_text_from_pdf, extract_text_from_pdf_bytes, extract_structured_data_from_pdf_bytes, TextractProcessor
 from llm_processor import process_text_with_llm
 from structured_llm_processor import process_structured_data_with_llm
 from export_utils import export_to_pdf
@@ -30,11 +30,32 @@ def extract():
         return jsonify({'error': 'No file selected'}), 400
     
     try:
-        # Extract structured data from PDF using Amazon Textract
+        # Extract structured data from PDF using enhanced page-by-page Textract
+        pdf_bytes = file.read()
+        processor = TextractProcessor()
+        structured_data = processor.extract_text_from_pdf_bytes_pagewise(pdf_bytes)
+        
+        # Return the enhanced JSON format with page-by-page results
+        return jsonify(structured_data)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/extract_legacy', methods=['POST'])
+def extract_legacy():
+    """Legacy extraction endpoint using the original method"""
+    if 'pdf' not in request.files:
+        return jsonify({'error': 'No file uploaded'}), 400
+    
+    file = request.files['pdf']
+    if file.filename == '':
+        return jsonify({'error': 'No file selected'}), 400
+    
+    try:
+        # Extract structured data from PDF using original Textract method
         pdf_bytes = file.read()
         structured_data = extract_structured_data_from_pdf_bytes(pdf_bytes)
         
-        # Return the new JSON format
+        # Return the original JSON format
         return jsonify(structured_data)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -128,8 +149,8 @@ def process():
             if df_data:
                 df = pd.DataFrame(df_data)
                 # Clean up empty values
-                df = df[df['value'].str.strip() != '']
-                df = df[df['value'] != 'nan']
+                df = df[df['value'].astype(str).str.strip() != '']
+                df = df[df['value'].astype(str) != 'nan']
                 
                 # Convert back to list of dicts for JSON response
                 clean_data = df.to_dict('records')

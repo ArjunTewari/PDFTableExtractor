@@ -1,7 +1,10 @@
 import boto3
 import time
 import uuid
+import json
+import fitz  # PyMuPDF for page splitting
 from typing import Dict, Any, List, Optional
+from io import BytesIO
 
 class TextractProcessor:
     def __init__(self):
@@ -9,6 +12,196 @@ class TextractProcessor:
         self.textract_client = boto3.client('textract')
         self.s3_client = boto3.client('s3')
         self.bucket_name = 'textract-bucket-lk'
+
+    def extract_pages_from_pdf(self, pdf_bytes: bytes) -> List[bytes]:
+        """Split PDF into individual pages and return as list of bytes"""
+        doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+        pages = []
+        
+        for page_num in range(doc.page_count):
+            # Create a new document with just this page
+            new_doc = fitz.open()
+            new_doc.insert_pdf(doc, from_page=page_num, to_page=page_num)
+            
+            # Convert to bytes
+            page_bytes = new_doc.tobytes()
+            pages.append(page_bytes)
+            new_doc.close()
+        
+        doc.close()
+        return pages
+    
+    def analyze_page_with_textract(self, page_bytes: bytes, job_id: str, page_num: int) -> Dict[str, Any]:
+        """Analyze a single page with Textract synchronously"""
+        try:
+            # Use synchronous analyze_document for single pages
+            response = self.textract_client.analyze_document(
+                Document={
+                    'Bytes': page_bytes
+                },
+                FeatureTypes=['TABLES', 'FORMS']
+            )
+            
+            # Save raw JSON to S3
+            raw_key = f"raw/{job_id}/page_{page_num}.json"
+            self.s3_client.put_object(
+                Bucket=self.bucket_name,
+                Key=raw_key,
+                Body=json.dumps(response, indent=2),
+                ContentType='application/json'
+            )
+            
+            return response
+            
+        except Exception as e:
+            print(f"Error analyzing page {page_num}: {e}")
+            return {"error": str(e)}
+    
+    def extract_raw_text_from_page(self, page_bytes: bytes, job_id: str, page_num: int) -> Dict[str, Any]:
+        """Extract raw text from page using DetectDocumentText as OCR fallback"""
+        try:
+            # Use DetectDocumentText for OCR
+            response = self.textract_client.detect_document_text(
+                Document={
+                    'Bytes': page_bytes
+                }
+            )
+            
+            # Save raw text JSON to S3
+            text_key = f"raw_text/{job_id}/page_{page_num}.json"
+            self.s3_client.put_object(
+                Bucket=self.bucket_name,
+                Key=text_key,
+                Body=json.dumps(response, indent=2),
+                ContentType='application/json'
+            )
+            
+            return response
+            
+        except Exception as e:
+            print(f"Error extracting text from page {page_num}: {e}")
+            return {"error": str(e)}
+
+    def extract_text_from_pdf_bytes_pagewise(self, pdf_bytes: bytes) -> Dict[str, Any]:
+        """
+        Enhanced page-by-page extraction with S3 storage and OCR fallback
+        
+        Args:
+            pdf_bytes (bytes): PDF file as bytes
+            
+        Returns:
+            Dict[str, Any]: Structured JSON with page-by-page results
+        """
+        start_time = time.time()
+        job_id = str(uuid.uuid4())
+        
+        try:
+            print(f"Starting page-by-page Textract processing with job ID: {job_id}")
+            
+            # Split PDF into pages
+            pages = self.extract_pages_from_pdf(pdf_bytes)
+            print(f"Split PDF into {len(pages)} pages")
+            
+            results = {
+                "job_id": job_id,
+                "total_pages": len(pages),
+                "pages": [],
+                "document_text": [],
+                "tables": [],
+                "key_values": [],
+                "processing_time": 0,
+                "errors": []
+            }
+            
+            # Process each page
+            for page_num, page_bytes in enumerate(pages, 1):
+                print(f"Processing page {page_num}/{len(pages)}")
+                
+                page_result = {
+                    "page_number": page_num,
+                    "textract_result": None,
+                    "ocr_fallback": None,
+                    "extracted_tables": [],
+                    "extracted_key_values": [],
+                    "extracted_text": []
+                }
+                
+                # Analyze page with Textract (structured extraction)
+                textract_response = self.analyze_page_with_textract(page_bytes, job_id, page_num)
+                page_result["textract_result"] = textract_response
+                
+                # Extract OCR text fallback
+                ocr_response = self.extract_raw_text_from_page(page_bytes, job_id, page_num)
+                page_result["ocr_fallback"] = ocr_response
+                
+                if not textract_response.get("error"):
+                    # Parse Textract blocks for this page
+                    page_data = self._parse_textract_blocks_for_page(
+                        textract_response.get("Blocks", []), 
+                        page_num
+                    )
+                    
+                    page_result["extracted_tables"] = page_data.get("tables", [])
+                    page_result["extracted_key_values"] = page_data.get("key_values", [])
+                    page_result["extracted_text"] = page_data.get("document_text", [])
+                    
+                    # Add to global results
+                    results["tables"].extend(page_data.get("tables", []))
+                    results["key_values"].extend(page_data.get("key_values", []))
+                    results["document_text"].extend(page_data.get("document_text", []))
+                
+                if ocr_response.get("error"):
+                    results["errors"].append(f"Page {page_num} OCR error: {ocr_response['error']}")
+                
+                results["pages"].append(page_result)
+            
+            results["processing_time"] = time.time() - start_time
+            print(f"Page-by-page processing completed in {results['processing_time']:.1f}s")
+            
+            return results
+            
+        except Exception as e:
+            error_msg = f"Error in page-by-page processing: {str(e)}"
+            print(error_msg)
+            return {
+                "job_id": job_id,
+                "error": error_msg,
+                "processing_time": time.time() - start_time
+            }
+
+    def _parse_textract_blocks_for_page(self, blocks: List[Dict[str, Any]], page_num: int) -> Dict[str, Any]:
+        """Parse Textract blocks for a specific page"""
+        result = {
+            "document_text": [],
+            "tables": [],
+            "key_values": []
+        }
+        
+        # Create block map for easier lookup
+        block_map = {block["Id"]: block for block in blocks}
+        
+        # Extract document text
+        for block in blocks:
+            if block["BlockType"] == "LINE":
+                result["document_text"].append(block.get("Text", ""))
+        
+        # Extract tables
+        for block in blocks:
+            if block["BlockType"] == "TABLE":
+                table_structure = self._extract_table_structure(block, block_map)
+                if table_structure:
+                    table_structure["page"] = page_num
+                    result["tables"].append(table_structure)
+        
+        # Extract key-value pairs
+        for block in blocks:
+            if block["BlockType"] == "KEY_VALUE_SET":
+                kv_pair = self._extract_key_value_pair(block, block_map)
+                if kv_pair:
+                    kv_pair["page"] = page_num
+                    result["key_values"].append(kv_pair)
+        
+        return result
 
     def extract_text_from_pdf_bytes(self, pdf_bytes: bytes) -> Dict[str, Any]:
         """
