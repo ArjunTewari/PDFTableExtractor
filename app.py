@@ -9,12 +9,16 @@ from textract_processor import extract_text_from_pdf, extract_text_from_pdf_byte
 from llm_processor import process_text_with_llm
 from structured_llm_processor import process_structured_data_with_llm
 from export_utils import export_to_pdf
+from schema_validator import SchemaValidator
 
 app = Flask(__name__)
 
 # Ensure templates directory exists
 os.makedirs('templates', exist_ok=True)
 os.makedirs('static', exist_ok=True)
+
+# Initialize schema validator
+schema_validator = SchemaValidator()
 
 @app.route('/')
 def index():

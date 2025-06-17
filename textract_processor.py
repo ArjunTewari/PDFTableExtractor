@@ -2,7 +2,6 @@ import boto3
 import time
 import uuid
 import json
-import fitz  # PyMuPDF for page splitting
 from typing import Dict, Any, List, Optional
 from io import BytesIO
 
@@ -14,22 +13,9 @@ class TextractProcessor:
         self.bucket_name = 'textract-bucket-lk'
 
     def extract_pages_from_pdf(self, pdf_bytes: bytes) -> List[bytes]:
-        """Split PDF into individual pages and return as list of bytes"""
-        doc = fitz.open(stream=pdf_bytes, filetype="pdf")
-        pages = []
-        
-        for page_num in range(doc.page_count):
-            # Create a new document with just this page
-            new_doc = fitz.open()
-            new_doc.insert_pdf(doc, from_page=page_num, to_page=page_num)
-            
-            # Convert to bytes
-            page_bytes = new_doc.tobytes()
-            pages.append(page_bytes)
-            new_doc.close()
-        
-        doc.close()
-        return pages
+        """For now, return the full PDF as a single page until PyMuPDF is properly configured"""
+        # Temporary implementation - process entire PDF as one page
+        return [pdf_bytes]
     
     def analyze_page_with_textract(self, page_bytes: bytes, job_id: str, page_num: int) -> Dict[str, Any]:
         """Analyze a single page with Textract synchronously"""
