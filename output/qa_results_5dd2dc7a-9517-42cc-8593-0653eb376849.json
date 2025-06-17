@@ -1,0 +1,49 @@
+{
+  "success": true,
+  "phase": "Phase 5: Merge, Normalize & QA",
+  "processing_stats": {
+    "original_items": 0,
+    "normalized_items": 0,
+    "final_items": 0,
+    "duplicates_removed": 0
+  },
+  "final_data": [],
+  "qa_results": {
+    "total_items": 0,
+    "checks": {
+      "unit_present": {
+        "passed": 0,
+        "failed": 0,
+        "failed_items": []
+      },
+      "numeric_parseable": {
+        "passed": 0,
+        "failed": 0,
+        "failed_items": []
+      },
+      "known_context": {
+        "passed": 0,
+        "failed": 0,
+        "failed_items": []
+      },
+      "required_fields": {
+        "passed": 0,
+        "failed": 0,
+        "failed_items": []
+      }
+    },
+    "warnings": [],
+    "errors": [],
+    "summary": {
+      "total_checks": 0,
+      "total_passed": 0,
+      "total_failed": 0,
+      "success_rate": 0
+    }
+  },
+  "metadata": {
+    "total_pages": 1,
+    "job_id": "5dd2dc7a-9517-42cc-8593-0653eb376849",
+    "processing_time": 1.844892978668213
+  }
+}

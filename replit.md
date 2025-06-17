@@ -32,10 +32,12 @@ The main entry point that provides:
 
 ### 2. Enhanced Textract Processing (`textract_processor.py`)
 Advanced PDF processing using Amazon Textract with page-by-page analysis:
+- `extract_pages_from_pdf`: PDF to PNG conversion using pdf2image for Textract compatibility
 - `extract_text_from_pdf_bytes_pagewise`: Page-by-page Textract processing with S3 storage
 - `analyze_page_with_textract`: Synchronous page analysis with TABLES and FORMS features
 - `extract_raw_text_from_page`: OCR fallback using DetectDocumentText
 - Raw JSON storage in S3 for audit and reprocessing capabilities
+- Resolves UnsupportedDocumentException by converting PDFs to high-quality PNG images
 
 ### 3. Structured LLM Processing (`structured_llm_processor.py`)
 Enhanced OpenAI GPT-4o processing with commentary matching:

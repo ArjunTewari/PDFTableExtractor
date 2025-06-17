@@ -15,30 +15,50 @@ class TextractProcessor:
     def extract_pages_from_pdf(self, pdf_bytes: bytes) -> List[bytes]:
         """Extract pages from PDF, converting to PNG for Textract compatibility"""
         try:
-            try:
-                import fitz  # Try standard import first
-            except ImportError:
-                import pymupdf as fitz  # Fallback to pymupdf alias
+            # Primary method: use pdf2image for reliable PDF to image conversion
+            from pdf2image import convert_from_bytes
+            import io
             
-            # Open the PDF document
-            pdf_doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+            # Convert PDF to images with high DPI for better OCR
+            images = convert_from_bytes(pdf_bytes, dpi=300, fmt='PNG')
             pages = []
             
-            for page_num in range(len(pdf_doc)):
-                page = pdf_doc[page_num]
-                # Convert page to PNG for better Textract compatibility
-                mat = fitz.Matrix(2, 2)  # 2x zoom for better quality
-                pix = page.get_pixmap(matrix=mat)
-                png_bytes = pix.tobytes("png")
-                pages.append(png_bytes)
+            for img in images:
+                img_bytes = io.BytesIO()
+                img.save(img_bytes, format='PNG')
+                pages.append(img_bytes.getvalue())
             
-            pdf_doc.close()
+            print(f"Successfully converted PDF to {len(pages)} PNG pages using pdf2image")
             return pages
             
         except Exception as e:
-            print(f"Error extracting pages with PyMuPDF: {e}")
-            # Fallback: return the full PDF as a single page
-            return [pdf_bytes]
+            print(f"Error with pdf2image conversion: {e}")
+            # Fallback: try PyMuPDF
+            try:
+                try:
+                    import fitz
+                except ImportError:
+                    import pymupdf as fitz
+                
+                pdf_doc = fitz.open(stream=pdf_bytes, filetype="pdf")
+                pages = []
+                
+                for page_num in range(len(pdf_doc)):
+                    page = pdf_doc[page_num]
+                    mat = fitz.Matrix(2, 2)  # 2x zoom for better quality
+                    pix = page.get_pixmap(matrix=mat)
+                    png_bytes = pix.tobytes("png")
+                    pages.append(png_bytes)
+                
+                pdf_doc.close()
+                print(f"Successfully converted PDF to {len(pages)} PNG pages using PyMuPDF")
+                return pages
+                
+            except Exception as e2:
+                print(f"Error with PyMuPDF fallback: {e2}")
+                # Last resort: return the full PDF as a single page
+                print("Using PDF bytes directly as fallback")
+                return [pdf_bytes]
     
     def analyze_page_with_textract(self, page_bytes: bytes, job_id: str, page_num: int) -> Dict[str, Any]:
         """Analyze a single page with Textract synchronously"""
