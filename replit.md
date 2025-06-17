@@ -52,7 +52,16 @@ Canonical data validation and transformation:
 - Transforms extracted data to standardized format with page, section, column, value structure
 - Validates required fields and provides detailed error reporting
 
-### 5. Export Utilities (`export_utils.py`)
+### 5. Chunking & Batch Processor (`chunking_processor.py`)
+Phase 3 processing for optimal LLM handling:
+- Groups raw Textract outputs into three batches: Tables, Key-Values, and Narrative
+- Extracts each TABLE Block with Relationships → CELL mappings
+- Processes KEY_VALUE_SET blocks for structured data pairs
+- Chunks narrative text from DetectDocumentText (~400 tokens each)
+- Bundles batches into single payload object with schema validation
+- Saves structured payloads for audit and downstream processing
+
+### 6. Export Utilities (`export_utils.py`)
 Provides functionality to:
 - Export processed data to PDF format using ReportLab
 - Create downloadable links for the exported data
@@ -62,20 +71,27 @@ Provides functionality to:
 ## Data Flow
 
 1. **Input**: User uploads a PDF document through the Flask web interface
-2. **Enhanced Processing**:
-   - PDF is processed page-by-page using Amazon Textract with S3 storage
-   - Structured data (tables, key-values) and OCR text are extracted
-   - Raw JSON results saved to S3 for audit and reprocessing
-   - Data sent to OpenAI GPT-4o for intelligent structuring and commentary matching
-3. **Schema Validation & Transformation**:
+2. **Phase 1 - Page-by-Page Textract Processing**:
+   - PDF split and processed page-by-page using Amazon Textract
+   - Each page analyzed with FeatureTypes=["TABLES","FORMS"] 
+   - Raw JSON saved to s3://bucket/raw/{jobId}/page_{n}.json
+   - OCR fallback using DetectDocumentText for narrative text
+   - Raw text stored as s3://bucket/raw_text/{jobId}/page_{n}.json
+3. **Phase 2 - Enhanced LLM Processing**:
+   - Data sent to OpenAI GPT-4o for intelligent structuring
+   - Commentary matching relates document text to specific data points
+   - Asynchronous processing for optimal performance
+4. **Phase 3 - Chunking & Batch Preparation**:
+   - Raw outputs grouped into three batches: Tables, Key-Values, Narrative
+   - TABLE blocks extracted with Relationships → CELL mappings
+   - KEY_VALUE_SET blocks processed for structured pairs
+   - Narrative text chunked (~400 tokens each) from DetectDocumentText
+   - All batches bundled into single payload object with schema
+5. **Schema Validation & Output**:
    - Extracted data transformed to canonical JSON schema format
    - Schema validation ensures data integrity and consistency
-   - Commentary matching relates document text to specific data points
-4. **Output**:
-   - Structured data displayed with commentary context
-   - Canonical format ensures consistent data structure
-   - Export options available in multiple formats
-   - Validated data can be saved for downstream processing
+   - Structured payloads saved for audit and downstream processing
+   - Export options available in multiple formats with commentary context
 
 ## External Dependencies
 

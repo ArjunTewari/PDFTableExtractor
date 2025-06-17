@@ -11,6 +11,7 @@ from llm_processor import process_text_with_llm
 from structured_llm_processor import process_structured_data_with_llm
 from export_utils import export_to_pdf
 from schema_validator import SchemaValidator
+from chunking_processor import ChunkingProcessor
 
 app = Flask(__name__)
 
@@ -18,8 +19,9 @@ app = Flask(__name__)
 os.makedirs('templates', exist_ok=True)
 os.makedirs('static', exist_ok=True)
 
-# Initialize schema validator
+# Initialize processors
 schema_validator = SchemaValidator()
+chunking_processor = ChunkingProcessor()
 
 @app.route('/')
 def index():
@@ -42,6 +44,50 @@ def extract():
         
         # Return the enhanced JSON format with page-by-page results
         return jsonify(structured_data)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/extract_with_chunking', methods=['POST'])
+def extract_with_chunking():
+    """Enhanced extraction with chunking and batch preparation"""
+    if 'pdf' not in request.files:
+        return jsonify({'error': 'No file uploaded'}), 400
+    
+    file = request.files['pdf']
+    if file.filename == '':
+        return jsonify({'error': 'No file selected'}), 400
+    
+    try:
+        # Phase 1: Extract structured data from PDF using enhanced page-by-page Textract
+        pdf_bytes = file.read()
+        processor = TextractProcessor()
+        textract_result = processor.extract_text_from_pdf_bytes_pagewise(pdf_bytes)
+        
+        # Phase 2: Chunking & Batch Preparation
+        payload = chunking_processor.process_complete_chunking_workflow(textract_result)
+        
+        # Validate payload structure
+        validation = chunking_processor.validate_payload_structure(payload)
+        
+        # Save payload for audit
+        job_id = textract_result.get('job_id', 'unknown')
+        output_path = f'output/payload_{job_id}.json'
+        os.makedirs('output', exist_ok=True)
+        chunking_processor.save_payload(payload, output_path)
+        
+        return jsonify({
+            'success': True,
+            'textract_result': textract_result,
+            'chunked_payload': payload,
+            'validation': validation,
+            'payload_saved': output_path,
+            'processing_stats': {
+                'textract_time': textract_result.get('processing_time', 0),
+                'total_pages': textract_result.get('total_pages', 0),
+                'chunking_stats': payload.get('processing_stats', {})
+            }
+        })
+        
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -234,6 +280,37 @@ def transform_to_canonical():
             'validation_result': validation_result,
             'total_items': len(canonical_data)
         })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/chunk_and_batch', methods=['POST'])
+def chunk_and_batch():
+    """Phase 3: Chunking & Batch Preparation"""
+    data = request.json
+    if not data or 'textract_result' not in data:
+        return jsonify({'error': 'No textract_result provided'}), 400
+    
+    try:
+        # Process complete chunking workflow
+        payload = chunking_processor.process_complete_chunking_workflow(data['textract_result'])
+        
+        # Validate payload structure
+        validation = chunking_processor.validate_payload_structure(payload)
+        
+        # Save payload if requested
+        if data.get('save_payload', False):
+            filename = data.get('filename', f'payload_{int(time.time())}.json')
+            output_path = f'output/{filename}'
+            os.makedirs('output', exist_ok=True)
+            chunking_processor.save_payload(payload, output_path)
+        
+        return jsonify({
+            'success': True,
+            'payload': payload,
+            'validation': validation,
+            'stats': payload.get('processing_stats', {})
+        })
+        
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
