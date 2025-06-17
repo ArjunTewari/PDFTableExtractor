@@ -112,11 +112,16 @@ Provides functionality to:
    - High-quality prompts ensure JSON output matching canonical schema
    - Streaming JSON parsing with real-time processing capability
    - Maps all data types to standardized (page, section, row_id, column, value, unit, context) format
-6. **Schema Validation & Output**:
-   - Extracted data transformed to canonical JSON schema format
+6. **Phase 5 - Merge, Normalize & QA**:
+   - Concatenates the three extraction arrays into unified dataset
+   - Normalizes units using regex patterns and GPT-3.5-turbo for complex cases
+   - Deduplicates and sorts by (page, section, row_id) for consistency
+   - Runs comprehensive QA checks with detailed failure logging
+7. **Schema Validation & Output**:
+   - Final data transformed to canonical JSON schema format
    - Schema validation ensures data integrity and consistency
-   - Structured payloads saved for audit and downstream processing
-   - Export options available in multiple formats with commentary context
+   - All processing results saved for audit and downstream processing
+   - Export options available in multiple formats with quality metrics
 
 ## External Dependencies
 
