@@ -23,20 +23,31 @@ async def process_table_data(table_data: Dict[str, Any]) -> Dict[str, Any]:
     """Process table data with GPT-4o asynchronously"""
     prompt = f"""You are a data analyst. The following table data has been extracted from a document.
 
-Analyze this table and extract ALL data values. Create a comprehensive, structured representation where EVERY piece of information is captured with appropriate field names.
+Analyze this table and reconstruct it as a proper table structure with headers and data rows.
 
 Table data:
 {json.dumps(table_data, indent=2)}
 
 Requirements:
-1. Extract ALL cell values, not just some
-2. Create descriptive field names for each data point
-3. Include row headers, column headers, and all cell values
-4. Preserve numerical values, percentages, dates, and text
-5. If there are multiple rows, create separate entries for each row
+1. Identify which row contains the headers (usually first row)
+2. Organize remaining rows as data rows under those headers
+3. Return both the structured table AND individual field-value pairs
+4. Preserve all numerical values, percentages, dates, and text exactly
+5. Handle empty cells appropriately
 
-Return as a JSON object with all extracted data points. Example structure:
-{{"Row_1_Company": "ABC Corp", "Row_1_Revenue": "$100M", "Row_2_Company": "XYZ Inc", "Row_2_Revenue": "$85M"}}"""
+Return as JSON with this structure:
+{{
+  "table_headers": ["Column1", "Column2", "Column3"],
+  "table_rows": [
+    ["Value1", "Value2", "Value3"],
+    ["Value4", "Value5", "Value6"]
+  ],
+  "field_value_pairs": {{
+    "Row_1_Column1": "Value1",
+    "Row_1_Column2": "Value2",
+    "Row_2_Column1": "Value4"
+  }}
+}}"""
 
     try:
         loop = asyncio.get_event_loop()

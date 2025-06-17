@@ -122,8 +122,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }, 100);
 
-        // Send file to server using complete 5-phase pipeline
-        fetch('/complete_extraction_pipeline', {
+        // Send file to server
+        fetch('/extract', {
             method: 'POST',
             body: formData
         })
@@ -141,20 +141,12 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             hideLoading();
             
-            if (data.success && data.final_data) {
-                // Handle complete 5-phase pipeline response
-                extractedText = data.final_data.map(item => 
-                    `Page ${item.page}, ${item.section}: ${item.column} = ${item.value} ${item.unit || ''}`
-                ).join('\n');
-                currentStructuredData = data;
-                showExtractedText(extractedText, data);
-            } else if (data.document_text) {
-                // Handle legacy response format
+            if (data.document_text) {
                 extractedText = data.document_text.join('\n');
                 currentStructuredData = data;
                 showExtractedText(extractedText, data);
             } else {
-                throw new Error('No data was extracted from the PDF');
+                throw new Error('No text was extracted from the PDF');
             }
         })
         .catch(error => {
@@ -170,82 +162,39 @@ document.addEventListener('DOMContentLoaded', function() {
             existingStructuredInfo.remove();
         }
         
-        // Show processing info for complete pipeline or structured data
+        // Show processing info and skip to AI processing
         if (structuredData) {
+            const documentText = structuredData.document_text || [];
+            const tables = structuredData.tables || [];
+            const keyValues = structuredData.key_values || [];
+            
             const structuredInfo = document.createElement('div');
             structuredInfo.className = 'alert alert-success mb-3 structured-data-info';
-            
-            if (structuredData.success && structuredData.phases_completed) {
-                // Complete 5-phase pipeline results
-                const phase1 = structuredData.phase_1_textract || {};
-                const phase2 = structuredData.phase_2_chunking || {};
-                const phase3 = structuredData.phase_3_extraction || {};
-                const phase4 = structuredData.phase_4_merge_qa || {};
-                const phase5 = structuredData.phase_5_validation || {};
-                
-                structuredInfo.innerHTML = `
-                    <h6 class="mb-2">📊 Document Processed Successfully</h6>
-                    <div class="row small mb-2">
-                        <div class="col-md-3">Pages: ${phase1.total_pages || 0}</div>
-                        <div class="col-md-3">Tables: ${phase2.total_tables || 0}</div>
-                        <div class="col-md-3">Key-Values: ${phase2.total_kvs || 0}</div>
-                        <div class="col-md-3">Processing: Complete</div>
-                    </div>
-                    <div class="row small mb-2">
-                        <div class="col-md-3">Extracted Items: ${phase3.total_extracted_items || 0}</div>
-                        <div class="col-md-3">Final Items: ${phase4.final_items || 0}</div>
-                        <div class="col-md-3">QA Success: ${Math.round((phase4.qa_success_rate || 0) * 100)}%</div>
-                        <div class="col-md-3">Phases: ${structuredData.phases_completed}/5</div>
-                    </div>
-                    <div class="text-center mt-3">
-                        <button class="btn btn-outline-secondary btn-sm" onclick="showJsonModal()">
-                            View Results JSON
-                        </button>
-                    </div>
-                `;
-                
-                // Auto-process since it's already complete
-                setTimeout(() => {
-                    processText();
-                }, 500);
-                
-            } else {
-                // Legacy structured data format
-                const documentText = structuredData.document_text || [];
-                const tables = structuredData.tables || [];
-                const keyValues = structuredData.key_values || [];
-                
-                structuredInfo.innerHTML = `
-                    <h6 class="mb-2">📊 Document Processed Successfully</h6>
-                    <div class="row small">
-                        <div class="col-md-3">Text Lines: ${documentText.length}</div>
-                        <div class="col-md-3">Tables: ${tables.length}</div>
-                        <div class="col-md-3">Key-Values: ${keyValues.length}</div>
-                        <div class="col-md-3">Processing: Complete</div>
-                    </div>
-                    <div class="text-center mt-3">
-                        <button id="process-ai-btn" class="btn btn-primary btn-lg">
-                            <i class="bi bi-gear"></i> Process with AI
-                        </button>
-                        <button class="btn btn-outline-secondary btn-sm ms-2" onclick="showJsonModal()">
-                            View Raw JSON
-                        </button>
-                    </div>
-                `;
-                
-                // Add event listener for AI processing
-                setTimeout(() => {
-                    const processAiBtn = document.getElementById('process-ai-btn');
-                    if (processAiBtn) {
-                        processAiBtn.addEventListener('click', processText);
-                    }
-                }, 100);
-            }
+            structuredInfo.innerHTML = `
+                <h6 class="mb-2">📊 Document Processed Successfully</h6>
+                <div class="row small">
+                    <div class="col-md-3">Text Lines: ${documentText.length}</div>
+                    <div class="col-md-3">Tables: ${tables.length}</div>
+                    <div class="col-md-3">Key-Values: ${keyValues.length}</div>
+                    <div class="col-md-3">Processing: Complete</div>
+                </div>
+                <div class="text-center mt-3">
+                    <button id="process-ai-btn" class="btn btn-primary btn-lg">
+                        <i class="bi bi-gear"></i> Process with AI
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm ms-2" onclick="showJsonModal()">
+                        View Raw JSON
+                    </button>
+                </div>
+            `;
             
             // Replace extracted text section content
             extractedTextSection.innerHTML = '';
             extractedTextSection.appendChild(structuredInfo);
             extractedTextSection.classList.remove('d-none');
+            
+            // Add event listener for AI processing
+            document.getElementById('process-ai-btn').addEventListener('click', processText);
         }
         
         window.scrollTo({
@@ -263,13 +212,89 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Check if this is already a complete 5-phase pipeline result
-        if (currentStructuredData.success && currentStructuredData.phases_completed === 5) {
-            // Already processed - display the final results directly
-            displayStructuredResults(currentStructuredData);
-            return;
-        }
+        showLoading('Starting AI processing...');
 
+        // Try streaming first, fallback to regular processing
+        processWithStreaming();
+    }
+
+    function processWithStreaming() {
+        fetch('/process_stream', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(currentStructuredData)
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Streaming not available');
+            }
+            
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            
+            function readStream() {
+                return reader.read().then(({ done, value }) => {
+                    if (done) {
+                        hideLoading();
+                        return;
+                    }
+                    
+                    const chunk = decoder.decode(value);
+                    const lines = chunk.split('\n');
+                    
+                    lines.forEach(line => {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.slice(6));
+                                handleStreamingData(data);
+                            } catch (e) {
+                                console.error('Error parsing streaming data:', e);
+                            }
+                        }
+                    });
+                    
+                    return readStream();
+                });
+            }
+            
+            return readStream();
+        })
+        .catch(error => {
+            console.log('Streaming failed, using regular processing');
+            processRegular();
+        });
+    }
+
+    function handleStreamingData(data) {
+        const loadingMsg = document.getElementById('loading-message');
+        
+        if (data.status === 'starting' || data.status === 'processing' || data.status === 'enhancing') {
+            if (loadingMsg) {
+                loadingMsg.textContent = data.message;
+            }
+        } else if (data.status === 'complete') {
+            if (loadingMsg) {
+                loadingMsg.textContent = 'Finalizing results...';
+            }
+        } else if (data.status === 'success') {
+            hideLoading();
+            console.log('Processing result:', data);
+            
+            processedData = data.dataframe_data || [];
+            displayResultsWithTables(processedData);
+            
+            if (data.summary) {
+                showProcessingSummary(data.summary);
+            }
+        } else if (data.status === 'error') {
+            hideLoading();
+            showError('Processing failed: ' + data.error);
+        }
+    }
+
+    function processRegular() {
         showLoading('Processing structured data with AI...');
 
         fetch('/process', {
@@ -290,8 +315,12 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(data => {
             hideLoading();
             
-            // Display structured processing results
-            displayStructuredResults(data);
+            processedData = data.dataframe_data || [];
+            displayResultsWithTables(processedData);
+            
+            if (data.summary) {
+                showProcessingSummary(data.summary);
+            }
         })
         .catch(error => {
             hideLoading();
@@ -305,154 +334,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // Clear previous results
         resultsSection.innerHTML = '';
         
-        // Check if this is complete 5-phase pipeline data
-        if (data.success && data.phases_completed === 5 && data.final_data) {
-            // Display complete pipeline results
-            const qaResults = data.qa_results || {};
-            const phase4 = data.phase_4_merge_qa || {};
-            
-            let html = `
-                <div class="processing-summary alert alert-success mb-3">
-                    <h5>5-Phase Processing Complete</h5>
-                    <div class="row small">
-                        <div class="col-md-3">Final Items: ${phase4.final_items || 0}</div>
-                        <div class="col-md-3">QA Success: ${Math.round((phase4.qa_success_rate || 0) * 100)}%</div>
-                        <div class="col-md-3">Duplicates Removed: ${phase4.duplicates_removed || 0}</div>
-                        <div class="col-md-3">Validation: ${data.phase_5_validation?.validation_valid ? 'Pass' : 'Fail'}</div>
-                    </div>
-                </div>
-            `;
-            
-            displayCanonicalData(data.final_data, html);
-            return;
-        }
-        
-        // Legacy format - redirect to complete pipeline processing
-        displayLegacyResults(data);
-    }
-
-    function displayCanonicalData(finalData, summaryHtml) {
-        const resultsSection = document.getElementById('results-section');
-        
-        // Group data by section type
-        const groupedData = {
-            'Table': [],
-            'KeyValue': [],
-            'Narrative': []
-        };
-        
-        finalData.forEach(item => {
-            if (groupedData[item.section]) {
-                groupedData[item.section].push(item);
-            }
-        });
-        
-        let html = summaryHtml;
-        let allCsvData = [];
-        
-        // Display each section
-        Object.entries(groupedData).forEach(([sectionType, items]) => {
-            if (items.length > 0) {
-                html += `<h5>📊 ${sectionType} Data</h5>`;
-                html += `
-                    <div class="card mb-3">
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-striped table-sm">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Page</th>
-                                            <th>Row</th>
-                                            <th>Column</th>
-                                            <th>Value</th>
-                                            <th>Unit</th>
-                                            <th>Context</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                `;
-                
-                items.forEach(item => {
-                    html += `
-                        <tr>
-                            <td>${item.page}</td>
-                            <td>${item.row_id}</td>
-                            <td>${item.column}</td>
-                            <td>${item.value}</td>
-                            <td>${item.unit || ''}</td>
-                            <td>${item.context || ''}</td>
-                        </tr>
-                    `;
-                    
-                    allCsvData.push({
-                        page: item.page,
-                        section: item.section,
-                        row_id: item.row_id,
-                        column: item.column,
-                        value: item.value,
-                        unit: item.unit || '',
-                        context: item.context || ''
-                    });
-                });
-                
-                html += `
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-        });
-        
-        if (allCsvData.length === 0) {
-            html += `
-                <div class="alert alert-warning">
-                    <h6>No structured data found</h6>
-                    <p>The AI processing did not extract meaningful data from the document.</p>
-                </div>
-            `;
-        } else {
-            // Add export buttons
-            html += `
-                <div class="text-center mt-4">
-                    <button id="export-csv-btn" class="btn btn-success me-2">
-                        📄 Export CSV (${allCsvData.length} rows)
-                    </button>
-                    <button id="export-json-btn" class="btn btn-primary me-2">
-                        📋 Export JSON
-                    </button>
-                    <button id="export-excel-btn" class="btn btn-info">
-                        📊 Export Excel
-                    </button>
-                </div>
-            `;
-        }
-        
-        resultsSection.innerHTML = html;
-        resultsSection.classList.remove('d-none');
-        
-        // Store processed data for export
-        processedData = allCsvData;
-        
-        // Add export event listeners
-        if (allCsvData.length > 0) {
-            document.getElementById('export-csv-btn').addEventListener('click', () => exportToCsv(allCsvData));
-            document.getElementById('export-json-btn').addEventListener('click', () => exportToJson(currentStructuredData));
-            document.getElementById('export-excel-btn').addEventListener('click', () => exportToExcel(allCsvData));
-        }
-        
-        // Scroll to results
-        window.scrollTo({
-            top: resultsSection.offsetTop - 20,
-            behavior: 'smooth'
-        });
-    }
-
-    // Legacy display function for backwards compatibility
-    function displayLegacyResults(data) {
-        const resultsSection = document.getElementById('results-section');
-        
         let html = `
             <div class="processing-summary alert alert-success mb-3">
                 <h5>AI Processing Complete</h5>
@@ -464,8 +345,145 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             </div>
         `;
-
-        if (!data.processed_tables && !data.processed_key_values && !data.processed_document_text) {
+        
+        let allCsvData = [];
+        let hasData = false;
+        
+        // Display Tables
+        if (data.processed_tables && data.processed_tables.length > 0) {
+            html += '<h5>📊 Extracted Tables</h5>';
+            data.processed_tables.forEach((table, index) => {
+                if (table.structured_table && !table.structured_table.error) {
+                    hasData = true;
+                    html += `
+                        <div class="card mb-3">
+                            <div class="card-header bg-primary text-white">
+                                <h6 class="mb-0">Table ${index + 1} (Page ${table.page})</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-sm">
+                                        <thead class="table-light">
+                                            <tr><th>Field</th><th>Value</th></tr>
+                                        </thead>
+                                        <tbody>
+                    `;
+                    
+                    Object.entries(table.structured_table).forEach(([key, value]) => {
+                        if (key !== 'error') {
+                            html += `<tr><td><strong>${key}</strong></td><td>${value}</td></tr>`;
+                            allCsvData.push({
+                                source: `Table ${index + 1}`,
+                                type: 'Table Data',
+                                field: key,
+                                value: String(value),
+                                page: table.page
+                            });
+                        }
+                    });
+                    
+                    html += `
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+        }
+        
+        // Display Key-Value Pairs
+        if (data.processed_key_values && data.processed_key_values.structured_key_values && !data.processed_key_values.structured_key_values.error) {
+            hasData = true;
+            html += `
+                <h5>🔑 Key-Value Pairs</h5>
+                <div class="card mb-3">
+                    <div class="card-header bg-info text-white">
+                        <h6 class="mb-0">Document Metadata</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-sm">
+                                <thead class="table-light">
+                                    <tr><th>Field</th><th>Value</th></tr>
+                                </thead>
+                                <tbody>
+            `;
+            
+            Object.entries(data.processed_key_values.structured_key_values).forEach(([key, value]) => {
+                if (key !== 'error') {
+                    html += `<tr><td><strong>${key}</strong></td><td>${value}</td></tr>`;
+                    allCsvData.push({
+                        source: 'Key-Value Pairs',
+                        type: 'Structured Data',
+                        field: key,
+                        value: String(value),
+                        page: 'N/A'
+                    });
+                }
+            });
+            
+            html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Display Financial Data
+        if (data.processed_document_text && data.processed_document_text.length > 0) {
+            const validChunks = data.processed_document_text.filter(chunk => 
+                chunk.extracted_facts && !chunk.extracted_facts.error && 
+                Object.keys(chunk.extracted_facts).length > 0
+            );
+            
+            if (validChunks.length > 0) {
+                hasData = true;
+                html += '<h5>💰 Financial & Business Data</h5>';
+                
+                validChunks.forEach((chunk, index) => {
+                    html += `
+                        <div class="card mb-3">
+                            <div class="card-header bg-success text-white">
+                                <h6 class="mb-0">Text Segment ${index + 1}</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped table-sm">
+                                        <thead class="table-light">
+                                            <tr><th>Metric</th><th>Value</th></tr>
+                                        </thead>
+                                        <tbody>
+                    `;
+                    
+                    Object.entries(chunk.extracted_facts).forEach(([key, value]) => {
+                        if (key !== 'error') {
+                            html += `<tr><td><strong>${key}</strong></td><td>${value}</td></tr>`;
+                            allCsvData.push({
+                                source: `Text Segment ${index + 1}`,
+                                type: 'Financial Data',
+                                field: key,
+                                value: String(value),
+                                page: 'N/A'
+                            });
+                        }
+                    });
+                    
+                    html += `
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+        }
+        
+        if (!hasData) {
             html += `
                 <div class="alert alert-warning">
                     <h6>No structured data found</h6>
@@ -474,49 +492,51 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
         }
         
+        // Add export buttons
+        html += `
+            <div class="text-center mt-4">
+                <button id="export-csv-btn" class="btn btn-success me-2" ${!hasData ? 'disabled' : ''}>
+                    <i class="bi bi-file-earmark-spreadsheet"></i> Export CSV (${allCsvData.length} rows)
+                </button>
+                <button id="export-json-btn" class="btn btn-outline-primary me-2">
+                    <i class="bi bi-file-earmark-code"></i> Export JSON
+                </button>
+                <button id="export-excel-btn" class="btn btn-outline-success" ${!hasData ? 'disabled' : ''}>
+                    <i class="bi bi-file-earmark-excel"></i> Export Excel
+                </button>
+            </div>
+        `;
+        
         resultsSection.innerHTML = html;
         resultsSection.classList.remove('d-none');
+        
+        // Add export event listeners
+        if (hasData) {
+            document.getElementById('export-csv-btn').addEventListener('click', () => {
+                exportToCSV(allCsvData);
+            });
+            
+            document.getElementById('export-excel-btn').addEventListener('click', () => {
+                exportToExcel(allCsvData);
+            });
+        }
+        
+        document.getElementById('export-json-btn').addEventListener('click', () => {
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'structured_data.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
         
         window.scrollTo({
             top: resultsSection.offsetTop - 20,
             behavior: 'smooth'
         });
-    }
-
-    // Export functions
-    function exportToCsv(data) {
-        const headers = Object.keys(data[0] || {});
-        const csvContent = [
-            headers.join(','),
-            ...data.map(row => headers.map(header => `"${row[header] || ''}"`).join(','))
-        ].join('\n');
-        
-        const blob = new Blob([csvContent], { type: 'text/csv' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'extracted_data.csv';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    }
-
-    function exportToJson(data) {
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'structured_data.json';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    }
-
-    function exportToExcel(data) {
-        // For now, export as CSV since Excel requires additional libraries
-        exportToCsv(data);
     }
     
     function createUnifiedTable(data) {
@@ -906,35 +926,151 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function displayResults(data) {
+        displayResultsWithTables(data);
+    }
+
+    function displayResultsWithTables(data) {
         if (!data.length) {
             showError('No structured data could be extracted');
             return;
         }
 
         // Clear previous results
-        tableHeader.innerHTML = '';
-        tableBody.innerHTML = '';
+        resultsSection.innerHTML = `
+            <h4>Extracted Data with Commentary</h4>
+            <div id="tables-container"></div>
+            <div id="data-table-container">
+                <h5>All Data Points</h5>
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead id="data-table-header" class="table-dark"></thead>
+                        <tbody id="data-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="mt-3">
+                <button class="btn btn-outline-primary" id="export-json-btn">Export as JSON</button>
+                <button class="btn btn-outline-success" id="export-csv-btn">Export as CSV</button>
+                <button class="btn btn-outline-danger" id="export-pdf-btn">Export as PDF</button>
+            </div>
+        `;
 
-        // Create table header
-        const headers = Object.keys(data[0]);
-        headers.forEach(header => {
-            const th = document.createElement('th');
-            th.textContent = header;
-            tableHeader.appendChild(th);
+        const tablesContainer = document.getElementById('tables-container');
+        const dataTableHeader = document.getElementById('data-table-header');
+        const dataTableBody = document.getElementById('data-table-body');
+
+        // Reconstruct and display actual tables
+        const tableStructures = data.filter(row => row.is_table_header && row.headers && row.rows);
+        
+        tableStructures.forEach((tableHeader, index) => {
+            const tableDiv = document.createElement('div');
+            tableDiv.className = 'card mb-4';
+            
+            const headers = tableHeader.headers;
+            const rows = tableHeader.rows;
+            
+            tableDiv.innerHTML = `
+                <div class="card-header bg-primary text-white">
+                    <h6 class="mb-0">Reconstructed Table ${index + 1} (Page ${tableHeader.page})</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover table-sm">
+                            <thead class="table-light">
+                                <tr>
+                                    ${headers.map(header => `<th>${header}</th>`).join('')}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rows.map(row => `
+                                    <tr>
+                                        ${row.map(cell => `<td>${cell || '-'}</td>`).join('')}
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                    <small class="text-muted">
+                        Original table reconstructed from extracted data points
+                    </small>
+                </div>
+            `;
+            
+            tablesContainer.appendChild(tableDiv);
         });
 
-        // Create table rows
+        // Check if any row has commentary
+        const hasCommentary = data.some(row => row.commentary && row.commentary.trim());
+
+        // Create data table header with conditional commentary column
+        const headers = ['Source', 'Type', 'Field', 'Value', 'Page'];
+        if (hasCommentary) {
+            headers.push('Commentary');
+        }
+        
+        dataTableHeader.innerHTML = `
+            <tr>
+                ${headers.map(header => `<th>${header}</th>`).join('')}
+            </tr>
+        `;
+
+        // Create data table rows
         data.forEach(row => {
+            // Skip table header rows in the detailed view
+            if (row.is_table_header) return;
+            
             const tr = document.createElement('tr');
             
-            headers.forEach(header => {
-                const td = document.createElement('td');
-                td.textContent = row[header] || '';
-                tr.appendChild(td);
-            });
+            // Add source column with badge
+            const sourceTd = document.createElement('td');
+            sourceTd.innerHTML = `<span class="badge bg-secondary">${row.source || ''}</span>`;
+            tr.appendChild(sourceTd);
             
-            tableBody.appendChild(tr);
+            // Add type column with badge
+            const typeTd = document.createElement('td');
+            const badgeClass = row.type === 'General Commentary' ? 'bg-warning' : 
+                              row.type === 'Table Data' ? 'bg-success' : 'bg-info';
+            typeTd.innerHTML = `<span class="badge ${badgeClass}">${row.type || ''}</span>`;
+            tr.appendChild(typeTd);
+            
+            // Add field column with bold text
+            const fieldTd = document.createElement('td');
+            fieldTd.innerHTML = `<strong>${row.field || ''}</strong>`;
+            tr.appendChild(fieldTd);
+            
+            // Add value column
+            const valueTd = document.createElement('td');
+            valueTd.textContent = row.value || '';
+            tr.appendChild(valueTd);
+            
+            // Add page column
+            const pageTd = document.createElement('td');
+            pageTd.textContent = row.page || '';
+            tr.appendChild(pageTd);
+            
+            // Add commentary column if needed
+            if (hasCommentary) {
+                const commentaryTd = document.createElement('td');
+                commentaryTd.className = 'commentary-cell';
+                if (row.commentary && row.commentary.trim()) {
+                    commentaryTd.innerHTML = `<span class="text-muted small">${row.commentary}</span>`;
+                    tr.classList.add('has-commentary');
+                } else {
+                    commentaryTd.innerHTML = '<span class="text-muted">-</span>';
+                }
+                tr.appendChild(commentaryTd);
+            }
+            
+            dataTableBody.appendChild(tr);
         });
+
+        // Re-attach export event listeners
+        document.getElementById('export-json-btn').addEventListener('click', exportJson);
+        document.getElementById('export-csv-btn').addEventListener('click', exportCsv);
+        document.getElementById('export-pdf-btn').addEventListener('click', exportPdf);
+
+        // Store processed data globally
+        processedData = data;
 
         // Show results section
         resultsSection.classList.remove('d-none');

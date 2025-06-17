@@ -2,7 +2,7 @@
 
 ## Overview
 
-This Flask-based web application leverages advanced cloud technologies to extract, analyze, and visualize structured information from PDF documents using intelligent asynchronous processing. The application now features enhanced page-by-page Textract processing with commentary matching functionality.
+This application extracts text from PDF files, processes the extracted content using an OpenAI language model to identify structured information, and displays the results in a tabulated format. Users can then download the results in various formats.
 
 ## User Preferences
 
@@ -10,120 +10,48 @@ Preferred communication style: Simple, everyday language.
 
 ## System Architecture
 
-The application follows an enhanced cloud-native architecture:
+The application follows a simple, streamlined architecture:
 
-1. **Frontend**: Flask web interface with responsive HTML/CSS/JavaScript
-2. **Backend Processing**: Python modules for advanced PDF processing and AI-powered analysis
-3. **Cloud Services**: Amazon Textract for document analysis with S3 storage
-4. **AI Processing**: OpenAI GPT-4o for intelligent data structuring and commentary matching
-5. **Data Flow**: PDF upload → Page-by-page Textract extraction → LLM processing with commentary → Enhanced tabulation → Export options
+1. **Frontend**: Streamlit web interface for user interactions
+2. **Backend Processing**: Python modules for PDF processing and LLM interaction 
+3. **Data Flow**: PDF upload → Text extraction → LLM processing → Tabulation → Export options
 
-The architecture prioritizes comprehensive data extraction, intelligent analysis, and structured presentation with commentary context.
+The architecture prioritizes simplicity and straightforward user interaction, with each component handling a specific responsibility in the data processing pipeline.
 
 ## Key Components
 
-### 1. Flask Web Interface (`app.py`)
+### 1. Streamlit Interface (`app.py`)
 The main entry point that provides:
-- PDF file upload functionality via responsive web interface
-- Enhanced page-by-page Textract processing endpoint
-- Legacy processing endpoint for backwards compatibility
-- Display of extracted and processed data with commentary
+- PDF file upload functionality
+- Display of extracted and processed data
 - Export options for the processed data
 
-### 2. Enhanced Textract Processing (`textract_processor.py`)
-Advanced PDF processing using Amazon Textract with page-by-page analysis:
-- `extract_pages_from_pdf`: PDF to PNG conversion using pdf2image for Textract compatibility
-- `extract_text_from_pdf_bytes_pagewise`: Page-by-page Textract processing with S3 storage
-- `analyze_page_with_textract`: Synchronous page analysis with TABLES and FORMS features
-- `extract_raw_text_from_page`: OCR fallback using DetectDocumentText
-- Raw JSON storage in S3 for audit and reprocessing capabilities
-- Resolves UnsupportedDocumentException by converting PDFs to high-quality PNG images
+### 2. PDF Processing (`pdf_processor.py`)
+Handles the extraction of text from PDF files using PyPDF2:
+- `extract_text_from_pdf`: Processes PDF files from a file path
+- `extract_text_from_pdf_bytes`: Processes PDF content provided as bytes
 
-### 3. Structured LLM Processing (`structured_llm_processor.py`)
-Enhanced OpenAI GPT-4o processing with commentary matching:
-- Asynchronous processing of tables, key-values, and document text
-- Commentary matching functionality that relates document text to extracted data
-- Comprehensive data extraction with ALL table values preserved
-- General commentary collection for unmatched text segments
+### 3. LLM Processing (`llm_processor.py`)
+Leverages OpenAI's GPT-4o model to:
+- Analyze extracted text from PDFs
+- Convert unstructured text into structured, tabular JSON data
+- Uses LangChain for prompt construction and model interaction
 
-### 4. Schema Validation System (`schema_validator.py` & `schema.json`)
-Canonical data validation and transformation:
-- `schema.json`: Defines the canonical JSON schema for all extracted data
-- `SchemaValidator`: Python utility for validation and transformation
-- Ensures data consistency across all processing stages
-- Transforms extracted data to standardized format with page, section, column, value structure
-- Validates required fields and provides detailed error reporting
-
-### 5. Chunking & Batch Processor (`chunking_processor.py`)
-Phase 3 processing for optimal LLM handling:
-- Groups raw Textract outputs into three batches: Tables, Key-Values, and Narrative
-- Extracts each TABLE Block with Relationships → CELL mappings
-- Processes KEY_VALUE_SET blocks for structured data pairs
-- Chunks narrative text from DetectDocumentText (~400 tokens each)
-- Bundles batches into single payload object with schema validation
-- Saves structured payloads for audit and downstream processing
-
-### 6. LLM Structured Extractor (`llm_structured_extractor.py`)
-Phase 4 advanced LLM processing with optimized prompts:
-- Three parallel GPT-4o calls for Tables, Key-Values, and Narrative extraction
-- High-quality prompts ensuring JSON output matching canonical schema
-- Streaming JSON parsing with `stream=True` for real-time processing
-- Maps table cells to (page, section="Table", row_id, column=header, value, unit, context=label)
-- Maps key-value pairs to (page, section="KeyValue", row_id, column=key, value, unit, context="")
-- Maps narrative chunks to (page, section="Narrative", row_id, column="text", value=line, unit="", context="")
-- Comprehensive error handling and validation for all extraction types
-
-### 7. Merge, Normalize & QA (`merge_normalize_qa.py`)
-Phase 5 data consolidation and quality assurance:
-- Concatenates the three extraction arrays (tables, key-values, narrative)
-- Normalizes units using regex patterns and GPT-3.5-turbo for complex cases
-- Converts "457 thousand" → value=457, unit="thousand"
-- Converts "$115.5 million" → value=115.5, unit="million USD"
-- Deduplicates and sorts by (page, section, row_id)
-- Runs comprehensive QA checks: unit presence, numeric parseability, known context
-- Provides detailed failure logging and success rate metrics
-
-### 8. Export Utilities (`export_utils.py`)
+### 4. Export Utilities (`export_utils.py`)
 Provides functionality to:
 - Export processed data to PDF format using ReportLab
 - Create downloadable links for the exported data
-- Handle enhanced data structures with commentary fields
-- Support canonical format exports
 
 ## Data Flow
 
-1. **Input**: User uploads a PDF document through the Flask web interface
-2. **Phase 1 - Page-by-Page Textract Processing**:
-   - PDF split and processed page-by-page using Amazon Textract
-   - Each page analyzed with FeatureTypes=["TABLES","FORMS"] 
-   - Raw JSON saved to s3://bucket/raw/{jobId}/page_{n}.json
-   - OCR fallback using DetectDocumentText for narrative text
-   - Raw text stored as s3://bucket/raw_text/{jobId}/page_{n}.json
-3. **Phase 2 - Enhanced LLM Processing**:
-   - Data sent to OpenAI GPT-4o for intelligent structuring
-   - Commentary matching relates document text to specific data points
-   - Asynchronous processing for optimal performance
-4. **Phase 3 - Chunking & Batch Preparation**:
-   - Raw outputs grouped into three batches: Tables, Key-Values, Narrative
-   - TABLE blocks extracted with Relationships → CELL mappings
-   - KEY_VALUE_SET blocks processed for structured pairs
-   - Narrative text chunked (~400 tokens each) from DetectDocumentText
-   - All batches bundled into single payload object with schema
-5. **Phase 4 - LLM Structured Extraction**:
-   - Three parallel GPT-4o calls process Tables, Key-Values, and Narrative batches
-   - High-quality prompts ensure JSON output matching canonical schema
-   - Streaming JSON parsing with real-time processing capability
-   - Maps all data types to standardized (page, section, row_id, column, value, unit, context) format
-6. **Phase 5 - Merge, Normalize & QA**:
-   - Concatenates the three extraction arrays into unified dataset
-   - Normalizes units using regex patterns and GPT-3.5-turbo for complex cases
-   - Deduplicates and sorts by (page, section, row_id) for consistency
-   - Runs comprehensive QA checks with detailed failure logging
-7. **Schema Validation & Output**:
-   - Final data transformed to canonical JSON schema format
-   - Schema validation ensures data integrity and consistency
-   - All processing results saved for audit and downstream processing
-   - Export options available in multiple formats with quality metrics
+1. **Input**: User uploads a PDF document through the Streamlit interface
+2. **Processing**:
+   - PDF text is extracted using PyPDF2
+   - Extracted text is sent to OpenAI's GPT-4o model
+   - The LLM analyzes the text and structures it into tabular format
+3. **Output**:
+   - Structured data is displayed as a table in the interface
+   - User can download the data in various formats
 
 ## External Dependencies
 

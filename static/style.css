@@ -41,6 +41,25 @@ body {
     overflow-y: auto;
 }
 
+/* Commentary column styles */
+.commentary-cell {
+    max-width: 250px;
+    word-wrap: break-word;
+    font-size: 0.9em;
+}
+
+.has-commentary {
+    background-color: rgba(25, 135, 84, 0.05);
+}
+
+.has-commentary:hover {
+    background-color: rgba(25, 135, 84, 0.1);
+}
+
+.commentary-cell .text-muted {
+    line-height: 1.4;
+}
+
 /* Loading spinner */
 #loading-overlay {
     display: none;
