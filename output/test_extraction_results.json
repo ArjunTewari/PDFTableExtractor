@@ -1,0 +1,246 @@
+{
+  "tables_extracted": [
+    {
+      "page": 1,
+      "section": "Table",
+      "row_id": 1,
+      "column": "Company",
+      "value": "Company",
+      "unit": "",
+      "context": "header"
+    },
+    {
+      "page": 1,
+      "section": "Table",
+      "row_id": 1,
+      "column": "Revenue",
+      "value": "Revenue",
+      "unit": "",
+      "context": "header"
+    },
+    {
+      "page": 1,
+      "section": "Table",
+      "row_id": 1,
+      "column": "Growth",
+      "value": "Growth",
+      "unit": "",
+      "context": "header"
+    },
+    {
+      "page": 1,
+      "section": "Table",
+      "row_id": 2,
+      "column": "Company",
+      "value": "Life360",
+      "unit": "",
+      "context": "data"
+    },
+    {
+      "page": 1,
+      "section": "Table",
+      "row_id": 2,
+      "column": "Revenue",
+      "value": "115.5M",
+      "unit": "USD",
+      "context": "data"
+    },
+    {
+      "page": 1,
+      "section": "Table",
+      "row_id": 2,
+      "column": "Growth",
+      "value": "35",
+      "unit": "%",
+      "context": "data"
+    },
+    {
+      "page": 1,
+      "section": "Table",
+      "row_id": 3,
+      "column": "Company",
+      "value": "Competitor A",
+      "unit": "",
+      "context": "data"
+    },
+    {
+      "page": 1,
+      "section": "Table",
+      "row_id": 3,
+      "column": "Revenue",
+      "value": "85M",
+      "unit": "USD",
+      "context": "data"
+    },
+    {
+      "page": 1,
+      "section": "Table",
+      "row_id": 3,
+      "column": "Growth",
+      "value": "20",
+      "unit": "%",
+      "context": "data"
+    }
+  ],
+  "keyvalues_extracted": [],
+  "narrative_extracted": [
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 1,
+      "column": "text",
+      "value": "Life360 is a leading family safety company.",
+      "unit": "",
+      "context": ""
+    }
+  ],
+  "total_extracted_items": 11,
+  "processing_stats": {
+    "tables_processed": 1,
+    "kvs_processed": 1,
+    "narrative_chunks_processed": 1,
+    "extraction_errors": 0
+  },
+  "kvs_extracted": [
+    {
+      "page": 1,
+      "section": "KeyValue",
+      "row_id": 1,
+      "column": "Total Users",
+      "value": "66.9",
+      "unit": "million",
+      "context": ""
+    }
+  ],
+  "combined_extracted_data": [
+    {
+      "page": 1,
+      "section": "Table",
+      "row_id": 1,
+      "column": "Company",
+      "value": "Company",
+      "unit": "",
+      "context": "header"
+    },
+    {
+      "page": 1,
+      "section": "Table",
+      "row_id": 1,
+      "column": "Revenue",
+      "value": "Revenue",
+      "unit": "",
+      "context": "header"
+    },
+    {
+      "page": 1,
+      "section": "Table",
+      "row_id": 1,
+      "column": "Growth",
+      "value": "Growth",
+      "unit": "",
+      "context": "header"
+    },
+    {
+      "page": 1,
+      "section": "Table",
+      "row_id": 2,
+      "column": "Company",
+      "value": "Life360",
+      "unit": "",
+      "context": "data"
+    },
+    {
+      "page": 1,
+      "section": "Table",
+      "row_id": 2,
+      "column": "Revenue",
+      "value": "115.5M",
+      "unit": "USD",
+      "context": "data"
+    },
+    {
+      "page": 1,
+      "section": "Table",
+      "row_id": 2,
+      "column": "Growth",
+      "value": "35",
+      "unit": "%",
+      "context": "data"
+    },
+    {
+      "page": 1,
+      "section": "Table",
+      "row_id": 3,
+      "column": "Company",
+      "value": "Competitor A",
+      "unit": "",
+      "context": "data"
+    },
+    {
+      "page": 1,
+      "section": "Table",
+      "row_id": 3,
+      "column": "Revenue",
+      "value": "85M",
+      "unit": "USD",
+      "context": "data"
+    },
+    {
+      "page": 1,
+      "section": "Table",
+      "row_id": 3,
+      "column": "Growth",
+      "value": "20",
+      "unit": "%",
+      "context": "data"
+    },
+    {
+      "page": 1,
+      "section": "Narrative",
+      "row_id": 1,
+      "column": "text",
+      "value": "Life360 is a leading family safety company.",
+      "unit": "",
+      "context": ""
+    }
+  ],
+  "metadata": {
+    "total_pages": 1,
+    "job_id": "test-job-123"
+  },
+  "schema": {
+    "type": "array",
+    "items": {
+      "type": "object",
+      "properties": {
+        "page": {
+          "type": "integer"
+        },
+        "section": {
+          "type": "string"
+        },
+        "row_id": {
+          "type": "integer"
+        },
+        "column": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        },
+        "unit": {
+          "type": "string"
+        },
+        "context": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "page",
+        "section",
+        "column",
+        "value"
+      ]
+    }
+  }
+}

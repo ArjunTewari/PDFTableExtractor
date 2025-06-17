@@ -61,7 +61,17 @@ Phase 3 processing for optimal LLM handling:
 - Bundles batches into single payload object with schema validation
 - Saves structured payloads for audit and downstream processing
 
-### 6. Export Utilities (`export_utils.py`)
+### 6. LLM Structured Extractor (`llm_structured_extractor.py`)
+Phase 4 advanced LLM processing with optimized prompts:
+- Three parallel GPT-4o calls for Tables, Key-Values, and Narrative extraction
+- High-quality prompts ensuring JSON output matching canonical schema
+- Streaming JSON parsing with `stream=True` for real-time processing
+- Maps table cells to (page, section="Table", row_id, column=header, value, unit, context=label)
+- Maps key-value pairs to (page, section="KeyValue", row_id, column=key, value, unit, context="")
+- Maps narrative chunks to (page, section="Narrative", row_id, column="text", value=line, unit="", context="")
+- Comprehensive error handling and validation for all extraction types
+
+### 7. Export Utilities (`export_utils.py`)
 Provides functionality to:
 - Export processed data to PDF format using ReportLab
 - Create downloadable links for the exported data
@@ -87,7 +97,12 @@ Provides functionality to:
    - KEY_VALUE_SET blocks processed for structured pairs
    - Narrative text chunked (~400 tokens each) from DetectDocumentText
    - All batches bundled into single payload object with schema
-5. **Schema Validation & Output**:
+5. **Phase 4 - LLM Structured Extraction**:
+   - Three parallel GPT-4o calls process Tables, Key-Values, and Narrative batches
+   - High-quality prompts ensure JSON output matching canonical schema
+   - Streaming JSON parsing with real-time processing capability
+   - Maps all data types to standardized (page, section, row_id, column, value, unit, context) format
+6. **Schema Validation & Output**:
    - Extracted data transformed to canonical JSON schema format
    - Schema validation ensures data integrity and consistency
    - Structured payloads saved for audit and downstream processing

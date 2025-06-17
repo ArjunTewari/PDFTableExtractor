@@ -12,6 +12,7 @@ from structured_llm_processor import process_structured_data_with_llm
 from export_utils import export_to_pdf
 from schema_validator import SchemaValidator
 from chunking_processor import ChunkingProcessor
+from llm_structured_extractor import LLMStructuredExtractor, extract_structured_data_from_payload
 
 app = Flask(__name__)
 
@@ -22,6 +23,7 @@ os.makedirs('static', exist_ok=True)
 # Initialize processors
 schema_validator = SchemaValidator()
 chunking_processor = ChunkingProcessor()
+llm_extractor = LLMStructuredExtractor()
 
 @app.route('/')
 def index():
@@ -87,6 +89,100 @@ def extract_with_chunking():
                 'chunking_stats': payload.get('processing_stats', {})
             }
         })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/complete_extraction_pipeline', methods=['POST'])
+def complete_extraction_pipeline():
+    """Complete end-to-end extraction pipeline: Phases 1-4"""
+    if 'pdf' not in request.files:
+        return jsonify({'error': 'No file uploaded'}), 400
+    
+    file = request.files['pdf']
+    if file.filename == '':
+        return jsonify({'error': 'No file selected'}), 400
+    
+    try:
+        import asyncio
+        
+        # Phase 1: Page-by-page Textract Processing
+        print("Starting Phase 1: Page-by-page Textract Processing...")
+        pdf_bytes = file.read()
+        processor = TextractProcessor()
+        textract_result = processor.extract_text_from_pdf_bytes_pagewise(pdf_bytes)
+        
+        # Phase 2: Chunking & Batch Preparation
+        print("Starting Phase 2: Chunking & Batch Preparation...")
+        payload = chunking_processor.process_complete_chunking_workflow(textract_result)
+        
+        # Phase 3: LLM Structured Extraction
+        print("Starting Phase 3: LLM Structured Extraction...")
+        extraction_results = asyncio.run(llm_extractor.process_structured_extraction(payload))
+        
+        # Phase 4: Schema Validation & Canonical Transformation
+        print("Starting Phase 4: Schema Validation & Canonical Transformation...")
+        canonical_data = schema_validator.transform_to_canonical(
+            extraction_results.get('combined_extracted_data', [])
+        )
+        validation_result = schema_validator.validate_data(canonical_data)
+        
+        # Save all results for audit
+        job_id = textract_result.get('job_id', 'unknown')
+        os.makedirs('output', exist_ok=True)
+        
+        # Save payload
+        payload_path = f'output/payload_{job_id}.json'
+        chunking_processor.save_payload(payload, payload_path)
+        
+        # Save extraction results
+        extraction_path = f'output/extraction_{job_id}.json'
+        llm_extractor.save_extraction_results(extraction_results, extraction_path)
+        
+        # Save canonical data
+        canonical_path = f'output/canonical_{job_id}.json'
+        schema_validator.save_canonical_data(canonical_data, canonical_path)
+        
+        # Compile comprehensive results
+        complete_results = {
+            'success': True,
+            'job_id': job_id,
+            'phases_completed': 4,
+            'phase_1_textract': {
+                'total_pages': textract_result.get('total_pages', 0),
+                'processing_time': textract_result.get('processing_time', 0),
+                'errors': textract_result.get('errors', [])
+            },
+            'phase_2_chunking': {
+                'total_tables': len(payload.get('raw', {}).get('tables', [])),
+                'total_kvs': len(payload.get('raw', {}).get('kvs', [])),
+                'total_text_chunks': len(payload.get('raw', {}).get('text_chunks', [])),
+                'payload_validation': chunking_processor.validate_payload_structure(payload)
+            },
+            'phase_3_extraction': {
+                'tables_extracted': len(extraction_results.get('tables_extracted', [])),
+                'keyvalues_extracted': len(extraction_results.get('keyvalues_extracted', [])),
+                'narrative_extracted': len(extraction_results.get('narrative_extracted', [])),
+                'total_extracted_items': extraction_results.get('total_extracted_items', 0),
+                'processing_stats': extraction_results.get('processing_stats', {})
+            },
+            'phase_4_validation': {
+                'canonical_items': len(canonical_data),
+                'validation_valid': validation_result.get('valid', False),
+                'validation_errors': len(validation_result.get('errors', [])),
+                'validation_warnings': len(validation_result.get('warnings', []))
+            },
+            'saved_files': {
+                'payload': payload_path,
+                'extraction_results': extraction_path,
+                'canonical_data': canonical_path
+            },
+            'canonical_data': canonical_data,
+            'validation_result': validation_result
+        }
+        
+        print(f"Complete extraction pipeline finished: {len(canonical_data)} items extracted and validated")
+        return jsonify(complete_results)
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -309,6 +405,45 @@ def chunk_and_batch():
             'payload': payload,
             'validation': validation,
             'stats': payload.get('processing_stats', {})
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/llm_structured_extraction', methods=['POST'])
+def llm_structured_extraction():
+    """Phase 4: LLM - Structured Extraction"""
+    data = request.json
+    if not data or 'payload' not in data:
+        return jsonify({'error': 'No payload provided'}), 400
+    
+    try:
+        import asyncio
+        
+        # Process structured extraction
+        extraction_results = asyncio.run(llm_extractor.process_structured_extraction(data['payload']))
+        
+        # Save extraction results if requested
+        if data.get('save_results', False):
+            job_id = data['payload'].get('metadata', {}).get('job_id', 'unknown')
+            filename = data.get('filename', f'extraction_{job_id}_{int(time.time())}.json')
+            output_path = f'output/{filename}'
+            os.makedirs('output', exist_ok=True)
+            llm_extractor.save_extraction_results(extraction_results, output_path)
+        
+        # Transform to canonical format and validate
+        canonical_data = schema_validator.transform_to_canonical(
+            extraction_results.get('combined_extracted_data', [])
+        )
+        validation_result = schema_validator.validate_data(canonical_data)
+        
+        return jsonify({
+            'success': True,
+            'extraction_results': extraction_results,
+            'canonical_data': canonical_data,
+            'validation_result': validation_result,
+            'processing_stats': extraction_results.get('processing_stats', {}),
+            'total_extracted_items': extraction_results.get('total_extracted_items', 0)
         })
         
     except Exception as e:
