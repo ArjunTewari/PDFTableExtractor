@@ -153,15 +153,51 @@ def process_stream():
                 
                 if 'processed_document_text' in result and result['processed_document_text']:
                     for chunk_idx, chunk in enumerate(result['processed_document_text']):
+                        # Handle tabulated document text structure
+                        if 'table_headers' in chunk and 'table_rows' in chunk:
+                            headers = chunk['table_headers']
+                            rows = chunk['table_rows']
+                            
+                            # Add document text table structure
+                            df_data.append({
+                                'source': f'Document Text {chunk_idx+1}',
+                                'type': 'Document Table',
+                                'field': 'Headers',
+                                'value': ' | '.join(headers),
+                                'page': 'N/A',
+                                'commentary': 'Tabulated document content',
+                                'has_commentary': True,
+                                'is_table_header': True,
+                                'table_id': f'doc_{chunk_idx}',
+                                'headers': headers,
+                                'rows': rows
+                            })
+                            
+                            # Add individual data points from document table
+                            for row_idx, row in enumerate(rows):
+                                for col_idx, cell_value in enumerate(row):
+                                    if col_idx < len(headers) and cell_value:
+                                        df_data.append({
+                                            'source': f'Document Text {chunk_idx+1}',
+                                            'type': 'Document Data',
+                                            'field': f'{headers[col_idx]}_Row_{row_idx+1}',
+                                            'value': str(cell_value),
+                                            'page': 'N/A',
+                                            'commentary': '',
+                                            'has_commentary': False,
+                                            'table_id': f'doc_{chunk_idx}'
+                                        })
+                        
+                        # Also handle extracted facts if available
                         if 'extracted_facts' in chunk and not chunk['extracted_facts'].get('error'):
                             facts = chunk['extracted_facts']
                             for key, value in facts.items():
-                                if key != 'error':
+                                if key != 'error' and value:
                                     df_data.append({
                                         'source': f'Text Chunk {chunk_idx+1}',
                                         'type': 'Financial Data',
                                         'field': key,
-                                        'value': str(value) if value else '',
+                                        'value': str(value),
                                         'page': 'N/A',
                                         'commentary': '',
                                         'has_commentary': False
@@ -266,18 +302,54 @@ def process():
                                 'has_commentary': False
                             })
             
-            # Process document text facts
+            # Process document text with tabulation
             if 'processed_document_text' in result and result['processed_document_text']:
                 for chunk_idx, chunk in enumerate(result['processed_document_text']):
+                    # Handle tabulated document text structure
+                    if 'table_headers' in chunk and 'table_rows' in chunk:
+                        headers = chunk['table_headers']
+                        rows = chunk['table_rows']
+                        
+                        # Add document text table structure
+                        df_data.append({
+                            'source': f'Document Text {chunk_idx+1}',
+                            'type': 'Document Table',
+                            'field': 'Headers',
+                            'value': ' | '.join(headers),
+                            'page': 'N/A',
+                            'commentary': 'Tabulated document content',
+                            'has_commentary': True,
+                            'is_table_header': True,
+                            'table_id': f'doc_{chunk_idx}',
+                            'headers': headers,
+                            'rows': rows
+                        })
+                        
+                        # Add individual data points from document table
+                        for row_idx, row in enumerate(rows):
+                            for col_idx, cell_value in enumerate(row):
+                                if col_idx < len(headers) and cell_value:
+                                    df_data.append({
+                                        'source': f'Document Text {chunk_idx+1}',
+                                        'type': 'Document Data',
+                                        'field': f'{headers[col_idx]}_Row_{row_idx+1}',
+                                        'value': str(cell_value),
+                                        'page': 'N/A',
+                                        'commentary': '',
+                                        'has_commentary': False,
+                                        'table_id': f'doc_{chunk_idx}'
+                                    })
+                    
+                    # Also handle extracted facts if available
                     if 'extracted_facts' in chunk and not chunk['extracted_facts'].get('error'):
                         facts = chunk['extracted_facts']
                         for key, value in facts.items():
-                            if key != 'error':
+                            if key != 'error' and value:
                                 df_data.append({
                                     'source': f'Text Chunk {chunk_idx+1}',
                                     'type': 'Financial Data',
                                     'field': key,
-                                    'value': str(value) if value else '',
+                                    'value': str(value),
                                     'page': 'N/A',
                                     'commentary': '',
                                     'has_commentary': False

@@ -23,31 +23,39 @@ async def process_table_data(table_data: Dict[str, Any]) -> Dict[str, Any]:
     """Process table data with GPT-4o asynchronously"""
     prompt = f"""You are a data analyst. The following table data has been extracted from a document.
 
-Analyze this table and reconstruct it as a proper table structure with headers and data rows.
+Analyze this table and reconstruct it as a proper multi-column table structure. DO NOT simplify to just 2 columns - preserve ALL columns found in the data.
 
 Table data:
 {json.dumps(table_data, indent=2)}
 
 Requirements:
-1. Identify which row contains the headers (usually first row)
-2. Organize remaining rows as data rows under those headers
-3. Return both the structured table AND individual field-value pairs
-4. Preserve all numerical values, percentages, dates, and text exactly
-5. Handle empty cells appropriately
+1. Identify ALL columns in the table (usually from the first row)
+2. Preserve the FULL table structure with ALL columns
+3. Create meaningful headers for each column based on content
+4. Include ALL data rows under those headers
+5. Return both the complete table structure AND comprehensive field-value pairs
+6. Preserve all numerical values, percentages, dates, and text exactly
+7. Handle empty cells as empty strings
 
-Return as JSON with this structure:
+Example for a financial table:
 {{
-  "table_headers": ["Column1", "Column2", "Column3"],
+  "table_headers": ["Company", "Q4 Revenue", "Growth Rate", "MAU", "Geographic Region"],
   "table_rows": [
-    ["Value1", "Value2", "Value3"],
-    ["Value4", "Value5", "Value6"]
+    ["Life360", "$115.5M", "33%", "65.8M", "Global"],
+    ["Competitor A", "$98.2M", "15%", "42.1M", "US/EU"]
   ],
   "field_value_pairs": {{
-    "Row_1_Column1": "Value1",
-    "Row_1_Column2": "Value2",
-    "Row_2_Column1": "Value4"
+    "Row_1_Company": "Life360",
+    "Row_1_Q4_Revenue": "$115.5M",
+    "Row_1_Growth_Rate": "33%",
+    "Row_1_MAU": "65.8M",
+    "Row_1_Geographic_Region": "Global",
+    "Row_2_Company": "Competitor A",
+    "Row_2_Q4_Revenue": "$98.2M"
   }}
-}}"""
+}}
+
+IMPORTANT: Do not reduce columns to just 2. Extract ALL columns present in the data."""
 
     try:
         loop = asyncio.get_event_loop()
@@ -119,25 +127,40 @@ Return a simple JSON object where each key is a descriptive field name and each 
         }
 
 async def process_text_chunk(text_chunk: List[str]) -> Dict[str, Any]:
-    """Process a text chunk with GPT-4o asynchronously"""
+    """Process a text chunk with GPT-4o asynchronously and tabulate the content"""
     text_content = '\n'.join(text_chunk)
     
-    prompt = f"""You are a financial document analyst. Extract specific measurable data from this text segment.
+    prompt = f"""You are a financial document analyst. Extract and tabulate ALL meaningful data from this text segment.
 
-Focus on extracting concrete facts such as:
-- Company names and dates
-- Financial figures (revenue, profit, growth rates)
-- User metrics (MAU, DAU, subscriber counts)
-- Percentages and ratios
-- Market data and statistics
+Create a comprehensive table structure that captures the key information in a tabulated format.
 
 Text:
 {text_content}
 
-Return a simple JSON object with descriptive field names and actual values. Example:
-{{"Company_Name": "Life360", "Q4_Revenue": "$115.5 million", "MAU_Growth": "33%"}}
+Requirements:
+1. Extract ALL meaningful data points and organize them into a table structure
+2. Create appropriate column headers based on the content type
+3. Structure data into logical rows and columns
+4. Include financial metrics, dates, percentages, company info, etc.
+5. If the text contains narrative information, extract key facts and tabulate them
 
-Do not create nested objects or arrays."""
+Return JSON with BOTH table structure AND individual facts:
+{{
+  "table_headers": ["Metric", "Value", "Period", "Context"],
+  "table_rows": [
+    ["Revenue", "$115.5M", "Q4 2023", "33% growth"],
+    ["MAU", "65.8M", "Q4 2023", "Global users"],
+    ["Market Share", "12%", "2023", "Primary market"]
+  ],
+  "extracted_facts": {{
+    "Company_Name": "Life360",
+    "Q4_Revenue": "$115.5 million",
+    "MAU_Growth": "33%",
+    "Market_Position": "Leading family safety platform"
+  }}
+}}
+
+Extract comprehensive data - do not limit to just a few items."""
 
     try:
         loop = asyncio.get_event_loop()

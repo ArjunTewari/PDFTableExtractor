@@ -77,9 +77,28 @@ The application is configured for deployment on Replit with:
 
 The deployment uses Nix packaging to ensure all dependencies are properly managed and the application runs consistently in the Replit environment.
 
+## Recent Changes
+
+### June 2025 - Enhanced Table Processing and Commentary System
+- **Multi-Column Table Reconstruction**: Enhanced prompts to preserve ALL columns from extracted tables instead of simplifying to 2 columns
+- **Document Text Tabulation**: Added comprehensive tabulation of document text content into structured table format
+- **Commentary Matching System**: Implemented intelligent matching between extracted data and document commentary
+- **Streaming Processing**: Added real-time streaming output for progressive data processing updates
+- **Enhanced Frontend Display**: Reconstructed tables now show original multi-column structure with proper headers and data rows
+- **Dual Table Views**: Both reconstructed original tables and detailed data point tables are displayed
+- **Document Content Tables**: Narrative text is now analyzed and tabulated into structured format alongside extracted tables
+
+### Architecture Improvements
+- **Advanced LLM Processing**: Updated prompts to extract comprehensive data while maintaining table structure integrity
+- **Asynchronous Commentary Matching**: Each data point is matched against document text to find relevant explanations
+- **Enhanced Data Structure**: Extended data model to include table headers, rows, commentary, and metadata
+- **Real-time Progress Updates**: Streaming endpoint provides live processing status updates
+
 ## Development Notes
 
 1. The application uses GPT-4o (released May 2024) as the default language model
-2. The PDF processing is basic text extraction without OCR capabilities
-3. The export functionality currently supports PDF format
+2. Uses Amazon Textract for advanced PDF text and table extraction
+3. Export functionality supports JSON, CSV, and PDF formats
 4. All processed data is session-based and not persisted between sessions
+5. Commentary matching uses intelligent text analysis to relate document content to extracted data
+6. Multi-column table preservation ensures no data loss during processing

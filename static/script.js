@@ -969,33 +969,54 @@ document.addEventListener('DOMContentLoaded', function() {
             const headers = tableHeader.headers;
             const rows = tableHeader.rows;
             
-            tableDiv.innerHTML = `
-                <div class="card-header bg-primary text-white">
-                    <h6 class="mb-0">Reconstructed Table ${index + 1} (Page ${tableHeader.page})</h6>
+            // Determine table type for styling
+            const isDocumentTable = tableHeader.source && tableHeader.source.includes('Document Text');
+            const headerClass = isDocumentTable ? 'bg-success' : 'bg-primary';
+            const tableTitle = isDocumentTable ? 
+                `Document Content Table ${index + 1}` : 
+                `Extracted Table ${index + 1} (Page ${tableHeader.page})`;
+            
+            let tableHtml = `
+                <div class="card-header ${headerClass} text-white">
+                    <h6 class="mb-0">${tableTitle}</h6>
+                    <small>Columns: ${headers.length} | Rows: ${rows.length}</small>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
                         <table class="table table-striped table-hover table-sm">
                             <thead class="table-light">
-                                <tr>
-                                    ${headers.map(header => `<th>${header}</th>`).join('')}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${rows.map(row => `
-                                    <tr>
-                                        ${row.map(cell => `<td>${cell || '-'}</td>`).join('')}
-                                    </tr>
-                                `).join('')}
+                                <tr>`;
+            
+            // Add headers
+            headers.forEach(header => {
+                tableHtml += `<th style="min-width: 120px;">${header}</th>`;
+            });
+            
+            tableHtml += `</tr></thead><tbody>`;
+            
+            // Add rows
+            rows.forEach(row => {
+                tableHtml += '<tr>';
+                for (let i = 0; i < headers.length; i++) {
+                    const cellValue = i < row.length ? (row[i] || '-') : '-';
+                    tableHtml += `<td>${cellValue}</td>`;
+                }
+                tableHtml += '</tr>';
+            });
+            
+            tableHtml += `
                             </tbody>
                         </table>
                     </div>
                     <small class="text-muted">
-                        Original table reconstructed from extracted data points
+                        ${isDocumentTable ? 
+                            'Document content organized into structured table format' : 
+                            'Original table reconstructed from extracted data points'}
                     </small>
                 </div>
             `;
             
+            tableDiv.innerHTML = tableHtml;
             tablesContainer.appendChild(tableDiv);
         });
 
