@@ -2,7 +2,7 @@
 
 ## Overview
 
-This application extracts text from PDF files, processes the extracted content using an OpenAI language model to identify structured information, and displays the results in a tabulated format. Users can then download the results in various formats.
+This Flask-based web application leverages advanced cloud technologies to extract, analyze, and visualize structured information from PDF documents using intelligent asynchronous processing. The application now features enhanced page-by-page Textract processing with commentary matching functionality.
 
 ## User Preferences
 
@@ -10,37 +10,45 @@ Preferred communication style: Simple, everyday language.
 
 ## System Architecture
 
-The application follows a simple, streamlined architecture:
+The application follows an enhanced cloud-native architecture:
 
-1. **Frontend**: Streamlit web interface for user interactions
-2. **Backend Processing**: Python modules for PDF processing and LLM interaction 
-3. **Data Flow**: PDF upload → Text extraction → LLM processing → Tabulation → Export options
+1. **Frontend**: Flask web interface with responsive HTML/CSS/JavaScript
+2. **Backend Processing**: Python modules for advanced PDF processing and AI-powered analysis
+3. **Cloud Services**: Amazon Textract for document analysis with S3 storage
+4. **AI Processing**: OpenAI GPT-4o for intelligent data structuring and commentary matching
+5. **Data Flow**: PDF upload → Page-by-page Textract extraction → LLM processing with commentary → Enhanced tabulation → Export options
 
-The architecture prioritizes simplicity and straightforward user interaction, with each component handling a specific responsibility in the data processing pipeline.
+The architecture prioritizes comprehensive data extraction, intelligent analysis, and structured presentation with commentary context.
 
 ## Key Components
 
-### 1. Streamlit Interface (`app.py`)
+### 1. Flask Web Interface (`app.py`)
 The main entry point that provides:
-- PDF file upload functionality
-- Display of extracted and processed data
+- PDF file upload functionality via responsive web interface
+- Enhanced page-by-page Textract processing endpoint
+- Legacy processing endpoint for backwards compatibility
+- Display of extracted and processed data with commentary
 - Export options for the processed data
 
-### 2. PDF Processing (`pdf_processor.py`)
-Handles the extraction of text from PDF files using PyPDF2:
-- `extract_text_from_pdf`: Processes PDF files from a file path
-- `extract_text_from_pdf_bytes`: Processes PDF content provided as bytes
+### 2. Enhanced Textract Processing (`textract_processor.py`)
+Advanced PDF processing using Amazon Textract with page-by-page analysis:
+- `extract_text_from_pdf_bytes_pagewise`: Page-by-page Textract processing with S3 storage
+- `analyze_page_with_textract`: Synchronous page analysis with TABLES and FORMS features
+- `extract_raw_text_from_page`: OCR fallback using DetectDocumentText
+- Raw JSON storage in S3 for audit and reprocessing capabilities
 
-### 3. LLM Processing (`llm_processor.py`)
-Leverages OpenAI's GPT-4o model to:
-- Analyze extracted text from PDFs
-- Convert unstructured text into structured, tabular JSON data
-- Uses LangChain for prompt construction and model interaction
+### 3. Structured LLM Processing (`structured_llm_processor.py`)
+Enhanced OpenAI GPT-4o processing with commentary matching:
+- Asynchronous processing of tables, key-values, and document text
+- Commentary matching functionality that relates document text to extracted data
+- Comprehensive data extraction with ALL table values preserved
+- General commentary collection for unmatched text segments
 
 ### 4. Export Utilities (`export_utils.py`)
 Provides functionality to:
 - Export processed data to PDF format using ReportLab
 - Create downloadable links for the exported data
+- Handle enhanced data structures with commentary fields
 
 ## Data Flow
 

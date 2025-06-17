@@ -145,15 +145,12 @@ def process():
                                     'has_commentary': False
                                 })
             
-            # Create DataFrame and clean
+            # Clean data without DataFrame
             if df_data:
-                df = pd.DataFrame(df_data)
-                # Clean up empty values
-                df = df[df['value'].astype(str).str.strip() != '']
-                df = df[df['value'].astype(str) != 'nan']
-                
-                # Convert back to list of dicts for JSON response
-                clean_data = df.to_dict('records')
+                clean_data = []
+                for item in df_data:
+                    if item['value'] and str(item['value']).strip() and str(item['value']) != 'nan':
+                        clean_data.append(item)
             else:
                 clean_data = []
         
