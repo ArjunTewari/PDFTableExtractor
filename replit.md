@@ -79,25 +79,24 @@ The deployment uses Nix packaging to ensure all dependencies are properly manage
 
 ## Recent Changes
 
-### June 20, 2025 - Migration to Gemini Pro 1.5 and Enhanced Commentary
-- **Gemini Pro 1.5 Integration**: Switched from OpenAI GPT-4o to Google Gemini Pro 1.5 for all LLM processing
+### June 20, 2025 - Enhanced Processing with Deduplication
 - **Advanced Deduplication**: Implemented semantic similarity-based deduplication using TF-IDF and cosine similarity
-- **Second Commentary Pass**: Added enhanced commentary generation with business insights and implications
+- **Enhanced Commentary System**: Added capability for enhanced commentary generation with business insights
 - **Simple Table Format**: Restored simple field-value format for better readability and processing
 - **Streaming Output**: Real-time streaming of actual results instead of progress messages
-- **Commentary from Document Text**: Commentary sourced exclusively from document content, not AI-generated
+- **Commentary from Document Text**: Commentary sourced exclusively from document content with optional AI enhancement
 
 ### Architecture Improvements
-- **Gemini Integration**: All LLM calls now use Google Gemini Pro 1.5 API for improved performance
+- **GPT-4o Processing**: Continued use of OpenAI GPT-4o for reliable LLM processing
 - **Deduplication System**: Semantic similarity matching prevents duplicate entries in results
-- **Enhanced Commentary**: Two-pass commentary system adds business context and insights
+- **Enhanced Commentary**: Capability for two-pass commentary system with business context
 - **Streaming Display**: Row-by-row streaming with live commentary updates
 
 ## Development Notes
 
-1. The application uses Google Gemini Pro 1.5 as the primary language model
+1. The application uses OpenAI GPT-4o as the primary language model
 2. Uses Amazon Textract for advanced PDF text and table extraction
 3. Export functionality supports JSON, CSV, and PDF formats
 4. All processed data is session-based and not persisted between sessions
-5. Commentary matching uses document text with AI enhancement for insights
+5. Commentary matching uses document text with optional AI enhancement for insights
 6. Deduplication prevents redundant data entries using semantic similarity

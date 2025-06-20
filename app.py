@@ -9,7 +9,7 @@ from textract_processor import extract_text_from_pdf, extract_text_from_pdf_byte
 from llm_processor import process_text_with_llm
 from structured_llm_processor import process_structured_data_with_llm
 from deduplication_utils import advanced_deduplication
-from gemini_simple_processor import enhance_commentary_sync
+# Enhanced commentary using OpenAI
 from export_utils import export_to_pdf
 
 app = Flask(__name__)

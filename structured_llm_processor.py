@@ -3,8 +3,11 @@ import os
 from typing import Dict, Any, List
 import asyncio
 import concurrent.futures
-from gemini_simple_processor import process_with_gemini_sync
+from openai import OpenAI
 from deduplication_utils import advanced_deduplication
+
+# Initialize OpenAI client
+openai_client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
 
 def split_text_section(text_lines, max_lines=20):
@@ -38,11 +41,26 @@ Return JSON with field-value pairs:
 
     try:
         loop = asyncio.get_event_loop()
-        result = await loop.run_in_executor(None, process_with_gemini_sync, prompt)
+        response = await loop.run_in_executor(
+            None,
+            lambda: openai_client.chat.completions.create(
+                model="gpt-4o",
+                messages=[{"role": "user", "content": prompt}],
+                response_format={"type": "json_object"}
+            )
+        )
+        
+        content = response.choices[0].message.content
+        if content:
+            result = json.loads(content)
+        else:
+            result = {"error": "No content received from OpenAI"}
+            
         return result
+        
     except Exception as e:
-        print(f"Error processing table: {e}")
-        return {"error": str(e)}
+        print(f"Error processing table data: {e}")
+        return {"error": f"Failed to process table: {str(e)}"}
 
 
 async def process_key_value_data(
@@ -59,7 +77,21 @@ Return a simple JSON object where each key is a descriptive field name and each 
 
     try:
         loop = asyncio.get_event_loop()
-        result = await loop.run_in_executor(None, process_with_gemini_sync, prompt)
+        response = await loop.run_in_executor(
+            None,
+            lambda: openai_client.chat.completions.create(
+                model="gpt-4o",
+                messages=[{"role": "user", "content": prompt}],
+                response_format={"type": "json_object"}
+            )
+        )
+        
+        content = response.choices[0].message.content
+        if content:
+            result = json.loads(content)
+        else:
+            result = {"error": "No content received from OpenAI"}
+            
         return {
             "structured_key_values": result,
             "original_pairs": key_value_pairs
@@ -129,7 +161,21 @@ Return JSON with facts:
 }}"""
         
         loop = asyncio.get_event_loop()
-        result = await loop.run_in_executor(None, process_with_gemini_sync, prompt)
+        response = await loop.run_in_executor(
+            None,
+            lambda: openai_client.chat.completions.create(
+                model="gpt-4o",
+                messages=[{"role": "user", "content": prompt}],
+                response_format={"type": "json_object"}
+            )
+        )
+        
+        content = response.choices[0].message.content
+        if content:
+            result = json.loads(content)
+        else:
+            result = {"error": "No content received from OpenAI"}
+            
         return {"extracted_facts": result}
     except Exception as e:
         print(f"Error processing text chunk: {e}")
@@ -161,8 +207,21 @@ OR
 
     try:
         loop = asyncio.get_event_loop()
-        result = await loop.run_in_executor(None, process_with_gemini_sync, prompt)
-        return result
+        response = await loop.run_in_executor(
+            None,
+            lambda: openai_client.chat.completions.create(
+                model="gpt-4o",
+                messages=[{"role": "user", "content": prompt}],
+                response_format={"type": "json_object"}
+            )
+        )
+        
+        content = response.choices[0].message.content
+        if content:
+            result = json.loads(content)
+            return result
+        else:
+            return {"commentary": None, "relevant": False}
 
     except Exception as e:
         print(f"Error matching commentary: {e}")
