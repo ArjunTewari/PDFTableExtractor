@@ -383,8 +383,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const summaryDiv = document.createElement('div');
         summaryDiv.className = 'alert alert-success mt-3';
         summaryDiv.innerHTML = `
-            <h6>Processing Complete</h6>
-            <small>Total rows extracted: ${streamedRows.length} | Commentary from document text only</small>
+            <h6>Processing Complete with Gemini Pro 1.5</h6>
+            <small>Total rows extracted: ${streamedRows.length} | Enhanced with deduplication and document commentary</small>
         `;
         resultsSection.appendChild(summaryDiv);
     }

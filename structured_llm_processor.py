@@ -38,35 +38,11 @@ Return JSON with field-value pairs:
 
     try:
         loop = asyncio.get_event_loop()
-        response = await loop.run_in_executor(
-            None, lambda: openai_client.chat.completions.create(
-                model="gpt-4o",
-                messages=[{
-                    "role": "user",
-                    "content": prompt
-                }],
-                response_format={"type": "json_object"}))
-
-        content = response.choices[0].message.content
-        if content:
-            result = json.loads(content)
-        else:
-            result = {"error": "No content received from OpenAI"}
-
-        return {
-            "page": table_data.get("page", 1),
-            "structured_table": result,
-            "original_rows": table_data.get("rows", [])
-        }
+        result = await loop.run_in_executor(None, process_with_gemini_sync, prompt)
+        return result
     except Exception as e:
         print(f"Error processing table: {e}")
-        return {
-            "page": table_data.get("page", 1),
-            "structured_table": {
-                "error": str(e)
-            },
-            "original_rows": table_data.get("rows", [])
-        }
+        return {"error": str(e)}
 
 
 async def process_key_value_data(
@@ -173,12 +149,7 @@ Extract comprehensive data - do not limit to just a few items. Return the respon
         }
     except Exception as e:
         print(f"Error processing text chunk: {e}")
-        return {
-            "extracted_facts": {
-                "error": str(e)
-            },
-            "original_text": text_chunk
-        }
+        return {"extracted_facts": {"error": str(e)}}
 
 
 async def match_commentary_to_data(row_data: str,

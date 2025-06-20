@@ -199,6 +199,10 @@ def process_stream():
                         df_data.append(row_data)
                         yield f"data: {json.dumps({'type': 'row', 'data': row_data})}\n\n"
             
+            # Final deduplication after all processing
+            if df_data:
+                df_data = advanced_deduplication(df_data)
+            
             # Send completion signal
             yield f"data: {json.dumps({'type': 'complete', 'total_rows': len(df_data)})}\n\n"
             
