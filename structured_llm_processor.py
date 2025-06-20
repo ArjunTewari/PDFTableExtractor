@@ -20,30 +20,24 @@ def split_text_section(text_lines, max_lines=20):
     return chunks
 
 async def process_table_data(table_data: Dict[str, Any]) -> Dict[str, Any]:
-    """Process financial table data with specialized financial analysis"""
-    prompt = f"""You are a financial analyst expert. Extract financial metrics from this table data.
+    """Process table data with GPT-4o asynchronously - simple format"""
+    prompt = f"""Extract key data points from this table as simple field-value pairs.
 
 Table data:
 {json.dumps(table_data, indent=2)}
 
-Financial Analysis Instructions:
-1. Identify and extract key financial metrics (revenue, profit, margins, growth rates, user metrics)
-2. Preserve exact numerical values with currency symbols and units (million, billion, %)
-3. Include time periods (Q1, Q2, FY2024, etc.) with each metric
-4. Classify metrics by type (income, operational, valuation, ratios)
-5. Extract comparative data (YoY growth, sequential changes)
+Instructions:
+1. Extract important data points as field-value pairs
+2. Use clear, descriptive field names
+3. Focus on financial figures, dates, and key metrics
+4. Keep it simple and straightforward
 
-Return JSON with structured financial data:
+Return JSON with field-value pairs:
 {{
-  "Revenue_Q4_2024": "$115.5 million",
-  "Revenue_Growth_YoY": "33%",
-  "Monthly_Active_Users": "65.8 million",
-  "Gross_Margin": "72%",
-  "Operating_Income": "$24.1 million",
-  "EBITDA_Margin": "21%"
-}}
-
-Focus on extracting complete financial metrics with proper context and units."""
+  "Revenue": "value",
+  "Growth_Rate": "value",
+  "Date": "value"
+}}"""
 
     try:
         loop = asyncio.get_event_loop()
@@ -222,75 +216,6 @@ OR
     except Exception as e:
         print(f"Error matching commentary: {e}")
         return {"commentary": None, "relevant": False}
-
-async def process_labeled_paragraph_chunk(paragraph_chunk: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """Process labeled financial paragraphs with specialized financial analysis"""
-    try:
-        metric_facts = {}
-        narrative_commentary = []
-        
-        for para_data in paragraph_chunk:
-            text = para_data.get('text', '')
-            label = para_data.get('label', 'narrative')
-            
-            if label == 'metric' and text.strip():
-                # Financial metric extraction for metric-rich paragraphs
-                metric_prompt = f"""You are a financial analyst. Extract specific financial metrics from this earnings/financial text.
-
-Text: {text}
-
-Financial Metric Extraction:
-1. Revenue figures (total, recurring, subscription, etc.)
-2. Profitability metrics (net income, EBITDA, operating income)
-3. Margin calculations (gross, operating, net margins)
-4. Growth rates (YoY, QoQ, sequential)
-5. User/customer metrics (MAU, subscribers, retention)
-6. Market metrics (market cap, valuation multiples)
-7. Forward guidance (outlook, projections)
-
-Include time periods and context for each metric. Preserve exact numerical values.
-
-Return JSON with financial metrics:
-{{
-  "Q4_2024_Revenue": "$115.5 million",
-  "Annual_Revenue_Growth": "33% YoY",
-  "Gross_Margin_Q4": "72.1%",
-  "Monthly_Active_Users": "65.8 million",
-  "Operating_Cash_Flow": "$89.2 million"
-}}"""
-                
-                try:
-                    loop = asyncio.get_event_loop()
-                    response = await loop.run_in_executor(
-                        None,
-                        lambda: openai_client.chat.completions.create(
-                            model="gpt-4o",
-                            messages=[{"role": "user", "content": metric_prompt}],
-                            response_format={"type": "json_object"}
-                        )
-                    )
-                    
-                    content = response.choices[0].message.content
-                    if content:
-                        result = json.loads(content)
-                        for key, value in result.items():
-                            metric_facts[f"metric_{key}"] = value
-                            
-                except Exception as e:
-                    print(f"Error processing metric paragraph: {e}")
-            
-            elif label == 'narrative' and text.strip():
-                # Store narrative for commentary
-                narrative_commentary.append(text)
-        
-        return {
-            "extracted_facts": metric_facts,
-            "narrative_commentary": narrative_commentary
-        }
-        
-    except Exception as e:
-        print(f"Error processing labeled paragraphs: {e}")
-        return {"error": str(e)}
 
 async def process_structured_data_with_llm_async(structured_data: Dict[str, Any]) -> Dict[str, Any]:
     """Process all sections of structured data with asynchronous LLM calls"""

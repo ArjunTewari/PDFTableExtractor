@@ -277,8 +277,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let streamedRows = [];
     let tableInitialized = false;
 
-    let cleanedRows = [];
-    
     function handleStreamingData(data) {
         if (data.type === 'row') {
             // Add new row to streaming results
@@ -349,10 +347,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function initializeStreamingTable() {
         hideLoading();
         resultsSection.innerHTML = `
-            <h4>Financial Data Extraction Results</h4>
-            <div class="alert alert-info">
-                <small><strong>Complete Data:</strong> All extracted financial metrics with document commentary • No data filtering or merging applied</small>
-            </div>
+            <h4>Extracted Data with Commentary</h4>
             <div class="table-responsive">
                 <table class="table table-striped table-hover">
                     <thead class="table-dark">
@@ -378,47 +373,6 @@ document.addEventListener('DOMContentLoaded', function() {
         resultsSection.classList.remove('d-none');
     }
 
-    function displayCleanedRow(rowData) {
-        // Show cleaned section if not visible
-        const cleanedSection = document.getElementById('cleaned-section');
-        if (cleanedSection) {
-            cleanedSection.style.display = 'block';
-        }
-        
-        const cleanedTableBody = document.getElementById('cleaned-table-body');
-        if (!cleanedTableBody) return;
-        
-        const tr = document.createElement('tr');
-        tr.className = 'table-success';
-        
-        tr.innerHTML = `
-            <td><span class="badge bg-success">${rowData.source}</span></td>
-            <td><span class="badge bg-primary">${rowData.type}</span></td>
-            <td><strong>${rowData.field}</strong></td>
-            <td>${rowData.value}</td>
-            <td>${rowData.page}</td>
-            <td class="commentary-cell">${rowData.commentary || '<span class="text-muted">-</span>'}</td>
-        `;
-        
-        cleanedTableBody.appendChild(tr);
-    }
-
-    function showCleanupSummary(originalRows, cleanedRows) {
-        const reductionPercentage = Math.round(((originalRows - cleanedRows) / originalRows) * 100);
-        
-        const summaryDiv = document.createElement('div');
-        summaryDiv.className = 'alert alert-success mt-2';
-        summaryDiv.innerHTML = `
-            <h6>Data Cleanup Complete</h6>
-            <small>Reduced from ${originalRows} to ${cleanedRows} rows (${reductionPercentage}% reduction)</small>
-        `;
-        
-        const cleanedSection = document.getElementById('cleaned-section');
-        if (cleanedSection) {
-            cleanedSection.appendChild(summaryDiv);
-        }
-    }
-
     function finalizeStreamingDisplay() {
         // Re-attach export event listeners
         document.getElementById('export-json-btn').addEventListener('click', exportJson);
@@ -428,10 +382,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // Add summary
         const summaryDiv = document.createElement('div');
         summaryDiv.className = 'alert alert-success mt-3';
-        
         summaryDiv.innerHTML = `
-            <h6>Financial Document Analysis Complete</h6>
-            <small>Total extracted financial data points: ${streamedRows.length} | All data preserved without filtering • Commentary from document text only</small>
+            <h6>Processing Complete</h6>
+            <small>Total rows extracted: ${streamedRows.length} | Commentary from document text only</small>
         `;
         resultsSection.appendChild(summaryDiv);
     }

@@ -141,118 +141,6 @@ def get_unmatched_document_text(df_data, document_text):
     
     return final_chunks
 
-def clean_and_interpret_final_table(df_data):
-    """Clean and interpret financial data table with financial domain expertise"""
-    import re
-    from collections import defaultdict
-    from financial_ontology import classify_financial_metric, extract_financial_context, detect_currency_and_units
-    
-    # Group similar fields and values
-    field_groups = defaultdict(list)
-    value_seen = set()
-    
-    for i, row in enumerate(df_data):
-        field = row.get('field', '').lower()
-        value = str(row.get('value', '')).strip()
-        
-        # Enhanced financial field normalization
-        normalized_field = re.sub(r'[_\s\d]+', '_', field).strip('_')
-        
-        # Classify financial metric type
-        metric_classification = classify_financial_metric(field + ' ' + value)
-        financial_context = extract_financial_context(row.get('commentary', ''))
-        currency_info = detect_currency_and_units(value)
-        
-        # Skip exact duplicates
-        duplicate_key = f"{normalized_field}_{value}"
-        if duplicate_key in value_seen:
-            continue
-        value_seen.add(duplicate_key)
-        
-        # Add financial metadata to row
-        enhanced_row = row.copy()
-        enhanced_row['metric_type'] = metric_classification['type']
-        enhanced_row['financial_context'] = financial_context
-        enhanced_row['has_financial_data'] = currency_info['has_financial_data']
-        
-        field_groups[normalized_field].append((i, enhanced_row))
-    
-    # Create cleaned data
-    cleaned_data = []
-    
-    for normalized_field, rows in field_groups.items():
-        if len(rows) == 1:
-            # Single row - clean commentary if needed
-            idx, row = rows[0]
-            cleaned_row = clean_single_row(row)
-            cleaned_data.append(cleaned_row)
-        else:
-            # Multiple similar rows - combine them
-            combined_row = combine_similar_rows(rows, normalized_field)
-            cleaned_data.append(combined_row)
-    
-    return cleaned_data
-
-def clean_single_row(row):
-    """Clean and improve a single row's commentary"""
-    cleaned_row = row.copy()
-    commentary = row.get('commentary', '')
-    
-    if commentary:
-        # Summarize if too long
-        if len(commentary) > 200:
-            # Extract key phrases
-            sentences = commentary.split('. ')
-            if len(sentences) > 1:
-                cleaned_row['commentary'] = sentences[0] + '.'
-            else:
-                cleaned_row['commentary'] = commentary[:150] + '...'
-        
-        # Make incomplete commentary more contextual
-        elif len(commentary) < 50 and not commentary.endswith('.'):
-            field = row.get('field', '')
-            value = row.get('value', '')
-            cleaned_row['commentary'] = f"Document mentions {field} as {value}. {commentary}"
-    
-    return cleaned_row
-
-def combine_similar_rows(rows, normalized_field):
-    """Combine similar rows into a single comprehensive row"""
-    # Take the most complete row as base
-    base_row = max(rows, key=lambda x: len(str(x[1].get('commentary', ''))))[1]
-    
-    # Collect all values and commentaries
-    values = []
-    commentaries = []
-    sources = set()
-    
-    for idx, row in rows:
-        if row.get('value') and row['value'] not in values:
-            values.append(str(row['value']))
-        if row.get('commentary') and row['commentary'] not in commentaries:
-            commentaries.append(row['commentary'])
-        if row.get('source'):
-            sources.add(row['source'])
-    
-    # Create combined row
-    combined_row = base_row.copy()
-    combined_row['field'] = normalized_field.replace('_', ' ').title()
-    combined_row['value'] = ' | '.join(values[:3])  # Limit to 3 values
-    combined_row['source'] = ' + '.join(list(sources)[:2])  # Limit to 2 sources
-    combined_row['type'] = 'Combined Data'
-    
-    # Combine and summarize commentary
-    if commentaries:
-        combined_commentary = ' '.join(commentaries)
-        if len(combined_commentary) > 300:
-            # Summarize using key phrases
-            sentences = combined_commentary.split('. ')
-            combined_row['commentary'] = '. '.join(sentences[:2]) + '.'
-        else:
-            combined_row['commentary'] = combined_commentary
-    
-    return combined_row
-
 @app.route('/process_stream', methods=['POST'])
 def process_stream():
     """Streaming endpoint for progressive data processing"""
@@ -310,27 +198,8 @@ def process_stream():
                             # Stream this row immediately
                             yield f"data: {json.dumps({'type': 'row', 'data': row_data})}\n\n"
             
-            # Process labeled paragraphs if available
-            if 'processed_labeled_text' in result and result['processed_labeled_text']:
-                for chunk_idx, chunk in enumerate(result['processed_labeled_text']):
-                    if 'extracted_facts' in chunk and not chunk['extracted_facts'].get('error'):
-                        facts = chunk['extracted_facts']
-                        for key, value in facts.items():
-                            if key != 'error' and value:
-                                row_data = {
-                                    'source': f'Labeled Text {chunk_idx+1}',
-                                    'type': 'Metric Data',
-                                    'field': key,
-                                    'value': str(value),
-                                    'page': 'N/A',
-                                    'commentary': ''  # Will be filled from document text only
-                                }
-                                df_data.append(row_data)
-                                # Stream this row immediately
-                                yield f"data: {json.dumps({'type': 'row', 'data': row_data})}\n\n"
-            
-            # Process document text facts (fallback)
-            elif 'processed_document_text' in result and result['processed_document_text']:
+            # Process document text facts
+            if 'processed_document_text' in result and result['processed_document_text']:
                 for chunk_idx, chunk in enumerate(result['processed_document_text']):
                     if 'extracted_facts' in chunk and not chunk['extracted_facts'].get('error'):
                         facts = chunk['extracted_facts']

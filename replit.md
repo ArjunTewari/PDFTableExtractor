@@ -1,8 +1,8 @@
-# Financial Document Intelligence Platform
+# PDF Text Extractor and Tabulator
 
 ## Overview
 
-This application is a specialized financial document analysis platform that extracts, interprets, and structures data from financial documents such as earnings reports, financial statements, SEC filings, and investor presentations. It uses advanced AI processing with financial domain expertise to provide accurate financial data extraction and analysis.
+This application extracts text from PDF files, processes the extracted content using an OpenAI language model to identify structured information, and displays the results in a tabulated format. Users can then download the results in various formats.
 
 ## User Preferences
 
@@ -92,19 +92,6 @@ The deployment uses Nix packaging to ensure all dependencies are properly manage
 - **Commentary Detection**: Paragraphs containing financial metrics and action verbs are automatically flagged as potential commentary
 - **Duplicate Prevention**: Key-value extraction now filters out redundant entries to improve data quality
 - **Enhanced Text Structure**: Document text is organized into meaningful paragraphs rather than individual lines
-
-### Financial Domain Specialization
-- **Financial Ontology**: Comprehensive financial metrics taxonomy covering revenue, profit, margins, growth, and operational metrics
-- **Financial Document Classification**: Automatic identification of document types (earnings reports, financial statements, SEC filings)
-- **Financial Context Analysis**: Sentiment analysis for financial performance indicators (positive, negative, neutral)
-- **Currency and Unit Detection**: Automatic recognition of financial units, currencies, and reporting periods
-- **Metric Classification**: Categorization of data into income, operational, valuation, and ratio metrics
-
-### Enhanced Financial Data Processing
-- **Specialized Financial Prompts**: LLM prompts tuned for financial document analysis and metric extraction
-- **Financial Period Recognition**: Automatic detection of quarters, fiscal years, and comparative timeframes
-- **Financial Context Preservation**: Maintains exact numerical values with proper currency symbols and units
-- **Investment Analysis Focus**: Extracts metrics relevant for financial analysis and business performance evaluation
 
 ## Development Notes
 
