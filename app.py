@@ -141,6 +141,106 @@ def get_unmatched_document_text(df_data, document_text):
     
     return final_chunks
 
+def clean_and_interpret_final_table(df_data):
+    """Clean and interpret the final table by removing redundancies and improving commentary"""
+    import re
+    from collections import defaultdict
+    
+    # Group similar fields and values
+    field_groups = defaultdict(list)
+    value_seen = set()
+    
+    for i, row in enumerate(df_data):
+        field = row.get('field', '').lower()
+        value = str(row.get('value', '')).strip()
+        
+        # Normalize field names for grouping
+        normalized_field = re.sub(r'[_\s\d]+', '_', field).strip('_')
+        
+        # Skip exact duplicates
+        duplicate_key = f"{normalized_field}_{value}"
+        if duplicate_key in value_seen:
+            continue
+        value_seen.add(duplicate_key)
+        
+        field_groups[normalized_field].append((i, row))
+    
+    # Create cleaned data
+    cleaned_data = []
+    
+    for normalized_field, rows in field_groups.items():
+        if len(rows) == 1:
+            # Single row - clean commentary if needed
+            idx, row = rows[0]
+            cleaned_row = clean_single_row(row)
+            cleaned_data.append(cleaned_row)
+        else:
+            # Multiple similar rows - combine them
+            combined_row = combine_similar_rows(rows, normalized_field)
+            cleaned_data.append(combined_row)
+    
+    return cleaned_data
+
+def clean_single_row(row):
+    """Clean and improve a single row's commentary"""
+    cleaned_row = row.copy()
+    commentary = row.get('commentary', '')
+    
+    if commentary:
+        # Summarize if too long
+        if len(commentary) > 200:
+            # Extract key phrases
+            sentences = commentary.split('. ')
+            if len(sentences) > 1:
+                cleaned_row['commentary'] = sentences[0] + '.'
+            else:
+                cleaned_row['commentary'] = commentary[:150] + '...'
+        
+        # Make incomplete commentary more contextual
+        elif len(commentary) < 50 and not commentary.endswith('.'):
+            field = row.get('field', '')
+            value = row.get('value', '')
+            cleaned_row['commentary'] = f"Document mentions {field} as {value}. {commentary}"
+    
+    return cleaned_row
+
+def combine_similar_rows(rows, normalized_field):
+    """Combine similar rows into a single comprehensive row"""
+    # Take the most complete row as base
+    base_row = max(rows, key=lambda x: len(str(x[1].get('commentary', ''))))[1]
+    
+    # Collect all values and commentaries
+    values = []
+    commentaries = []
+    sources = set()
+    
+    for idx, row in rows:
+        if row.get('value') and row['value'] not in values:
+            values.append(str(row['value']))
+        if row.get('commentary') and row['commentary'] not in commentaries:
+            commentaries.append(row['commentary'])
+        if row.get('source'):
+            sources.add(row['source'])
+    
+    # Create combined row
+    combined_row = base_row.copy()
+    combined_row['field'] = normalized_field.replace('_', ' ').title()
+    combined_row['value'] = ' | '.join(values[:3])  # Limit to 3 values
+    combined_row['source'] = ' + '.join(list(sources)[:2])  # Limit to 2 sources
+    combined_row['type'] = 'Combined Data'
+    
+    # Combine and summarize commentary
+    if commentaries:
+        combined_commentary = ' '.join(commentaries)
+        if len(combined_commentary) > 300:
+            # Summarize using key phrases
+            sentences = combined_commentary.split('. ')
+            combined_row['commentary'] = '. '.join(sentences[:2]) + '.'
+        else:
+            combined_row['commentary'] = combined_commentary
+    
+    return combined_row
+
 @app.route('/process_stream', methods=['POST'])
 def process_stream():
     """Streaming endpoint for progressive data processing"""
@@ -262,6 +362,16 @@ def process_stream():
                         }
                         df_data.append(row_data)
                         yield f"data: {json.dumps({'type': 'row', 'data': row_data})}\n\n"
+            
+            # Final step: Clean and interpret the final table
+            if df_data:
+                cleaned_data = clean_and_interpret_final_table(df_data)
+                
+                # Stream cleaned results
+                for row in cleaned_data:
+                    yield f"data: {json.dumps({'type': 'cleaned_row', 'data': row})}\n\n"
+                
+                yield f"data: {json.dumps({'type': 'cleanup_complete', 'original_rows': len(df_data), 'cleaned_rows': len(cleaned_data)})}\n\n"
             
             # Send completion signal
             yield f"data: {json.dumps({'type': 'complete', 'total_rows': len(df_data)})}\n\n"

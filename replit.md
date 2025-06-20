@@ -93,6 +93,13 @@ The deployment uses Nix packaging to ensure all dependencies are properly manage
 - **Duplicate Prevention**: Key-value extraction now filters out redundant entries to improve data quality
 - **Enhanced Text Structure**: Document text is organized into meaningful paragraphs rather than individual lines
 
+### Final Data Interpretation and Cleanup
+- **Redundancy Removal**: Automatically detects and removes duplicate or highly similar data entries
+- **Column Combination**: Groups similar fields using normalized field names and combines related data points
+- **Commentary Summarization**: Long commentary is automatically summarized while incomplete commentary is made contextually complete
+- **Clean Table Presentation**: Final cleaned table shows reduced, interpreted data with improved readability
+- **Dual Display**: Shows both original extracted data and cleaned interpreted results for comparison
+
 ## Development Notes
 
 1. The application uses GPT-4o (released May 2024) as the default language model

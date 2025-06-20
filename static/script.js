@@ -277,6 +277,8 @@ document.addEventListener('DOMContentLoaded', function() {
     let streamedRows = [];
     let tableInitialized = false;
 
+    let cleanedRows = [];
+    
     function handleStreamingData(data) {
         if (data.type === 'row') {
             // Add new row to streaming results
@@ -285,10 +287,17 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (data.type === 'row_update') {
             // Update existing row with commentary
             updateStreamingRow(data.data);
+        } else if (data.type === 'cleaned_row') {
+            // Add cleaned row
+            cleanedRows.push(data.data);
+            displayCleanedRow(data.data);
+        } else if (data.type === 'cleanup_complete') {
+            console.log('Data cleanup complete. Original:', data.original_rows, 'Cleaned:', data.cleaned_rows);
+            showCleanupSummary(data.original_rows, data.cleaned_rows);
         } else if (data.type === 'complete') {
             hideLoading();
             console.log('Streaming complete. Total rows:', data.total_rows);
-            processedData = streamedRows;
+            processedData = cleanedRows.length > 0 ? cleanedRows : streamedRows;
             finalizeStreamingDisplay();
         } else if (data.status === 'error') {
             hideLoading();
@@ -347,21 +356,51 @@ document.addEventListener('DOMContentLoaded', function() {
     function initializeStreamingTable() {
         hideLoading();
         resultsSection.innerHTML = `
-            <h4>Extracted Data with Commentary</h4>
-            <div class="table-responsive">
-                <table class="table table-striped table-hover">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Source</th>
-                            <th>Type</th>
-                            <th>Field</th>
-                            <th>Value</th>
-                            <th>Page</th>
-                            <th>Commentary</th>
-                        </tr>
-                    </thead>
-                    <tbody id="streaming-table-body"></tbody>
-                </table>
+            <div class="row">
+                <div class="col-12">
+                    <h4>Extracted Data with Commentary</h4>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Source</th>
+                                    <th>Type</th>
+                                    <th>Field</th>
+                                    <th>Value</th>
+                                    <th>Page</th>
+                                    <th>Commentary</th>
+                                </tr>
+                            </thead>
+                            <tbody id="streaming-table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div id="cleaned-section" style="display: none;">
+                <hr>
+                <div class="row">
+                    <div class="col-12">
+                        <h4>Cleaned & Interpreted Data</h4>
+                        <div class="alert alert-info">
+                            <small>Redundancies removed, similar columns combined, commentary summarized</small>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-success">
+                                    <tr>
+                                        <th>Source</th>
+                                        <th>Type</th>
+                                        <th>Field</th>
+                                        <th>Value</th>
+                                        <th>Page</th>
+                                        <th>Commentary</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cleaned-table-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="mt-3">
                 <button class="btn btn-outline-primary" id="export-json-btn">Export as JSON</button>
@@ -373,6 +412,47 @@ document.addEventListener('DOMContentLoaded', function() {
         resultsSection.classList.remove('d-none');
     }
 
+    function displayCleanedRow(rowData) {
+        // Show cleaned section if not visible
+        const cleanedSection = document.getElementById('cleaned-section');
+        if (cleanedSection) {
+            cleanedSection.style.display = 'block';
+        }
+        
+        const cleanedTableBody = document.getElementById('cleaned-table-body');
+        if (!cleanedTableBody) return;
+        
+        const tr = document.createElement('tr');
+        tr.className = 'table-success';
+        
+        tr.innerHTML = `
+            <td><span class="badge bg-success">${rowData.source}</span></td>
+            <td><span class="badge bg-primary">${rowData.type}</span></td>
+            <td><strong>${rowData.field}</strong></td>
+            <td>${rowData.value}</td>
+            <td>${rowData.page}</td>
+            <td class="commentary-cell">${rowData.commentary || '<span class="text-muted">-</span>'}</td>
+        `;
+        
+        cleanedTableBody.appendChild(tr);
+    }
+
+    function showCleanupSummary(originalRows, cleanedRows) {
+        const reductionPercentage = Math.round(((originalRows - cleanedRows) / originalRows) * 100);
+        
+        const summaryDiv = document.createElement('div');
+        summaryDiv.className = 'alert alert-success mt-2';
+        summaryDiv.innerHTML = `
+            <h6>Data Cleanup Complete</h6>
+            <small>Reduced from ${originalRows} to ${cleanedRows} rows (${reductionPercentage}% reduction)</small>
+        `;
+        
+        const cleanedSection = document.getElementById('cleaned-section');
+        if (cleanedSection) {
+            cleanedSection.appendChild(summaryDiv);
+        }
+    }
+
     function finalizeStreamingDisplay() {
         // Re-attach export event listeners
         document.getElementById('export-json-btn').addEventListener('click', exportJson);
@@ -382,9 +462,12 @@ document.addEventListener('DOMContentLoaded', function() {
         // Add summary
         const summaryDiv = document.createElement('div');
         summaryDiv.className = 'alert alert-success mt-3';
+        const dataSource = cleanedRows.length > 0 ? 'cleaned and interpreted' : 'original extracted';
+        const totalRows = cleanedRows.length > 0 ? cleanedRows.length : streamedRows.length;
+        
         summaryDiv.innerHTML = `
             <h6>Processing Complete</h6>
-            <small>Total rows extracted: ${streamedRows.length} | Commentary from document text only</small>
+            <small>Total ${dataSource} rows: ${totalRows} | Commentary from document text only</small>
         `;
         resultsSection.appendChild(summaryDiv);
     }
