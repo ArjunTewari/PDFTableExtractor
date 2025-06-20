@@ -59,21 +59,7 @@ Return a simple JSON object where each key is a descriptive field name and each 
 
     try:
         loop = asyncio.get_event_loop()
-        response = await loop.run_in_executor(
-            None, lambda: openai_client.chat.completions.create(
-                model="gpt-4o",
-                messages=[{
-                    "role": "user",
-                    "content": prompt
-                }],
-                response_format={"type": "json_object"}))
-
-        content = response.choices[0].message.content
-        if content:
-            result = json.loads(content)
-        else:
-            result = {"error": "No content received from OpenAI"}
-
+        result = await loop.run_in_executor(None, process_with_gemini_sync, prompt)
         return {
             "structured_key_values": result,
             "original_pairs": key_value_pairs
@@ -125,28 +111,26 @@ Return JSON with BOTH table structure AND individual facts:
 Extract comprehensive data - do not limit to just a few items. Return the response as valid JSON format."""
 
     try:
+        prompt = f"""Extract key financial facts from this text as simple field-value pairs.
+
+Text to analyze:
+{text_content}
+
+Instructions:
+1. Extract important financial data, metrics, dates
+2. Use clear field names
+3. Keep values concise and accurate
+
+Return JSON with facts:
+{{
+  "Revenue": "value",
+  "Growth_Rate": "value",
+  "Date": "value"
+}}"""
+        
         loop = asyncio.get_event_loop()
-        response = await loop.run_in_executor(
-            None, lambda: openai_client.chat.completions.create(
-                model="gpt-4o",
-                messages=[{
-                    "role": "user",
-                    "content": prompt
-                }],
-                response_format={"type": "json_object"}))
-
-        content = response.choices[0].message.content
-        if content:
-            result = json.loads(content)
-        else:
-            result = {"error": "No content received from OpenAI"}
-
-        return {
-            "table_headers": result.get("table_headers", []),
-            "table_rows": result.get("table_rows", []),
-            "extracted_facts": result.get("extracted_facts", {}),
-            "original_text": text_chunk
-        }
+        result = await loop.run_in_executor(None, process_with_gemini_sync, prompt)
+        return {"extracted_facts": result}
     except Exception as e:
         print(f"Error processing text chunk: {e}")
         return {"extracted_facts": {"error": str(e)}}
@@ -177,18 +161,7 @@ OR
 
     try:
         loop = asyncio.get_event_loop()
-        response = await loop.run_in_executor(
-            None, lambda: openai_client.chat.completions.create(
-                model="gpt-4o",
-                messages=[{
-                    "role": "user",
-                    "content": prompt
-                }],
-                response_format={"type": "json_object"}))
-
-        content = response.choices[0].message.content
-        if content:
-            result = json.loads(content)
+        result = await loop.run_in_executor(None, process_with_gemini_sync, prompt)
             return result
         else:
             return {"commentary": None, "relevant": False}

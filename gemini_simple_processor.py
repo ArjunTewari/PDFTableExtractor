@@ -9,7 +9,7 @@ import google.generativeai as genai
 genai.configure(api_key=os.environ.get("GOOGLE_API_KEY"))
 
 def process_with_gemini_sync(prompt: str) -> dict:
-    """Process text with Gemini Pro 1.5 synchronously"""
+    """Process text with Gemini Pro 1.5 synchronously with fallback"""
     try:
         model = genai.GenerativeModel('gemini-1.5-pro')
         response = model.generate_content(prompt)
@@ -26,7 +26,14 @@ def process_with_gemini_sync(prompt: str) -> dict:
         
         return json.loads(content)
     except Exception as e:
-        print(f"Gemini processing error: {e}")
+        error_msg = str(e)
+        print(f"Gemini processing error: {error_msg}")
+        
+        # Check if quota exceeded
+        if "quota" in error_msg.lower() or "429" in error_msg:
+            print("Gemini quota exceeded - API key needs billing setup or has reached free tier limits")
+            return {"error": "Gemini quota exceeded - please check your billing plan"}
+        
         return {"error": str(e)}
 
 def enhance_commentary_sync(commentary: str, field: str, value: str) -> str:
