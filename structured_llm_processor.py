@@ -20,23 +20,31 @@ def split_text_section(text_lines, max_lines=20):
     return chunks
 
 async def process_table_data(table_data: Dict[str, Any]) -> Dict[str, Any]:
-    """Process table data with GPT-4o asynchronously - simple format"""
+    """Process table data with GPT-4o asynchronously using metadata"""
+    page = table_data.get('page', 'N/A')
+    confidence = table_data.get('confidence', 0)
+    
     prompt = f"""Extract key data points from this table as simple field-value pairs.
+
+Table metadata:
+- Page: {page}
+- Confidence: {confidence}%
 
 Table data:
 {json.dumps(table_data, indent=2)}
 
 Instructions:
 1. Extract important data points as field-value pairs
-2. Use clear, descriptive field names
-3. Focus on financial figures, dates, and key metrics
-4. Keep it simple and straightforward
+2. Use clear, descriptive field names that include context when possible
+3. Focus on financial figures, dates, key metrics, and business data
+4. For each field, include the page number in parentheses if relevant
+5. Prioritize high-confidence extractions
 
 Return JSON with field-value pairs:
 {{
-  "Revenue": "value",
+  "Revenue_Q4": "value",
   "Growth_Rate": "value",
-  "Date": "value"
+  "Report_Date": "value"
 }}"""
 
     try:

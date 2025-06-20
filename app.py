@@ -40,51 +40,72 @@ def extract():
         return jsonify({'error': str(e)}), 500
 
 def find_relevant_document_text(row_data, document_text):
-    """Find relevant text from document that mentions this data point"""
+    """Find relevant text from document paragraphs that mentions this data point"""
     field = row_data.get('field', '').lower()
     value = str(row_data.get('value', '')).lower()
     
-    # Look for mentions of the field name or value in document text
-    for line in document_text:
-        line_lower = line.lower()
-        if field in line_lower or value in line_lower:
-            # Return the original line (not lowercased)
-            return line.strip()[:300] + '...' if len(line.strip()) > 300 else line.strip()
+    # Handle both old format (list of strings) and new format (list of dicts with metadata)
+    for text_item in document_text:
+        if isinstance(text_item, dict):
+            # New format with metadata
+            text = text_item.get('text', '')
+            page = text_item.get('page', 'N/A')
+            confidence = text_item.get('confidence', 0)
+        else:
+            # Old format - simple string
+            text = text_item
+            page = 'N/A'
+            confidence = 0
+        
+        text_lower = text.lower()
+        
+        # Look for field name or value in the text
+        if field in text_lower or value in text_lower:
+            # Return relevant excerpt with metadata
+            excerpt = text[:300] + '...' if len(text) > 300 else text
+            if isinstance(text_item, dict):
+                return f"{excerpt} (Page {page}, Confidence: {confidence}%)"
+            else:
+                return excerpt
     
     return ''
 
 def get_unmatched_document_text(df_data, document_text):
-    """Get document text that doesn't match any extracted data"""
-    used_lines = set()
+    """Get document paragraphs that don't match any extracted data"""
+    used_texts = set()
     
-    # Mark lines that were used for commentary
+    # Mark paragraphs that were used for commentary
     for row in df_data:
         if row.get('commentary'):
-            for line in document_text:
-                if row['commentary'][:50] in line:
-                    used_lines.add(line)
+            commentary_excerpt = row['commentary'][:50]
+            for text_item in document_text:
+                if isinstance(text_item, dict):
+                    text = text_item.get('text', '')
+                else:
+                    text = text_item
+                
+                if commentary_excerpt in text:
+                    used_texts.add(text)
     
-    # Return unused lines
+    # Return unused paragraphs
     unmatched = []
-    for line in document_text:
-        if line not in used_lines and len(line.strip()) > 20:
-            unmatched.append(line.strip())
-    
-    # Group into chunks of reasonable size
-    chunks = []
-    current_chunk = ""
-    for line in unmatched:
-        if len(current_chunk + line) < 400:
-            current_chunk += line + " "
+    for text_item in document_text:
+        if isinstance(text_item, dict):
+            text = text_item.get('text', '')
+            page = text_item.get('page', 'N/A')
+            confidence = text_item.get('confidence', 0)
+            
+            if text not in used_texts and len(text.strip()) > 30:
+                # Include metadata in the unmatched text
+                text_with_meta = f"{text} (Page {page}, Confidence: {confidence}%)"
+                unmatched.append(text_with_meta)
         else:
-            if current_chunk:
-                chunks.append(current_chunk.strip())
-            current_chunk = line + " "
+            # Old format - simple string
+            text = text_item
+            if text not in used_texts and len(text.strip()) > 30:
+                unmatched.append(text)
     
-    if current_chunk:
-        chunks.append(current_chunk.strip())
-    
-    return chunks[:5]  # Limit to 5 chunks
+    return unmatched[:5]  # Limit to 5 unmatched paragraphs
 
 @app.route('/process_stream', methods=['POST'])
 def process_stream():

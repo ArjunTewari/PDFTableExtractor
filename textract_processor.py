@@ -96,29 +96,46 @@ class TextractProcessor:
             raise Exception(f"Failed to extract text using Amazon Textract: {str(e)}")
 
     def _parse_textract_blocks(self, blocks: List[Dict[str, Any]], start_time: float) -> Dict[str, Any]:
-        """Parse Textract blocks into the specified JSON format"""
+        """Parse Textract blocks with paragraph merging and metadata"""
         
         block_map = {block['Id']: block for block in blocks}
         
-        # Extract document text (line by line)
-        document_text = []
+        # Collect line blocks with metadata
+        line_blocks = []
         tables = []
         key_values = []
         
         # Process blocks
         for block in blocks:
             if block['BlockType'] == 'LINE':
-                document_text.append(block.get('Text', ''))
+                text = block.get('Text', '').strip()
+                if text:
+                    line_blocks.append({
+                        'text': text,
+                        'page': block.get('Page', 1),
+                        'confidence': block.get('Confidence', 0),
+                        'geometry': block.get('Geometry', {}),
+                        'id': block.get('Id', '')
+                    })
             
             elif block['BlockType'] == 'TABLE':
                 table_data = self._extract_table_structure(block, block_map)
                 if table_data:
+                    # Add metadata to table
+                    table_data['page'] = block.get('Page', 1)
+                    table_data['confidence'] = block.get('Confidence', 0)
                     tables.append(table_data)
             
             elif block['BlockType'] == 'KEY_VALUE_SET':
                 kv_pair = self._extract_key_value_pair(block, block_map)
                 if kv_pair:
+                    # Add metadata to key-value pair
+                    kv_pair['page'] = block.get('Page', 1)
+                    kv_pair['confidence'] = block.get('Confidence', 0)
                     key_values.append(kv_pair)
+        
+        # Merge lines into paragraphs
+        document_text = self._merge_lines_into_paragraphs(line_blocks)
         
         processing_time = f"{time.time() - start_time:.1f}s"
         print(f"Textract processing completed in {processing_time}")
@@ -126,8 +143,100 @@ class TextractProcessor:
         return {
             "document_text": document_text,
             "tables": tables,
-            "key_values": key_values
+            "key_values": key_values,
+            "metadata": {
+                "total_blocks": len(blocks),
+                "total_lines": len(line_blocks),
+                "total_paragraphs": len(document_text),
+                "processing_time": processing_time,
+                "extraction_timestamp": time.strftime('%Y-%m-%d %H:%M:%S')
+            }
         }
+
+    def _merge_lines_into_paragraphs(self, line_blocks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Merge adjacent lines into coherent paragraphs with metadata"""
+        if not line_blocks:
+            return []
+        
+        # Sort by page, then by vertical position
+        line_blocks.sort(key=lambda x: (
+            x['page'],
+            x['geometry'].get('BoundingBox', {}).get('Top', 0)
+        ))
+        
+        paragraphs = []
+        current_paragraph = {
+            'text': '',
+            'page': line_blocks[0]['page'],
+            'confidence_scores': [],
+            'line_count': 0
+        }
+        
+        for i, line in enumerate(line_blocks):
+            should_start_new = False
+            
+            if i > 0:
+                prev_line = line_blocks[i-1]
+                
+                # Start new paragraph if different page
+                if line['page'] != prev_line['page']:
+                    should_start_new = True
+                else:
+                    # Calculate vertical gap between lines
+                    prev_bbox = prev_line['geometry'].get('BoundingBox', {})
+                    curr_bbox = line['geometry'].get('BoundingBox', {})
+                    
+                    if prev_bbox and curr_bbox:
+                        prev_bottom = prev_bbox.get('Top', 0) + prev_bbox.get('Height', 0)
+                        current_top = curr_bbox.get('Top', 0)
+                        vertical_gap = current_top - prev_bottom
+                        
+                        # Large gap indicates paragraph break
+                        if vertical_gap > 0.02:
+                            should_start_new = True
+                    
+                    # Short line followed by longer line might be header/paragraph break
+                    if len(prev_line['text']) < 40 and len(line['text']) > 60:
+                        should_start_new = True
+            
+            if should_start_new and current_paragraph['text']:
+                # Finalize current paragraph
+                avg_confidence = sum(current_paragraph['confidence_scores']) / len(current_paragraph['confidence_scores']) if current_paragraph['confidence_scores'] else 0
+                paragraphs.append({
+                    'text': current_paragraph['text'],
+                    'page': current_paragraph['page'],
+                    'line_count': current_paragraph['line_count'],
+                    'confidence': round(avg_confidence, 2)
+                })
+                
+                # Start new paragraph
+                current_paragraph = {
+                    'text': '',
+                    'page': line['page'],
+                    'confidence_scores': [],
+                    'line_count': 0
+                }
+            
+            # Add line to current paragraph
+            if current_paragraph['text']:
+                current_paragraph['text'] += ' ' + line['text']
+            else:
+                current_paragraph['text'] = line['text']
+            
+            current_paragraph['confidence_scores'].append(line['confidence'])
+            current_paragraph['line_count'] += 1
+        
+        # Add final paragraph
+        if current_paragraph['text']:
+            avg_confidence = sum(current_paragraph['confidence_scores']) / len(current_paragraph['confidence_scores']) if current_paragraph['confidence_scores'] else 0
+            paragraphs.append({
+                'text': current_paragraph['text'],
+                'page': current_paragraph['page'],
+                'line_count': current_paragraph['line_count'],
+                'confidence': round(avg_confidence, 2)
+            })
+        
+        return paragraphs
 
     def _extract_table_structure(self, table_block: Dict[str, Any], block_map: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Extract table as rows format"""
