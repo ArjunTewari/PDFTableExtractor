@@ -187,28 +187,36 @@ def process_stream():
             document_text = data.get('document_text', [])
             if document_text and df_data:
                 for row in df_data:
-                    # Find relevant text from document that mentions this data point
-                    relevant_text = find_relevant_document_text(row, document_text)
-                    if relevant_text:
-                        row['commentary'] = relevant_text
-                        # Stream updated row with commentary
-                        yield f"data: {json.dumps({'type': 'row_update', 'data': row})}\n\n"
+                    try:
+                        # Find relevant text from document that mentions this data point
+                        relevant_text = find_relevant_document_text(row, document_text)
+                        if relevant_text:
+                            row['commentary'] = relevant_text
+                            # Stream updated row with commentary
+                            yield f"data: {json.dumps({'type': 'row_update', 'data': row})}\n\n"
+                    except Exception as e:
+                        print(f"Error matching commentary for {row.get('field', 'unknown')}: {e}")
+                        row['commentary'] = ''
             
             # Add general unmatched document text as separate entries
             if document_text:
-                unmatched_text = get_unmatched_document_text(df_data, document_text)
-                if unmatched_text:
-                    for idx, text_chunk in enumerate(unmatched_text):
-                        row_data = {
-                            'source': 'Document Text',
-                            'type': 'General Commentary',
-                            'field': f'Text Segment {idx+1}',
-                            'value': text_chunk[:500] + '...' if len(text_chunk) > 500 else text_chunk,
-                            'page': 'N/A',
-                            'commentary': 'Unmatched document content'
-                        }
-                        df_data.append(row_data)
-                        yield f"data: {json.dumps({'type': 'row', 'data': row_data})}\n\n"
+                try:
+                    unmatched_text = get_unmatched_document_text(df_data, document_text)
+                    if unmatched_text:
+                        for idx, text_chunk in enumerate(unmatched_text):
+                            row_data = {
+                                'source': 'Document Text',
+                                'type': 'General Commentary',
+                                'field': f'Text Segment {idx+1}',
+                                'value': text_chunk[:500] + '...' if len(text_chunk) > 500 else text_chunk,
+                                'page': 'N/A',
+                                'commentary': 'Unmatched document content'
+                            }
+                            df_data.append(row_data)
+                            yield f"data: {json.dumps({'type': 'row', 'data': row_data})}\n\n"
+                except Exception as e:
+                    print(f"Error processing unmatched text: {e}")
+                    # Continue without unmatched text
             
             # Send completion signal
             yield f"data: {json.dumps({'type': 'complete', 'total_rows': len(df_data)})}\n\n"

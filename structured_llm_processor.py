@@ -12,11 +12,31 @@ OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 openai_client = OpenAI(api_key=OPENAI_API_KEY)
 
 def split_text_section(text_lines, max_lines=20):
-    """Split text lines into manageable chunks"""
+    """Split text lines into manageable chunks, handling both string and dict formats"""
     chunks = []
-    for i in range(0, len(text_lines), max_lines):
-        chunk = text_lines[i:i + max_lines]
+    
+    # Handle different input formats
+    if not text_lines:
+        return chunks
+    
+    # Convert to consistent format
+    processed_lines = []
+    for item in text_lines:
+        if isinstance(item, dict):
+            # Extract text from paragraph dict
+            text = item.get('text', '')
+            if text:
+                processed_lines.append(text)
+        else:
+            # Already a string
+            if item:
+                processed_lines.append(str(item))
+    
+    # Split into chunks
+    for i in range(0, len(processed_lines), max_lines):
+        chunk = processed_lines[i:i + max_lines]
         chunks.append(chunk)
+    
     return chunks
 
 async def process_table_data(table_data: Dict[str, Any]) -> Dict[str, Any]:
