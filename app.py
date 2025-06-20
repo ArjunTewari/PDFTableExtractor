@@ -44,47 +44,102 @@ def find_relevant_document_text(row_data, document_text):
     field = row_data.get('field', '').lower()
     value = str(row_data.get('value', '')).lower()
     
-    # Look for mentions of the field name or value in document text
-    for line in document_text:
-        line_lower = line.lower()
-        if field in line_lower or value in line_lower:
-            # Return the original line (not lowercased)
-            return line.strip()[:300] + '...' if len(line.strip()) > 300 else line.strip()
+    # Clean field and value for better matching
+    field_words = field.replace('_', ' ').split()
+    value_clean = value.replace('$', '').replace('%', '').replace(',', '')
     
-    return ''
+    best_match = ""
+    best_score = 0
+    
+    # Look for the best matching text segment
+    for i, line in enumerate(document_text):
+        line_lower = line.lower()
+        score = 0
+        
+        # Score based on field word matches
+        for word in field_words:
+            if len(word) > 2 and word in line_lower:
+                score += 2
+        
+        # Score based on value matches
+        if value_clean and value_clean in line_lower:
+            score += 5
+        elif value and value in line_lower:
+            score += 3
+        
+        # If we found a good match, include surrounding context
+        if score > best_score:
+            best_score = score
+            # Get context around the matching line
+            start_idx = max(0, i - 1)
+            end_idx = min(len(document_text), i + 2)
+            context_lines = document_text[start_idx:end_idx]
+            
+            # Join and clean up the context
+            context = ' '.join(context_lines).strip()
+            # Truncate at sentence boundary if possible
+            if len(context) > 400:
+                sentences = context.split('. ')
+                truncated = '. '.join(sentences[:2])
+                if len(truncated) < 400:
+                    best_match = truncated + '.'
+                else:
+                    best_match = context[:400] + '...'
+            else:
+                best_match = context
+    
+    return best_match if best_score > 1 else ''
 
 def get_unmatched_document_text(df_data, document_text):
     """Get document text that doesn't match any extracted data"""
-    used_lines = set()
+    used_indices = set()
     
-    # Mark lines that were used for commentary
+    # Mark lines that were used for commentary (with context)
     for row in df_data:
         if row.get('commentary'):
-            for line in document_text:
-                if row['commentary'][:50] in line:
-                    used_lines.add(line)
+            commentary_sample = row['commentary'][:100].lower()
+            for i, line in enumerate(document_text):
+                if commentary_sample in line.lower():
+                    # Mark this line and surrounding context as used
+                    for j in range(max(0, i-1), min(len(document_text), i+2)):
+                        used_indices.add(j)
     
-    # Return unused lines
-    unmatched = []
-    for line in document_text:
-        if line not in used_lines and len(line.strip()) > 20:
-            unmatched.append(line.strip())
+    # Collect unused lines in meaningful paragraphs
+    unmatched_paragraphs = []
+    current_paragraph = []
     
-    # Group into chunks of reasonable size
-    chunks = []
-    current_chunk = ""
-    for line in unmatched:
-        if len(current_chunk + line) < 400:
-            current_chunk += line + " "
+    for i, line in enumerate(document_text):
+        if i not in used_indices and len(line.strip()) > 15:
+            current_paragraph.append(line.strip())
         else:
-            if current_chunk:
-                chunks.append(current_chunk.strip())
-            current_chunk = line + " "
+            # End of paragraph - save if substantial
+            if current_paragraph:
+                paragraph_text = ' '.join(current_paragraph)
+                if len(paragraph_text) > 50:  # Only keep substantial paragraphs
+                    unmatched_paragraphs.append(paragraph_text)
+                current_paragraph = []
     
-    if current_chunk:
-        chunks.append(current_chunk.strip())
+    # Don't forget the last paragraph
+    if current_paragraph:
+        paragraph_text = ' '.join(current_paragraph)
+        if len(paragraph_text) > 50:
+            unmatched_paragraphs.append(paragraph_text)
     
-    return chunks[:5]  # Limit to 5 chunks
+    # Limit and truncate paragraphs for readability
+    final_chunks = []
+    for paragraph in unmatched_paragraphs[:3]:  # Limit to 3 substantial chunks
+        if len(paragraph) > 600:
+            # Truncate at sentence boundary
+            sentences = paragraph.split('. ')
+            truncated = '. '.join(sentences[:3])
+            if len(truncated) < 600:
+                final_chunks.append(truncated + '.')
+            else:
+                final_chunks.append(paragraph[:600] + '...')
+        else:
+            final_chunks.append(paragraph)
+    
+    return final_chunks
 
 @app.route('/process_stream', methods=['POST'])
 def process_stream():
