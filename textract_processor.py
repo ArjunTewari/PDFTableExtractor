@@ -173,8 +173,36 @@ class TextractProcessor:
             }
         }
 
+    def _contains_numeric_financial_data(self, text: str) -> bool:
+        """Check if text contains numeric or financial data that should not be merged"""
+        import re
+        
+        # Patterns for numeric/financial data
+        patterns = [
+            r'\d+',              # Any numbers
+            r'\$',               # Currency symbols
+            r'%',                # Percentages
+            r'Q\d',              # Quarter references (Q1, Q2, etc.)
+            r'FY\d{2,4}',        # Fiscal year references (FY24, FY2024, etc.)
+            r'\d{1,2}/\d{1,2}/\d{2,4}',  # Dates (MM/DD/YYYY)
+            r'\d{4}-\d{2}-\d{2}',        # ISO dates (YYYY-MM-DD)
+            r'[A-Z]{3}\s+\d{4}',         # Month year (JAN 2024)
+            r'\d+[KMB]',                 # Numbers with K/M/B suffixes
+            r'\d+\.\d+',                 # Decimal numbers
+            r':\s*\d+',                  # Colon followed by numbers (ratios, times)
+            r'revenue|profit|loss|income|expense|cost|price|amount|total|sum',  # Financial keywords
+            r'million|billion|thousand|USD|EUR|GBP',  # Financial magnitudes and currencies
+        ]
+        
+        # Check if any pattern matches (case insensitive)
+        for pattern in patterns:
+            if re.search(pattern, text, re.IGNORECASE):
+                return True
+        
+        return False
+
     def _merge_lines_into_paragraphs(self, line_blocks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Merge adjacent lines into coherent paragraphs with metadata"""
+        """Merge adjacent lines into paragraphs, but keep numeric/financial data separate"""
         if not line_blocks:
             return []
         
@@ -189,17 +217,25 @@ class TextractProcessor:
             'text': '',
             'page': line_blocks[0]['page'],
             'confidence_scores': [],
-            'line_count': 0
+            'line_count': 0,
+            'contains_financial_data': False
         }
         
         for i, line in enumerate(line_blocks):
+            line_text = line['text']
+            has_numeric_data = self._contains_numeric_financial_data(line_text)
+            
             should_start_new = False
             
             if i > 0:
                 prev_line = line_blocks[i-1]
+                prev_has_numeric = self._contains_numeric_financial_data(prev_line['text'])
                 
                 # Start new paragraph if different page
                 if line['page'] != prev_line['page']:
+                    should_start_new = True
+                # Start new paragraph if current or previous line has numeric data
+                elif has_numeric_data or prev_has_numeric:
                     should_start_new = True
                 else:
                     # Calculate vertical gap between lines
@@ -226,7 +262,8 @@ class TextractProcessor:
                     'text': current_paragraph['text'],
                     'page': current_paragraph['page'],
                     'line_count': current_paragraph['line_count'],
-                    'confidence': round(avg_confidence, 2)
+                    'confidence': round(avg_confidence, 2),
+                    'contains_financial_data': current_paragraph['contains_financial_data']
                 })
                 
                 # Start new paragraph
@@ -234,17 +271,22 @@ class TextractProcessor:
                     'text': '',
                     'page': line['page'],
                     'confidence_scores': [],
-                    'line_count': 0
+                    'line_count': 0,
+                    'contains_financial_data': False
                 }
             
             # Add line to current paragraph
             if current_paragraph['text']:
-                current_paragraph['text'] += ' ' + line['text']
+                current_paragraph['text'] += ' ' + line_text
             else:
-                current_paragraph['text'] = line['text']
+                current_paragraph['text'] = line_text
             
             current_paragraph['confidence_scores'].append(line['confidence'])
             current_paragraph['line_count'] += 1
+            
+            # Mark if this paragraph contains financial data
+            if has_numeric_data:
+                current_paragraph['contains_financial_data'] = True
         
         # Add final paragraph
         if current_paragraph['text']:
@@ -253,8 +295,11 @@ class TextractProcessor:
                 'text': current_paragraph['text'],
                 'page': current_paragraph['page'],
                 'line_count': current_paragraph['line_count'],
-                'confidence': round(avg_confidence, 2)
+                'confidence': round(avg_confidence, 2),
+                'contains_financial_data': current_paragraph['contains_financial_data']
             })
+        
+        print(f"Paragraph merging complete: {sum(1 for p in paragraphs if p['contains_financial_data'])} financial paragraphs, {sum(1 for p in paragraphs if not p['contains_financial_data'])} text paragraphs")
         
         return paragraphs
 
