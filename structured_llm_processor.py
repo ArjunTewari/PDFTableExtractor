@@ -217,6 +217,66 @@ OR
         print(f"Error matching commentary: {e}")
         return {"commentary": None, "relevant": False}
 
+async def process_labeled_paragraph_chunk(paragraph_chunk: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Process labeled paragraphs with different prompts for narrative vs metric"""
+    try:
+        metric_facts = {}
+        narrative_commentary = []
+        
+        for para_data in paragraph_chunk:
+            text = para_data.get('text', '')
+            label = para_data.get('label', 'narrative')
+            
+            if label == 'metric' and text.strip():
+                # Tabular extraction prompt for metric paragraphs
+                metric_prompt = f"""Extract financial metrics from this text as field-value pairs.
+
+Text: {text}
+
+Focus on extracting:
+- Dollar amounts, percentages, growth rates
+- Time periods, quarters, years  
+- User counts, revenue figures
+- Key performance indicators
+
+Return JSON with metrics:
+{{
+  "metric_name": "value"
+}}"""
+                
+                try:
+                    loop = asyncio.get_event_loop()
+                    response = await loop.run_in_executor(
+                        None,
+                        lambda: openai_client.chat.completions.create(
+                            model="gpt-4o",
+                            messages=[{"role": "user", "content": metric_prompt}],
+                            response_format={"type": "json_object"}
+                        )
+                    )
+                    
+                    content = response.choices[0].message.content
+                    if content:
+                        result = json.loads(content)
+                        for key, value in result.items():
+                            metric_facts[f"metric_{key}"] = value
+                            
+                except Exception as e:
+                    print(f"Error processing metric paragraph: {e}")
+            
+            elif label == 'narrative' and text.strip():
+                # Store narrative for commentary
+                narrative_commentary.append(text)
+        
+        return {
+            "extracted_facts": metric_facts,
+            "narrative_commentary": narrative_commentary
+        }
+        
+    except Exception as e:
+        print(f"Error processing labeled paragraphs: {e}")
+        return {"error": str(e)}
+
 async def process_structured_data_with_llm_async(structured_data: Dict[str, Any]) -> Dict[str, Any]:
     """Process all sections of structured data with asynchronous LLM calls"""
     
