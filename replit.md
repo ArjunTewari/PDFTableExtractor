@@ -79,20 +79,20 @@ The deployment uses Nix packaging to ensure all dependencies are properly manage
 
 ## Recent Changes
 
-### June 2025 - Enhanced Table Processing and Commentary System
-- **Multi-Column Table Reconstruction**: Enhanced prompts to preserve ALL columns from extracted tables instead of simplifying to 2 columns
-- **Document Text Tabulation**: Added comprehensive tabulation of document text content into structured table format
-- **Commentary Matching System**: Implemented intelligent matching between extracted data and document commentary
-- **Streaming Processing**: Added real-time streaming output for progressive data processing updates
-- **Enhanced Frontend Display**: Reconstructed tables now show original multi-column structure with proper headers and data rows
-- **Dual Table Views**: Both reconstructed original tables and detailed data point tables are displayed
-- **Document Content Tables**: Narrative text is now analyzed and tabulated into structured format alongside extracted tables
+### June 2025 - Enhanced Document Processing and Smart Text Extraction
+- **Smart Paragraph Merging**: Enhanced Amazon Textract to merge adjacent lines into coherent paragraphs while preserving structured data
+- **Financial Data Detection**: Added regex patterns to identify numbers, percentages, dates, currency symbols (33%, $65 million, Q1 2024)
+- **Structured Data Preservation**: Lines containing financial metrics remain as standalone rows, preventing data loss during merging
+- **Metadata Integration**: Added page numbers, confidence scores, and line counts to all extracted content
+- **Commentary Matching**: Implemented intelligent matching between extracted data and document text with metadata references
+- **Streaming Processing**: Real-time streaming output shows results as they're processed, not progress messages
+- **Enhanced Error Handling**: Added comprehensive error handling for data type compatibility issues
 
 ### Architecture Improvements
-- **Advanced LLM Processing**: Updated prompts to extract comprehensive data while maintaining table structure integrity
-- **Asynchronous Commentary Matching**: Each data point is matched against document text to find relevant explanations
-- **Enhanced Data Structure**: Extended data model to include table headers, rows, commentary, and metadata
-- **Real-time Progress Updates**: Streaming endpoint provides live processing status updates
+- **Advanced Text Splitting**: Paragraphs are split at structured data points (MAU: 79.6 million becomes standalone row)
+- **Dual Processing Logic**: Narrative text merges into paragraphs, financial data stays separate for tabular extraction
+- **Enhanced LLM Prompts**: Updated prompts to use metadata (page numbers, confidence scores) for better AI processing
+- **Robust Data Handling**: Fixed compatibility issues between string and dictionary formats in document processing
 
 ## Development Notes
 

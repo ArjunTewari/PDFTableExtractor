@@ -201,8 +201,85 @@ class TextractProcessor:
         
         return False
 
+    def _split_paragraph_at_structured_data(self, text: str, page: int, confidence: float) -> List[Dict[str, Any]]:
+        """Split paragraph text at structured data points, creating standalone rows"""
+        import re
+        
+        # Enhanced patterns for structured data that should be standalone
+        structured_patterns = [
+            r'[A-Z]{2,}:\s*[\d\$%]+[^.]*',  # Labels with data (MAU: 79.6 million)
+            r'\$[\d,]+\s*(?:million|billion|thousand)',  # Currency amounts
+            r'\d+%\s*(?:growth|increase|decrease|change)',  # Percentage changes
+            r'Q[1-4]\s+\d{4}:\s*[\d\$%]+',  # Quarterly data
+            r'FY\d{2,4}:\s*[\d\$%]+',  # Fiscal year data
+            r'(?:Revenue|Profit|Loss|Income|EBITDA|MAU|ARPU):\s*[\d\$%,]+',  # Key metrics
+            r'\d+\.\d+\s*(?:million|billion|thousand)',  # Decimal numbers with magnitudes
+            r'[\d,]+\s+(?:users|subscribers|customers|members)',  # User counts
+        ]
+        
+        # Find all structured data matches
+        matches = []
+        for pattern in structured_patterns:
+            for match in re.finditer(pattern, text, re.IGNORECASE):
+                matches.append((match.start(), match.end(), match.group()))
+        
+        # Sort matches by position
+        matches.sort(key=lambda x: x[0])
+        
+        # If no structured data found, return as single paragraph
+        if not matches:
+            return [{
+                'text': text,
+                'page': page,
+                'confidence': confidence,
+                'line_count': 1,
+                'contains_financial_data': self._contains_numeric_financial_data(text)
+            }]
+        
+        # Split text at structured data points
+        segments = []
+        last_end = 0
+        
+        for start, end, matched_text in matches:
+            # Add text before the match as a paragraph (if any)
+            if start > last_end:
+                pre_text = text[last_end:start].strip()
+                if pre_text:
+                    segments.append({
+                        'text': pre_text,
+                        'page': page,
+                        'confidence': confidence,
+                        'line_count': 1,
+                        'contains_financial_data': self._contains_numeric_financial_data(pre_text)
+                    })
+            
+            # Add the structured data as standalone row
+            segments.append({
+                'text': matched_text.strip(),
+                'page': page,
+                'confidence': confidence,
+                'line_count': 1,
+                'contains_financial_data': True  # Always true for structured data
+            })
+            
+            last_end = end
+        
+        # Add remaining text after last match (if any)
+        if last_end < len(text):
+            post_text = text[last_end:].strip()
+            if post_text:
+                segments.append({
+                    'text': post_text,
+                    'page': page,
+                    'confidence': confidence,
+                    'line_count': 1,
+                    'contains_financial_data': self._contains_numeric_financial_data(post_text)
+                })
+        
+        return segments
+
     def _merge_lines_into_paragraphs(self, line_blocks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Merge adjacent lines into paragraphs, but keep numeric/financial data separate"""
+        """Merge adjacent lines into paragraphs, keeping structured data as standalone rows"""
         if not line_blocks:
             return []
         
@@ -256,15 +333,16 @@ class TextractProcessor:
                         should_start_new = True
             
             if should_start_new and current_paragraph['text']:
-                # Finalize current paragraph
+                # Process the current paragraph for structured data splitting
                 avg_confidence = sum(current_paragraph['confidence_scores']) / len(current_paragraph['confidence_scores']) if current_paragraph['confidence_scores'] else 0
-                paragraphs.append({
-                    'text': current_paragraph['text'],
-                    'page': current_paragraph['page'],
-                    'line_count': current_paragraph['line_count'],
-                    'confidence': round(avg_confidence, 2),
-                    'contains_financial_data': current_paragraph['contains_financial_data']
-                })
+                
+                # Split paragraph at structured data points
+                split_segments = self._split_paragraph_at_structured_data(
+                    current_paragraph['text'],
+                    current_paragraph['page'],
+                    round(avg_confidence, 2)
+                )
+                paragraphs.extend(split_segments)
                 
                 # Start new paragraph
                 current_paragraph = {
@@ -288,18 +366,20 @@ class TextractProcessor:
             if has_numeric_data:
                 current_paragraph['contains_financial_data'] = True
         
-        # Add final paragraph
+        # Add final paragraph with structured data splitting
         if current_paragraph['text']:
             avg_confidence = sum(current_paragraph['confidence_scores']) / len(current_paragraph['confidence_scores']) if current_paragraph['confidence_scores'] else 0
-            paragraphs.append({
-                'text': current_paragraph['text'],
-                'page': current_paragraph['page'],
-                'line_count': current_paragraph['line_count'],
-                'confidence': round(avg_confidence, 2),
-                'contains_financial_data': current_paragraph['contains_financial_data']
-            })
+            
+            split_segments = self._split_paragraph_at_structured_data(
+                current_paragraph['text'],
+                current_paragraph['page'],
+                round(avg_confidence, 2)
+            )
+            paragraphs.extend(split_segments)
         
-        print(f"Paragraph merging complete: {sum(1 for p in paragraphs if p['contains_financial_data'])} financial paragraphs, {sum(1 for p in paragraphs if not p['contains_financial_data'])} text paragraphs")
+        financial_count = sum(1 for p in paragraphs if p['contains_financial_data'])
+        text_count = len(paragraphs) - financial_count
+        print(f"Paragraph processing complete: {financial_count} structured data rows, {text_count} text paragraphs")
         
         return paragraphs
 
