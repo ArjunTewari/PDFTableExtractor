@@ -3,12 +3,7 @@ import os
 from typing import Dict, Any, List
 import asyncio
 import concurrent.futures
-from gemini_processor import (
-    process_table_data_gemini, 
-    process_key_value_data_gemini, 
-    process_text_chunk_gemini,
-    enhance_commentary_gemini
-)
+from gemini_simple_processor import process_with_gemini_sync
 from deduplication_utils import advanced_deduplication
 
 

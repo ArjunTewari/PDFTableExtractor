@@ -9,7 +9,7 @@ from textract_processor import extract_text_from_pdf, extract_text_from_pdf_byte
 from llm_processor import process_text_with_llm
 from structured_llm_processor import process_structured_data_with_llm
 from deduplication_utils import advanced_deduplication
-from gemini_processor import enhance_commentary_gemini
+from gemini_simple_processor import enhance_commentary_sync
 from export_utils import export_to_pdf
 
 app = Flask(__name__)
@@ -95,7 +95,7 @@ def process_stream():
     if not data:
         return jsonify({'error': 'No data provided'}), 400
     
-    async def generate():
+    def generate():
         try:
             import pandas as pd
             
@@ -165,7 +165,8 @@ def process_stream():
                                 yield f"data: {json.dumps({'type': 'row', 'data': row_data})}\n\n"
             
             # Apply deduplication before adding commentary
-            df_data = advanced_deduplication(df_data)
+            if df_data:
+                df_data = advanced_deduplication(df_data)
             
             # Now add commentary from document text only (no AI-generated comments)
             document_text = data.get('document_text', [])
@@ -179,23 +180,8 @@ def process_stream():
                         yield f"data: {json.dumps({'type': 'row_update', 'data': row})}\n\n"
             
             # Second commentary pass: Enhance commentary with Gemini Pro 1.5
-            enhanced_rows = []
-            for row in df_data:
-                if row.get('commentary') and row['commentary'] != '-':
-                    try:
-                        enhanced = await enhance_commentary_gemini(
-                            row['commentary'], 
-                            row.get('field', ''), 
-                            str(row.get('value', ''))
-                        )
-                        if enhanced and enhanced != row['commentary']:
-                            row['commentary'] = enhanced
-                            enhanced_rows.append(row)
-                            # Stream enhanced commentary
-                            yield f"data: {json.dumps({'type': 'row_update', 'data': row})}\n\n"
-                    except Exception as e:
-                        print(f"Error enhancing commentary: {e}")
-                        continue
+            # Note: For now, skip async enhancement in streaming to avoid complexity
+            # This can be added later as a background process
             
             # Add general unmatched document text as separate entries
             if document_text:
