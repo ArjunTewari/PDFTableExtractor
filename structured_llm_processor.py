@@ -162,9 +162,7 @@ OR
     try:
         loop = asyncio.get_event_loop()
         result = await loop.run_in_executor(None, process_with_gemini_sync, prompt)
-            return result
-        else:
-            return {"commentary": None, "relevant": False}
+        return result
 
     except Exception as e:
         print(f"Error matching commentary: {e}")
