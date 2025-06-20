@@ -198,8 +198,27 @@ def process_stream():
                             # Stream this row immediately
                             yield f"data: {json.dumps({'type': 'row', 'data': row_data})}\n\n"
             
-            # Process document text facts
-            if 'processed_document_text' in result and result['processed_document_text']:
+            # Process labeled paragraphs if available
+            if 'processed_labeled_text' in result and result['processed_labeled_text']:
+                for chunk_idx, chunk in enumerate(result['processed_labeled_text']):
+                    if 'extracted_facts' in chunk and not chunk['extracted_facts'].get('error'):
+                        facts = chunk['extracted_facts']
+                        for key, value in facts.items():
+                            if key != 'error' and value:
+                                row_data = {
+                                    'source': f'Labeled Text {chunk_idx+1}',
+                                    'type': 'Metric Data',
+                                    'field': key,
+                                    'value': str(value),
+                                    'page': 'N/A',
+                                    'commentary': ''  # Will be filled from document text only
+                                }
+                                df_data.append(row_data)
+                                # Stream this row immediately
+                                yield f"data: {json.dumps({'type': 'row', 'data': row_data})}\n\n"
+            
+            # Process document text facts (fallback)
+            elif 'processed_document_text' in result and result['processed_document_text']:
                 for chunk_idx, chunk in enumerate(result['processed_document_text']):
                     if 'extracted_facts' in chunk and not chunk['extracted_facts'].get('error'):
                         facts = chunk['extracted_facts']

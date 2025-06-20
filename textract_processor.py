@@ -125,18 +125,38 @@ class TextractProcessor:
         # Perform smart merging before classification
         merged_paragraphs = self._smart_merge_paragraphs(paragraphs)
         
-        # Add narrative classification and commentary labels
+        # Label paragraphs as narrative or metric and add classification
         document_text = []
         potential_commentary = []
+        labeled_paragraphs = []
         
         # Classification keywords
-        keywords = ["achieved", "reported", "grew", "increased", "rose", "declined", "exceeded"]
+        action_keywords = ["achieved", "reported", "grew", "increased", "rose", "declined", "exceeded"]
+        metric_indicators = ["$", "%", "million", "YoY", "Q4", "billion", "thousand"]
         
         for para in merged_paragraphs:
             para_lower = para.lower()
             
-            # Check if paragraph contains metrics AND action verbs
-            if any(k in para_lower for k in keywords) and any(c in para for c in ["$", "%", "million", "YoY", "Q4"]):
+            # Label paragraph type
+            has_metrics = any(indicator in para for indicator in metric_indicators)
+            has_actions = any(keyword in para_lower for keyword in action_keywords)
+            
+            if has_metrics:
+                label = "metric"
+            else:
+                label = "narrative"
+            
+            # Store labeled paragraph
+            labeled_para = {
+                "text": para,
+                "label": label,
+                "has_metrics": has_metrics,
+                "has_actions": has_actions
+            }
+            labeled_paragraphs.append(labeled_para)
+            
+            # Check if paragraph contains metrics AND action verbs for commentary
+            if has_actions and has_metrics:
                 potential_commentary.append(para)
             
             document_text.append(para)
@@ -168,7 +188,8 @@ class TextractProcessor:
             "document_text": document_text,
             "tables": tables,
             "key_values": key_values,
-            "potential_commentary": potential_commentary
+            "potential_commentary": potential_commentary,
+            "labeled_paragraphs": labeled_paragraphs
         }
     
     def _smart_merge_paragraphs(self, paragraphs: List[str]) -> List[str]:
