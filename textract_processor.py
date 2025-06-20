@@ -100,17 +100,51 @@ class TextractProcessor:
         
         block_map = {block['Id']: block for block in blocks}
         
-        # Extract document text (line by line)
-        document_text = []
-        tables = []
-        key_values = []
+        # Group lines into paragraphs using punctuation and spacing heuristics
+        paragraphs = []
+        current_para = ""
         
-        # Process blocks
         for block in blocks:
             if block['BlockType'] == 'LINE':
-                document_text.append(block.get('Text', ''))
+                line = block.get('Text', '').strip()
+                
+                if not line:
+                    continue
+                
+                current_para += (" " if current_para else "") + line
+                
+                # If sentence looks complete
+                if line.endswith(('.', '!', '?')) or len(current_para) > 300:
+                    paragraphs.append(current_para.strip())
+                    current_para = ""
+        
+        # Final leftover
+        if current_para:
+            paragraphs.append(current_para.strip())
+        
+        # Add narrative classification and commentary labels
+        document_text = []
+        potential_commentary = []
+        
+        # Classification keywords
+        keywords = ["achieved", "reported", "grew", "increased", "rose", "declined", "exceeded"]
+        
+        for para in paragraphs:
+            para_lower = para.lower()
             
-            elif block['BlockType'] == 'TABLE':
+            # Check if paragraph contains metrics AND action verbs
+            if any(k in para_lower for k in keywords) and any(c in para for c in ["$", "%", "million", "YoY", "Q4"]):
+                potential_commentary.append(para)
+            
+            document_text.append(para)
+        
+        # Process tables and key-values
+        tables = []
+        key_values = []
+        seen_keys = set()
+        
+        for block in blocks:
+            if block['BlockType'] == 'TABLE':
                 table_data = self._extract_table_structure(block, block_map)
                 if table_data:
                     tables.append(table_data)
@@ -118,7 +152,11 @@ class TextractProcessor:
             elif block['BlockType'] == 'KEY_VALUE_SET':
                 kv_pair = self._extract_key_value_pair(block, block_map)
                 if kv_pair:
-                    key_values.append(kv_pair)
+                    key_text = kv_pair.get('key', '').lower()
+                    # Skip empty or obviously repeated keys
+                    if key_text and key_text not in seen_keys:
+                        seen_keys.add(key_text)
+                        key_values.append(kv_pair)
         
         processing_time = f"{time.time() - start_time:.1f}s"
         print(f"Textract processing completed in {processing_time}")
@@ -126,7 +164,8 @@ class TextractProcessor:
         return {
             "document_text": document_text,
             "tables": tables,
-            "key_values": key_values
+            "key_values": key_values,
+            "potential_commentary": potential_commentary
         }
 
     def _extract_table_structure(self, table_block: Dict[str, Any], block_map: Dict[str, Any]) -> Optional[Dict[str, Any]]:
