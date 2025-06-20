@@ -1,15 +1,15 @@
 import json
 import os
-from openai import OpenAI
 from typing import Dict, Any, List
 import asyncio
-import aiohttp
 import concurrent.futures
-
-# the newest OpenAI model is "gpt-4o" which was released May 13, 2024.
-# do not change this unless explicitly requested by the user
-OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
-openai_client = OpenAI(api_key=OPENAI_API_KEY)
+from gemini_processor import (
+    process_table_data_gemini, 
+    process_key_value_data_gemini, 
+    process_text_chunk_gemini,
+    enhance_commentary_gemini
+)
+from deduplication_utils import advanced_deduplication
 
 
 def split_text_section(text_lines, max_lines=20):

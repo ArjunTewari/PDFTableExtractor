@@ -79,26 +79,25 @@ The deployment uses Nix packaging to ensure all dependencies are properly manage
 
 ## Recent Changes
 
-### June 2025 - Enhanced Table Processing and Commentary System
-- **Multi-Column Table Reconstruction**: Enhanced prompts to preserve ALL columns from extracted tables instead of simplifying to 2 columns
-- **Document Text Tabulation**: Added comprehensive tabulation of document text content into structured table format
-- **Commentary Matching System**: Implemented intelligent matching between extracted data and document commentary
-- **Streaming Processing**: Added real-time streaming output for progressive data processing updates
-- **Enhanced Frontend Display**: Reconstructed tables now show original multi-column structure with proper headers and data rows
-- **Dual Table Views**: Both reconstructed original tables and detailed data point tables are displayed
-- **Document Content Tables**: Narrative text is now analyzed and tabulated into structured format alongside extracted tables
+### June 20, 2025 - Migration to Gemini Pro 1.5 and Enhanced Commentary
+- **Gemini Pro 1.5 Integration**: Switched from OpenAI GPT-4o to Google Gemini Pro 1.5 for all LLM processing
+- **Advanced Deduplication**: Implemented semantic similarity-based deduplication using TF-IDF and cosine similarity
+- **Second Commentary Pass**: Added enhanced commentary generation with business insights and implications
+- **Simple Table Format**: Restored simple field-value format for better readability and processing
+- **Streaming Output**: Real-time streaming of actual results instead of progress messages
+- **Commentary from Document Text**: Commentary sourced exclusively from document content, not AI-generated
 
 ### Architecture Improvements
-- **Advanced LLM Processing**: Updated prompts to extract comprehensive data while maintaining table structure integrity
-- **Asynchronous Commentary Matching**: Each data point is matched against document text to find relevant explanations
-- **Enhanced Data Structure**: Extended data model to include table headers, rows, commentary, and metadata
-- **Real-time Progress Updates**: Streaming endpoint provides live processing status updates
+- **Gemini Integration**: All LLM calls now use Google Gemini Pro 1.5 API for improved performance
+- **Deduplication System**: Semantic similarity matching prevents duplicate entries in results
+- **Enhanced Commentary**: Two-pass commentary system adds business context and insights
+- **Streaming Display**: Row-by-row streaming with live commentary updates
 
 ## Development Notes
 
-1. The application uses GPT-4o (released May 2024) as the default language model
+1. The application uses Google Gemini Pro 1.5 as the primary language model
 2. Uses Amazon Textract for advanced PDF text and table extraction
 3. Export functionality supports JSON, CSV, and PDF formats
 4. All processed data is session-based and not persisted between sessions
-5. Commentary matching uses intelligent text analysis to relate document content to extracted data
-6. Multi-column table preservation ensures no data loss during processing
+5. Commentary matching uses document text with AI enhancement for insights
+6. Deduplication prevents redundant data entries using semantic similarity
