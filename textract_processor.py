@@ -3,7 +3,9 @@ import time
 import uuid
 from typing import Dict, Any, List, Optional
 
+
 class TextractProcessor:
+
     def __init__(self):
         """Initialize AWS Textract and S3 clients with credentials from environment"""
         self.textract_client = boto3.client('textract')
@@ -21,19 +23,17 @@ class TextractProcessor:
             Dict[str, Any]: Structured JSON with document_text, tables, and key_values
         """
         start_time = time.time()
-        
+
         try:
             print("Using Amazon Textract with S3 storage for PDF processing")
-            
+
             # Upload PDF to S3
             file_key = f"textract-input/{uuid.uuid4()}.pdf"
-            self.s3_client.put_object(
-                Bucket=self.bucket_name,
-                Key=file_key,
-                Body=pdf_bytes,
-                ContentType='application/pdf'
-            )
-            
+            self.s3_client.put_object(Bucket=self.bucket_name,
+                                      Key=file_key,
+                                      Body=pdf_bytes,
+                                      ContentType='application/pdf')
+
             # Start document analysis
             response = self.textract_client.start_document_analysis(
                 DocumentLocation={
@@ -42,113 +42,122 @@ class TextractProcessor:
                         'Name': file_key
                     }
                 },
-                FeatureTypes=['TABLES', 'FORMS']
-            )
-            
+                FeatureTypes=['TABLES', 'FORMS'])
+
             job_id = response['JobId']
             print(f"Started Textract job: {job_id}")
-            
+
             # Wait for job completion
             while True:
-                result = self.textract_client.get_document_analysis(JobId=job_id)
+                result = self.textract_client.get_document_analysis(
+                    JobId=job_id)
                 status = result['JobStatus']
                 print(f"Job status: {status}")
-                
+
                 if status in ['SUCCEEDED', 'FAILED']:
                     break
-                
+
                 time.sleep(5)
-            
+
             if status == 'FAILED':
                 raise Exception("Textract job failed")
-            
+
             # Fetch full results (handle pagination)
             pages = []
             next_token = None
-            
+
             while True:
                 if next_token:
-                    response = self.textract_client.get_document_analysis(JobId=job_id, NextToken=next_token)
+                    response = self.textract_client.get_document_analysis(
+                        JobId=job_id, NextToken=next_token)
                 else:
-                    response = self.textract_client.get_document_analysis(JobId=job_id)
-                
+                    response = self.textract_client.get_document_analysis(
+                        JobId=job_id)
+
                 pages.extend(response['Blocks'])
-                
+
                 next_token = response.get('NextToken')
                 if not next_token:
                     break
-            
+
             print(f"Total blocks extracted: {len(pages)}")
-            
+
             # Parse the results
             structured_data = self._parse_textract_blocks(pages, start_time)
-            
+
             # Clean up S3 file
             try:
-                self.s3_client.delete_object(Bucket=self.bucket_name, Key=file_key)
+                self.s3_client.delete_object(Bucket=self.bucket_name,
+                                             Key=file_key)
             except Exception as e:
                 print(f"Warning: Could not delete S3 file: {e}")
-            
+
             return structured_data
-            
+
         except Exception as e:
             print(f"Textract extraction failed: {e}")
-            raise Exception(f"Failed to extract text using Amazon Textract: {str(e)}")
+            raise Exception(
+                f"Failed to extract text using Amazon Textract: {str(e)}")
 
-    def _parse_textract_blocks(self, blocks: List[Dict[str, Any]], start_time: float) -> Dict[str, Any]:
+    def _parse_textract_blocks(self, blocks: List[Dict[str, Any]],
+                               start_time: float) -> Dict[str, Any]:
         """Parse Textract blocks into the specified JSON format"""
-        
+
         block_map = {block['Id']: block for block in blocks}
-        
+
         # Group lines into paragraphs using punctuation and spacing heuristics
         paragraphs = []
         current_para = ""
-        
+
         for block in blocks:
             if block['BlockType'] == 'LINE':
                 line = block.get('Text', '').strip()
-                
                 if not line:
                     continue
-                
-                current_para += (" " if current_para else "") + line
-                
-                # If sentence looks complete
-                if line.endswith(('.', '!', '?')) or len(current_para) > 300:
+
+                # Start a new paragraph if current_para ends in punctuation OR newline
+                if current_para and (current_para.strip()[-1] in '.!?"'
+                                     or len(current_para) > 250):
                     paragraphs.append(current_para.strip())
-                    current_para = ""
-        
+                    current_para = line
+                else:
+                    current_para += (" " if current_para else "") + line
+
         # Final leftover
         if current_para:
             paragraphs.append(current_para.strip())
-        
+
         # Add narrative classification and commentary labels
         document_text = []
         potential_commentary = []
-        
+
         # Classification keywords
-        keywords = ["achieved", "reported", "grew", "increased", "rose", "declined", "exceeded"]
-        
+        keywords = [
+            "achieved", "reported", "grew", "increased", "rose", "declined",
+            "exceeded"
+        ]
+
         for para in paragraphs:
             para_lower = para.lower()
-            
+
             # Check if paragraph contains metrics AND action verbs
-            if any(k in para_lower for k in keywords) and any(c in para for c in ["$", "%", "million", "YoY", "Q4"]):
+            if any(k in para_lower for k in keywords) and any(
+                    c in para for c in ["$", "%", "million", "YoY", "Q4"]):
                 potential_commentary.append(para)
-            
+
             document_text.append(para)
-        
+
         # Process tables and key-values
         tables = []
         key_values = []
         seen_keys = set()
-        
+
         for block in blocks:
             if block['BlockType'] == 'TABLE':
                 table_data = self._extract_table_structure(block, block_map)
                 if table_data:
                     tables.append(table_data)
-            
+
             elif block['BlockType'] == 'KEY_VALUE_SET':
                 kv_pair = self._extract_key_value_pair(block, block_map)
                 if kv_pair:
@@ -157,10 +166,10 @@ class TextractProcessor:
                     if key_text and key_text not in seen_keys:
                         seen_keys.add(key_text)
                         key_values.append(kv_pair)
-        
+
         processing_time = f"{time.time() - start_time:.1f}s"
         print(f"Textract processing completed in {processing_time}")
-        
+
         return {
             "document_text": document_text,
             "tables": tables,
@@ -168,43 +177,46 @@ class TextractProcessor:
             "potential_commentary": potential_commentary
         }
 
-    def _extract_table_structure(self, table_block: Dict[str, Any], block_map: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def _extract_table_structure(
+            self, table_block: Dict[str, Any],
+            block_map: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Extract table as rows format"""
         if 'Relationships' not in table_block:
             return None
-        
+
         # Get page number
         page_num = table_block.get('Page', 1)
-        
+
         # Find all cells in the table
         cells = []
         for relationship in table_block['Relationships']:
             if relationship['Type'] == 'CHILD':
                 for child_id in relationship['Ids']:
-                    if child_id in block_map and block_map[child_id]['BlockType'] == 'CELL':
+                    if child_id in block_map and block_map[child_id][
+                            'BlockType'] == 'CELL':
                         cells.append(block_map[child_id])
-        
+
         if not cells:
             return None
-        
+
         # Organize cells by row and column
         table_structure = {}
         max_row = 0
         max_col = 0
-        
+
         for cell in cells:
             row_index = cell.get('RowIndex', 1) - 1  # Convert to 0-based
             col_index = cell.get('ColumnIndex', 1) - 1  # Convert to 0-based
-            
+
             max_row = max(max_row, row_index)
             max_col = max(max_col, col_index)
-            
+
             cell_text = self._get_cell_text(cell, block_map)
-            
+
             if row_index not in table_structure:
                 table_structure[row_index] = {}
             table_structure[row_index][col_index] = cell_text
-        
+
         # Convert to list of lists (rows)
         rows = []
         for row_idx in range(max_row + 1):
@@ -213,17 +225,15 @@ class TextractProcessor:
                 cell_value = table_structure.get(row_idx, {}).get(col_idx, "")
                 row.append(cell_value)
             rows.append(row)
-        
-        return {
-            "page": page_num,
-            "rows": rows
-        }
 
-    def _get_cell_text(self, cell_block: Dict[str, Any], block_map: Dict[str, Any]) -> str:
+        return {"page": page_num, "rows": rows}
+
+    def _get_cell_text(self, cell_block: Dict[str, Any],
+                       block_map: Dict[str, Any]) -> str:
         """Extract text from a table cell"""
         if 'Relationships' not in cell_block:
             return ""
-        
+
         text_parts = []
         for relationship in cell_block['Relationships']:
             if relationship['Type'] == 'CHILD':
@@ -232,17 +242,19 @@ class TextractProcessor:
                         child_block = block_map[child_id]
                         if child_block['BlockType'] == 'WORD':
                             text_parts.append(child_block.get('Text', ''))
-        
+
         return ' '.join(text_parts)
 
-    def _extract_key_value_pair(self, kv_block: Dict[str, Any], block_map: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def _extract_key_value_pair(
+            self, kv_block: Dict[str, Any],
+            block_map: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Extract key-value pairs"""
         if kv_block.get('EntityTypes') and 'KEY' in kv_block['EntityTypes']:
             page_num = kv_block.get('Page', 1)
-            
+
             key_text = self._get_text_from_block(kv_block, block_map)
             value_text = ""
-            
+
             # Find the corresponding VALUE
             if 'Relationships' in kv_block:
                 for relationship in kv_block['Relationships']:
@@ -250,26 +262,24 @@ class TextractProcessor:
                         for value_id in relationship['Ids']:
                             if value_id in block_map:
                                 value_block = block_map[value_id]
-                                value_text = self._get_text_from_block(value_block, block_map)
+                                value_text = self._get_text_from_block(
+                                    value_block, block_map)
                                 break
-            
+
             if key_text:
-                return {
-                    "key": key_text,
-                    "value": value_text,
-                    "page": page_num
-                }
-        
+                return {"key": key_text, "value": value_text, "page": page_num}
+
         return None
 
-    def _get_text_from_block(self, block: Dict[str, Any], block_map: Dict[str, Any]) -> str:
+    def _get_text_from_block(self, block: Dict[str, Any],
+                             block_map: Dict[str, Any]) -> str:
         """Get text content from a block"""
         if 'Text' in block:
             return block['Text']
-        
+
         if 'Relationships' not in block:
             return ""
-        
+
         text_parts = []
         for relationship in block['Relationships']:
             if relationship['Type'] == 'CHILD':
@@ -278,7 +288,7 @@ class TextractProcessor:
                         child_block = block_map[child_id]
                         if child_block['BlockType'] in ['WORD', 'LINE']:
                             text_parts.append(child_block.get('Text', ''))
-        
+
         return ' '.join(text_parts)
 
 
