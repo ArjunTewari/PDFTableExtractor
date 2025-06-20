@@ -8,8 +8,6 @@ from io import BytesIO
 from textract_processor import extract_text_from_pdf, extract_text_from_pdf_bytes, extract_structured_data_from_pdf_bytes
 from llm_processor import process_text_with_llm
 from structured_llm_processor import process_structured_data_with_llm
-from deduplication_utils import advanced_deduplication
-# Enhanced commentary using OpenAI
 from export_utils import export_to_pdf
 
 app = Flask(__name__)
@@ -164,10 +162,6 @@ def process_stream():
                                 # Stream this row immediately
                                 yield f"data: {json.dumps({'type': 'row', 'data': row_data})}\n\n"
             
-            # Apply deduplication before adding commentary
-            if df_data:
-                df_data = advanced_deduplication(df_data)
-            
             # Now add commentary from document text only (no AI-generated comments)
             document_text = data.get('document_text', [])
             if document_text and df_data:
@@ -178,10 +172,6 @@ def process_stream():
                         row['commentary'] = relevant_text
                         # Stream updated row with commentary
                         yield f"data: {json.dumps({'type': 'row_update', 'data': row})}\n\n"
-            
-            # Second commentary pass: Enhance commentary with Gemini Pro 1.5
-            # Note: For now, skip async enhancement in streaming to avoid complexity
-            # This can be added later as a background process
             
             # Add general unmatched document text as separate entries
             if document_text:
@@ -198,10 +188,6 @@ def process_stream():
                         }
                         df_data.append(row_data)
                         yield f"data: {json.dumps({'type': 'row', 'data': row_data})}\n\n"
-            
-            # Final deduplication after all processing
-            if df_data:
-                df_data = advanced_deduplication(df_data)
             
             # Send completion signal
             yield f"data: {json.dumps({'type': 'complete', 'total_rows': len(df_data)})}\n\n"
