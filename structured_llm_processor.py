@@ -12,59 +12,31 @@ OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 openai_client = OpenAI(api_key=OPENAI_API_KEY)
 
 def split_text_section(text_lines, max_lines=20):
-    """Split text lines into manageable chunks, handling both string and dict formats"""
+    """Split text lines into manageable chunks"""
     chunks = []
-    
-    # Handle different input formats
-    if not text_lines:
-        return chunks
-    
-    # Convert to consistent format
-    processed_lines = []
-    for item in text_lines:
-        if isinstance(item, dict):
-            # Extract text from paragraph dict
-            text = item.get('text', '')
-            if text:
-                processed_lines.append(text)
-        else:
-            # Already a string
-            if item:
-                processed_lines.append(str(item))
-    
-    # Split into chunks
-    for i in range(0, len(processed_lines), max_lines):
-        chunk = processed_lines[i:i + max_lines]
+    for i in range(0, len(text_lines), max_lines):
+        chunk = text_lines[i:i + max_lines]
         chunks.append(chunk)
-    
     return chunks
 
 async def process_table_data(table_data: Dict[str, Any]) -> Dict[str, Any]:
-    """Process table data with GPT-4o asynchronously using metadata"""
-    page = table_data.get('page', 'N/A')
-    confidence = table_data.get('confidence', 0)
-    
+    """Process table data with GPT-4o asynchronously - simple format"""
     prompt = f"""Extract key data points from this table as simple field-value pairs.
-
-Table metadata:
-- Page: {page}
-- Confidence: {confidence}%
 
 Table data:
 {json.dumps(table_data, indent=2)}
 
 Instructions:
 1. Extract important data points as field-value pairs
-2. Use clear, descriptive field names that include context when possible
-3. Focus on financial figures, dates, key metrics, and business data
-4. For each field, include the page number in parentheses if relevant
-5. Prioritize high-confidence extractions
+2. Use clear, descriptive field names
+3. Focus on financial figures, dates, and key metrics
+4. Keep it simple and straightforward
 
 Return JSON with field-value pairs:
 {{
-  "Revenue_Q4": "value",
+  "Revenue": "value",
   "Growth_Rate": "value",
-  "Report_Date": "value"
+  "Date": "value"
 }}"""
 
     try:

@@ -96,292 +96,38 @@ class TextractProcessor:
             raise Exception(f"Failed to extract text using Amazon Textract: {str(e)}")
 
     def _parse_textract_blocks(self, blocks: List[Dict[str, Any]], start_time: float) -> Dict[str, Any]:
-        """Parse Textract blocks with paragraph merging and metadata"""
+        """Parse Textract blocks into the specified JSON format"""
         
         block_map = {block['Id']: block for block in blocks}
         
-        # Collect line blocks with metadata
-        line_blocks = []
+        # Extract document text (line by line)
+        document_text = []
         tables = []
         key_values = []
-        
-        # Count block types for debugging
-        block_types = {}
-        for block in blocks:
-            block_type = block.get('BlockType', 'UNKNOWN')
-            block_types[block_type] = block_types.get(block_type, 0) + 1
-        
-        print(f"Block type counts: {block_types}")
         
         # Process blocks
         for block in blocks:
             if block['BlockType'] == 'LINE':
-                text = block.get('Text', '').strip()
-                if text:
-                    line_blocks.append({
-                        'text': text,
-                        'page': block.get('Page', 1),
-                        'confidence': block.get('Confidence', 0),
-                        'geometry': block.get('Geometry', {}),
-                        'id': block.get('Id', '')
-                    })
+                document_text.append(block.get('Text', ''))
             
             elif block['BlockType'] == 'TABLE':
-                print(f"Processing TABLE block on page {block.get('Page', 1)}")
                 table_data = self._extract_table_structure(block, block_map)
                 if table_data:
-                    # Add metadata to table
-                    table_data['page'] = block.get('Page', 1)
-                    table_data['confidence'] = block.get('Confidence', 0)
                     tables.append(table_data)
-                    print(f"Successfully extracted table with {len(table_data.get('rows', []))} rows")
-                else:
-                    print("Failed to extract table structure")
             
             elif block['BlockType'] == 'KEY_VALUE_SET':
-                print(f"Processing KEY_VALUE_SET block on page {block.get('Page', 1)}")
                 kv_pair = self._extract_key_value_pair(block, block_map)
                 if kv_pair:
-                    # Add metadata to key-value pair
-                    kv_pair['page'] = block.get('Page', 1)
-                    kv_pair['confidence'] = block.get('Confidence', 0)
                     key_values.append(kv_pair)
-                    print(f"Successfully extracted key-value: {kv_pair.get('key', '')} = {kv_pair.get('value', '')}")
-                else:
-                    print("Failed to extract key-value pair")
-        
-        # Merge lines into paragraphs
-        document_text = self._merge_lines_into_paragraphs(line_blocks)
         
         processing_time = f"{time.time() - start_time:.1f}s"
         print(f"Textract processing completed in {processing_time}")
-        print(f"Extracted: {len(document_text)} paragraphs, {len(tables)} tables, {len(key_values)} key-value pairs")
         
         return {
             "document_text": document_text,
             "tables": tables,
-            "key_values": key_values,
-            "metadata": {
-                "total_blocks": len(blocks),
-                "total_lines": len(line_blocks),
-                "total_paragraphs": len(document_text),
-                "total_tables": len(tables),
-                "total_key_values": len(key_values),
-                "processing_time": processing_time,
-                "extraction_timestamp": time.strftime('%Y-%m-%d %H:%M:%S'),
-                "block_types": block_types
-            }
+            "key_values": key_values
         }
-
-    def _contains_numeric_financial_data(self, text: str) -> bool:
-        """Check if text contains numeric or financial data that should not be merged"""
-        import re
-        
-        # Patterns for numeric/financial data
-        patterns = [
-            r'\d+',              # Any numbers
-            r'\$',               # Currency symbols
-            r'%',                # Percentages
-            r'Q\d',              # Quarter references (Q1, Q2, etc.)
-            r'FY\d{2,4}',        # Fiscal year references (FY24, FY2024, etc.)
-            r'\d{1,2}/\d{1,2}/\d{2,4}',  # Dates (MM/DD/YYYY)
-            r'\d{4}-\d{2}-\d{2}',        # ISO dates (YYYY-MM-DD)
-            r'[A-Z]{3}\s+\d{4}',         # Month year (JAN 2024)
-            r'\d+[KMB]',                 # Numbers with K/M/B suffixes
-            r'\d+\.\d+',                 # Decimal numbers
-            r':\s*\d+',                  # Colon followed by numbers (ratios, times)
-            r'revenue|profit|loss|income|expense|cost|price|amount|total|sum',  # Financial keywords
-            r'million|billion|thousand|USD|EUR|GBP',  # Financial magnitudes and currencies
-        ]
-        
-        # Check if any pattern matches (case insensitive)
-        for pattern in patterns:
-            if re.search(pattern, text, re.IGNORECASE):
-                return True
-        
-        return False
-
-    def _split_paragraph_at_structured_data(self, text: str, page: int, confidence: float) -> List[Dict[str, Any]]:
-        """Split paragraph text at structured data points, creating standalone rows"""
-        import re
-        
-        # Enhanced patterns for structured data that should be standalone
-        structured_patterns = [
-            r'[A-Z]{2,}:\s*[\d\$%]+[^.]*',  # Labels with data (MAU: 79.6 million)
-            r'\$[\d,]+\s*(?:million|billion|thousand)',  # Currency amounts
-            r'\d+%\s*(?:growth|increase|decrease|change)',  # Percentage changes
-            r'Q[1-4]\s+\d{4}:\s*[\d\$%]+',  # Quarterly data
-            r'FY\d{2,4}:\s*[\d\$%]+',  # Fiscal year data
-            r'(?:Revenue|Profit|Loss|Income|EBITDA|MAU|ARPU):\s*[\d\$%,]+',  # Key metrics
-            r'\d+\.\d+\s*(?:million|billion|thousand)',  # Decimal numbers with magnitudes
-            r'[\d,]+\s+(?:users|subscribers|customers|members)',  # User counts
-        ]
-        
-        # Find all structured data matches
-        matches = []
-        for pattern in structured_patterns:
-            for match in re.finditer(pattern, text, re.IGNORECASE):
-                matches.append((match.start(), match.end(), match.group()))
-        
-        # Sort matches by position
-        matches.sort(key=lambda x: x[0])
-        
-        # If no structured data found, return as single paragraph
-        if not matches:
-            return [{
-                'text': text,
-                'page': page,
-                'confidence': confidence,
-                'line_count': 1,
-                'contains_financial_data': self._contains_numeric_financial_data(text)
-            }]
-        
-        # Split text at structured data points
-        segments = []
-        last_end = 0
-        
-        for start, end, matched_text in matches:
-            # Add text before the match as a paragraph (if any)
-            if start > last_end:
-                pre_text = text[last_end:start].strip()
-                if pre_text:
-                    segments.append({
-                        'text': pre_text,
-                        'page': page,
-                        'confidence': confidence,
-                        'line_count': 1,
-                        'contains_financial_data': self._contains_numeric_financial_data(pre_text)
-                    })
-            
-            # Add the structured data as standalone row
-            segments.append({
-                'text': matched_text.strip(),
-                'page': page,
-                'confidence': confidence,
-                'line_count': 1,
-                'contains_financial_data': True  # Always true for structured data
-            })
-            
-            last_end = end
-        
-        # Add remaining text after last match (if any)
-        if last_end < len(text):
-            post_text = text[last_end:].strip()
-            if post_text:
-                segments.append({
-                    'text': post_text,
-                    'page': page,
-                    'confidence': confidence,
-                    'line_count': 1,
-                    'contains_financial_data': self._contains_numeric_financial_data(post_text)
-                })
-        
-        return segments
-
-    def _merge_lines_into_paragraphs(self, line_blocks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Merge adjacent lines into paragraphs, keeping structured data as standalone rows"""
-        if not line_blocks:
-            return []
-        
-        # Sort by page, then by vertical position
-        line_blocks.sort(key=lambda x: (
-            x['page'],
-            x['geometry'].get('BoundingBox', {}).get('Top', 0)
-        ))
-        
-        paragraphs = []
-        current_paragraph = {
-            'text': '',
-            'page': line_blocks[0]['page'],
-            'confidence_scores': [],
-            'line_count': 0,
-            'contains_financial_data': False
-        }
-        
-        for i, line in enumerate(line_blocks):
-            line_text = line['text']
-            has_numeric_data = self._contains_numeric_financial_data(line_text)
-            
-            should_start_new = False
-            
-            if i > 0:
-                prev_line = line_blocks[i-1]
-                prev_has_numeric = self._contains_numeric_financial_data(prev_line['text'])
-                
-                # Start new paragraph if different page
-                if line['page'] != prev_line['page']:
-                    should_start_new = True
-                # Start new paragraph if current or previous line has numeric data
-                elif has_numeric_data or prev_has_numeric:
-                    should_start_new = True
-                else:
-                    # Calculate vertical gap between lines
-                    prev_bbox = prev_line['geometry'].get('BoundingBox', {})
-                    curr_bbox = line['geometry'].get('BoundingBox', {})
-                    
-                    if prev_bbox and curr_bbox:
-                        prev_bottom = prev_bbox.get('Top', 0) + prev_bbox.get('Height', 0)
-                        current_top = curr_bbox.get('Top', 0)
-                        vertical_gap = current_top - prev_bottom
-                        
-                        # Large gap indicates paragraph break
-                        if vertical_gap > 0.02:
-                            should_start_new = True
-                    
-                    # Short line followed by longer line might be header/paragraph break
-                    if len(prev_line['text']) < 40 and len(line['text']) > 60:
-                        should_start_new = True
-            
-            if should_start_new and current_paragraph['text']:
-                # Process the current paragraph for structured data splitting
-                avg_confidence = sum(current_paragraph['confidence_scores']) / len(current_paragraph['confidence_scores']) if current_paragraph['confidence_scores'] else 0
-                
-                # Split paragraph at structured data points
-                split_segments = self._split_paragraph_at_structured_data(
-                    current_paragraph['text'],
-                    current_paragraph['page'],
-                    round(avg_confidence, 2)
-                )
-                paragraphs.extend(split_segments)
-                
-                # Start new paragraph
-                current_paragraph = {
-                    'text': '',
-                    'page': line['page'],
-                    'confidence_scores': [],
-                    'line_count': 0,
-                    'contains_financial_data': False
-                }
-            
-            # Add line to current paragraph
-            if current_paragraph['text']:
-                current_paragraph['text'] += ' ' + line_text
-            else:
-                current_paragraph['text'] = line_text
-            
-            current_paragraph['confidence_scores'].append(line['confidence'])
-            current_paragraph['line_count'] += 1
-            
-            # Mark if this paragraph contains financial data
-            if has_numeric_data:
-                current_paragraph['contains_financial_data'] = True
-        
-        # Add final paragraph with structured data splitting
-        if current_paragraph['text']:
-            avg_confidence = sum(current_paragraph['confidence_scores']) / len(current_paragraph['confidence_scores']) if current_paragraph['confidence_scores'] else 0
-            
-            split_segments = self._split_paragraph_at_structured_data(
-                current_paragraph['text'],
-                current_paragraph['page'],
-                round(avg_confidence, 2)
-            )
-            paragraphs.extend(split_segments)
-        
-        financial_count = sum(1 for p in paragraphs if p['contains_financial_data'])
-        text_count = len(paragraphs) - financial_count
-        print(f"Paragraph processing complete: {financial_count} structured data rows, {text_count} text paragraphs")
-        
-        return paragraphs
 
     def _extract_table_structure(self, table_block: Dict[str, Any], block_map: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Extract table as rows format"""

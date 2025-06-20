@@ -40,139 +40,51 @@ def extract():
         return jsonify({'error': str(e)}), 500
 
 def find_relevant_document_text(row_data, document_text):
-    """Find relevant text using fuzzy string similarity matching"""
-    from fuzzywuzzy import fuzz
-    import re
+    """Find relevant text from document that mentions this data point"""
+    field = row_data.get('field', '').lower()
+    value = str(row_data.get('value', '')).lower()
     
-    field = row_data.get('field', '')
-    value = str(row_data.get('value', ''))
+    # Look for mentions of the field name or value in document text
+    for line in document_text:
+        line_lower = line.lower()
+        if field in line_lower or value in line_lower:
+            # Return the original line (not lowercased)
+            return line.strip()[:300] + '...' if len(line.strip()) > 300 else line.strip()
     
-    # Create search terms from field and value
-    search_terms = []
-    
-    # Add field name (clean it first)
-    clean_field = re.sub(r'[_\-]', ' ', field).strip()
-    if clean_field:
-        search_terms.append(clean_field)
-    
-    # Add value (extract meaningful parts)
-    clean_value = re.sub(r'[^\w\s%$.]', ' ', value).strip()
-    if clean_value:
-        search_terms.append(clean_value)
-    
-    # Extract keywords from field and value
-    keywords = []
-    for term in search_terms:
-        words = re.findall(r'\b\w{3,}\b', term.lower())  # Words with 3+ characters
-        keywords.extend(words)
-    
-    if not keywords:
-        return ''
-    
-    best_match = None
-    best_score = 0
-    similarity_threshold = 80  # 80% similarity threshold
-    
-    # Handle both old format (list of strings) and new format (list of dicts with metadata)
-    for text_item in document_text:
-        if isinstance(text_item, dict):
-            # New format with metadata
-            text = text_item.get('text', '')
-            page = text_item.get('page', 'N/A')
-            confidence = text_item.get('confidence', 0)
-        else:
-            # Old format - simple string
-            text = text_item
-            page = 'N/A'
-            confidence = 0
-        
-        if not text or len(text.strip()) < 10:
-            continue
-        
-        # Calculate similarity scores
-        max_score = 0
-        
-        # Check similarity with each search term
-        for term in search_terms:
-            # Partial ratio for substring matching
-            partial_score = fuzz.partial_ratio(term.lower(), text.lower())
-            # Token sort ratio for word order independence
-            token_score = fuzz.token_sort_ratio(term.lower(), text.lower())
-            # Use the higher score
-            score = max(partial_score, token_score)
-            max_score = max(max_score, score)
-        
-        # Check for keyword matches with boosting
-        keyword_matches = 0
-        for keyword in keywords:
-            if keyword in text.lower():
-                keyword_matches += 1
-        
-        # Boost score based on keyword matches
-        if keyword_matches > 0:
-            boost = min(20, keyword_matches * 10)  # Up to 20% boost
-            max_score = min(100, max_score + boost)
-        
-        # Update best match if score is above threshold
-        if max_score >= similarity_threshold and max_score > best_score:
-            best_score = max_score
-            excerpt = text[:300] + '...' if len(text) > 300 else text
-            
-            if isinstance(text_item, dict):
-                best_match = f"{excerpt} (Page {page}, Confidence: {confidence}%, Similarity: {max_score}%)"
-            else:
-                best_match = f"{excerpt} (Similarity: {max_score}%)"
-    
-    return best_match or ''
+    return ''
 
 def get_unmatched_document_text(df_data, document_text):
-    """Get document paragraphs that don't match any extracted data using fuzzy matching"""
-    from fuzzywuzzy import fuzz
+    """Get document text that doesn't match any extracted data"""
+    used_lines = set()
     
-    used_texts = set()
-    
-    # Mark paragraphs that were used for commentary with fuzzy matching
+    # Mark lines that were used for commentary
     for row in df_data:
         if row.get('commentary'):
-            commentary = row['commentary']
-            # Extract the main text part (before metadata)
-            main_commentary = commentary.split(' (Page')[0].split(' (Similarity')[0]
-            
-            for text_item in document_text:
-                if isinstance(text_item, dict):
-                    text = text_item.get('text', '')
-                else:
-                    text = text_item
-                
-                if not text or len(text.strip()) < 10:
-                    continue
-                
-                # Use fuzzy matching to identify used texts
-                similarity = fuzz.partial_ratio(main_commentary.lower(), text.lower())
-                if similarity > 70:  # 70% threshold for marking as used
-                    used_texts.add(text)
+            for line in document_text:
+                if row['commentary'][:50] in line:
+                    used_lines.add(line)
     
-    # Return unused paragraphs
+    # Return unused lines
     unmatched = []
-    for text_item in document_text:
-        if isinstance(text_item, dict):
-            text = text_item.get('text', '')
-            page = text_item.get('page', 'N/A')
-            confidence = text_item.get('confidence', 0)
-            contains_financial = text_item.get('contains_financial_data', False)
-            
-            if text not in used_texts and len(text.strip()) > 30:
-                # Prioritize non-financial text for general commentary
-                if not contains_financial:
-                    text_with_meta = f"{text} (Page {page}, Confidence: {confidence}%)"
-                    unmatched.append(text_with_meta)
-        else:
-            # Old format - simple string
-            text = text_item
-            if text not in used_texts and len(text.strip()) > 30:
-                unmatched.append(text)
+    for line in document_text:
+        if line not in used_lines and len(line.strip()) > 20:
+            unmatched.append(line.strip())
     
-    return unmatched[:5]  # Limit to 5 unmatched paragraphs
+    # Group into chunks of reasonable size
+    chunks = []
+    current_chunk = ""
+    for line in unmatched:
+        if len(current_chunk + line) < 400:
+            current_chunk += line + " "
+        else:
+            if current_chunk:
+                chunks.append(current_chunk.strip())
+            current_chunk = line + " "
+    
+    if current_chunk:
+        chunks.append(current_chunk.strip())
+    
+    return chunks[:5]  # Limit to 5 chunks
 
 @app.route('/process_stream', methods=['POST'])
 def process_stream():
@@ -254,36 +166,28 @@ def process_stream():
             document_text = data.get('document_text', [])
             if document_text and df_data:
                 for row in df_data:
-                    try:
-                        # Find relevant text from document that mentions this data point
-                        relevant_text = find_relevant_document_text(row, document_text)
-                        if relevant_text:
-                            row['commentary'] = relevant_text
-                            # Stream updated row with commentary
-                            yield f"data: {json.dumps({'type': 'row_update', 'data': row})}\n\n"
-                    except Exception as e:
-                        print(f"Error matching commentary for {row.get('field', 'unknown')}: {e}")
-                        row['commentary'] = ''
+                    # Find relevant text from document that mentions this data point
+                    relevant_text = find_relevant_document_text(row, document_text)
+                    if relevant_text:
+                        row['commentary'] = relevant_text
+                        # Stream updated row with commentary
+                        yield f"data: {json.dumps({'type': 'row_update', 'data': row})}\n\n"
             
             # Add general unmatched document text as separate entries
             if document_text:
-                try:
-                    unmatched_text = get_unmatched_document_text(df_data, document_text)
-                    if unmatched_text:
-                        for idx, text_chunk in enumerate(unmatched_text):
-                            row_data = {
-                                'source': 'Document Text',
-                                'type': 'General Commentary',
-                                'field': f'Text Segment {idx+1}',
-                                'value': text_chunk[:500] + '...' if len(text_chunk) > 500 else text_chunk,
-                                'page': 'N/A',
-                                'commentary': 'Unmatched document content'
-                            }
-                            df_data.append(row_data)
-                            yield f"data: {json.dumps({'type': 'row', 'data': row_data})}\n\n"
-                except Exception as e:
-                    print(f"Error processing unmatched text: {e}")
-                    # Continue without unmatched text
+                unmatched_text = get_unmatched_document_text(df_data, document_text)
+                if unmatched_text:
+                    for idx, text_chunk in enumerate(unmatched_text):
+                        row_data = {
+                            'source': 'Document Text',
+                            'type': 'General Commentary',
+                            'field': f'Text Segment {idx+1}',
+                            'value': text_chunk[:500] + '...' if len(text_chunk) > 500 else text_chunk,
+                            'page': 'N/A',
+                            'commentary': 'Unmatched document content'
+                        }
+                        df_data.append(row_data)
+                        yield f"data: {json.dumps({'type': 'row', 'data': row_data})}\n\n"
             
             # Send completion signal
             yield f"data: {json.dumps({'type': 'complete', 'total_rows': len(df_data)})}\n\n"
