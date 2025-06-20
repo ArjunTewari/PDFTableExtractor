@@ -21,4 +21,6 @@ dependencies = [
     "pymupdf>=1.26.0",
     "pdf2image>=1.17.0",
     "aiohttp>=3.11.18",
+    "fuzzywuzzy>=0.18.0",
+    "python-levenshtein>=0.27.1",
 ]

@@ -40,9 +40,38 @@ def extract():
         return jsonify({'error': str(e)}), 500
 
 def find_relevant_document_text(row_data, document_text):
-    """Find relevant text from document paragraphs that mentions this data point"""
-    field = row_data.get('field', '').lower()
-    value = str(row_data.get('value', '')).lower()
+    """Find relevant text using fuzzy string similarity matching"""
+    from fuzzywuzzy import fuzz
+    import re
+    
+    field = row_data.get('field', '')
+    value = str(row_data.get('value', ''))
+    
+    # Create search terms from field and value
+    search_terms = []
+    
+    # Add field name (clean it first)
+    clean_field = re.sub(r'[_\-]', ' ', field).strip()
+    if clean_field:
+        search_terms.append(clean_field)
+    
+    # Add value (extract meaningful parts)
+    clean_value = re.sub(r'[^\w\s%$.]', ' ', value).strip()
+    if clean_value:
+        search_terms.append(clean_value)
+    
+    # Extract keywords from field and value
+    keywords = []
+    for term in search_terms:
+        words = re.findall(r'\b\w{3,}\b', term.lower())  # Words with 3+ characters
+        keywords.extend(words)
+    
+    if not keywords:
+        return ''
+    
+    best_match = None
+    best_score = 0
+    similarity_threshold = 80  # 80% similarity threshold
     
     # Handle both old format (list of strings) and new format (list of dicts with metadata)
     for text_item in document_text:
@@ -57,34 +86,70 @@ def find_relevant_document_text(row_data, document_text):
             page = 'N/A'
             confidence = 0
         
-        text_lower = text.lower()
+        if not text or len(text.strip()) < 10:
+            continue
         
-        # Look for field name or value in the text
-        if field in text_lower or value in text_lower:
-            # Return relevant excerpt with metadata
+        # Calculate similarity scores
+        max_score = 0
+        
+        # Check similarity with each search term
+        for term in search_terms:
+            # Partial ratio for substring matching
+            partial_score = fuzz.partial_ratio(term.lower(), text.lower())
+            # Token sort ratio for word order independence
+            token_score = fuzz.token_sort_ratio(term.lower(), text.lower())
+            # Use the higher score
+            score = max(partial_score, token_score)
+            max_score = max(max_score, score)
+        
+        # Check for keyword matches with boosting
+        keyword_matches = 0
+        for keyword in keywords:
+            if keyword in text.lower():
+                keyword_matches += 1
+        
+        # Boost score based on keyword matches
+        if keyword_matches > 0:
+            boost = min(20, keyword_matches * 10)  # Up to 20% boost
+            max_score = min(100, max_score + boost)
+        
+        # Update best match if score is above threshold
+        if max_score >= similarity_threshold and max_score > best_score:
+            best_score = max_score
             excerpt = text[:300] + '...' if len(text) > 300 else text
+            
             if isinstance(text_item, dict):
-                return f"{excerpt} (Page {page}, Confidence: {confidence}%)"
+                best_match = f"{excerpt} (Page {page}, Confidence: {confidence}%, Similarity: {max_score}%)"
             else:
-                return excerpt
+                best_match = f"{excerpt} (Similarity: {max_score}%)"
     
-    return ''
+    return best_match or ''
 
 def get_unmatched_document_text(df_data, document_text):
-    """Get document paragraphs that don't match any extracted data"""
+    """Get document paragraphs that don't match any extracted data using fuzzy matching"""
+    from fuzzywuzzy import fuzz
+    
     used_texts = set()
     
-    # Mark paragraphs that were used for commentary
+    # Mark paragraphs that were used for commentary with fuzzy matching
     for row in df_data:
         if row.get('commentary'):
-            commentary_excerpt = row['commentary'][:50]
+            commentary = row['commentary']
+            # Extract the main text part (before metadata)
+            main_commentary = commentary.split(' (Page')[0].split(' (Similarity')[0]
+            
             for text_item in document_text:
                 if isinstance(text_item, dict):
                     text = text_item.get('text', '')
                 else:
                     text = text_item
                 
-                if commentary_excerpt in text:
+                if not text or len(text.strip()) < 10:
+                    continue
+                
+                # Use fuzzy matching to identify used texts
+                similarity = fuzz.partial_ratio(main_commentary.lower(), text.lower())
+                if similarity > 70:  # 70% threshold for marking as used
                     used_texts.add(text)
     
     # Return unused paragraphs
@@ -94,11 +159,13 @@ def get_unmatched_document_text(df_data, document_text):
             text = text_item.get('text', '')
             page = text_item.get('page', 'N/A')
             confidence = text_item.get('confidence', 0)
+            contains_financial = text_item.get('contains_financial_data', False)
             
             if text not in used_texts and len(text.strip()) > 30:
-                # Include metadata in the unmatched text
-                text_with_meta = f"{text} (Page {page}, Confidence: {confidence}%)"
-                unmatched.append(text_with_meta)
+                # Prioritize non-financial text for general commentary
+                if not contains_financial:
+                    text_with_meta = f"{text} (Page {page}, Confidence: {confidence}%)"
+                    unmatched.append(text_with_meta)
         else:
             # Old format - simple string
             text = text_item
