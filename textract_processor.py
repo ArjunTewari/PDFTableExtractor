@@ -105,6 +105,14 @@ class TextractProcessor:
         tables = []
         key_values = []
         
+        # Count block types for debugging
+        block_types = {}
+        for block in blocks:
+            block_type = block.get('BlockType', 'UNKNOWN')
+            block_types[block_type] = block_types.get(block_type, 0) + 1
+        
+        print(f"Block type counts: {block_types}")
+        
         # Process blocks
         for block in blocks:
             if block['BlockType'] == 'LINE':
@@ -119,26 +127,35 @@ class TextractProcessor:
                     })
             
             elif block['BlockType'] == 'TABLE':
+                print(f"Processing TABLE block on page {block.get('Page', 1)}")
                 table_data = self._extract_table_structure(block, block_map)
                 if table_data:
                     # Add metadata to table
                     table_data['page'] = block.get('Page', 1)
                     table_data['confidence'] = block.get('Confidence', 0)
                     tables.append(table_data)
+                    print(f"Successfully extracted table with {len(table_data.get('rows', []))} rows")
+                else:
+                    print("Failed to extract table structure")
             
             elif block['BlockType'] == 'KEY_VALUE_SET':
+                print(f"Processing KEY_VALUE_SET block on page {block.get('Page', 1)}")
                 kv_pair = self._extract_key_value_pair(block, block_map)
                 if kv_pair:
                     # Add metadata to key-value pair
                     kv_pair['page'] = block.get('Page', 1)
                     kv_pair['confidence'] = block.get('Confidence', 0)
                     key_values.append(kv_pair)
+                    print(f"Successfully extracted key-value: {kv_pair.get('key', '')} = {kv_pair.get('value', '')}")
+                else:
+                    print("Failed to extract key-value pair")
         
         # Merge lines into paragraphs
         document_text = self._merge_lines_into_paragraphs(line_blocks)
         
         processing_time = f"{time.time() - start_time:.1f}s"
         print(f"Textract processing completed in {processing_time}")
+        print(f"Extracted: {len(document_text)} paragraphs, {len(tables)} tables, {len(key_values)} key-value pairs")
         
         return {
             "document_text": document_text,
@@ -148,8 +165,11 @@ class TextractProcessor:
                 "total_blocks": len(blocks),
                 "total_lines": len(line_blocks),
                 "total_paragraphs": len(document_text),
+                "total_tables": len(tables),
+                "total_key_values": len(key_values),
                 "processing_time": processing_time,
-                "extraction_timestamp": time.strftime('%Y-%m-%d %H:%M:%S')
+                "extraction_timestamp": time.strftime('%Y-%m-%d %H:%M:%S'),
+                "block_types": block_types
             }
         }
 
