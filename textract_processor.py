@@ -130,9 +130,17 @@ class TextractProcessor:
         potential_commentary = []
         labeled_paragraphs = []
         
-        # Classification keywords
-        action_keywords = ["achieved", "reported", "grew", "increased", "rose", "declined", "exceeded"]
-        metric_indicators = ["$", "%", "million", "YoY", "Q4", "billion", "thousand"]
+        # Financial classification keywords  
+        action_keywords = [
+            "achieved", "reported", "grew", "increased", "rose", "declined", "exceeded",
+            "outperformed", "beat", "missed", "disappointed", "strong", "robust",
+            "improved", "deteriorated", "expanded", "contracted", "accelerated"
+        ]
+        metric_indicators = [
+            "$", "%", "million", "billion", "thousand", "YoY", "Q1", "Q2", "Q3", "Q4",
+            "revenue", "earnings", "profit", "margin", "EBITDA", "subscribers", "users",
+            "growth", "decline", "basis points", "bps"
+        ]
         
         for para in merged_paragraphs:
             para_lower = para.lower()

@@ -142,9 +142,10 @@ def get_unmatched_document_text(df_data, document_text):
     return final_chunks
 
 def clean_and_interpret_final_table(df_data):
-    """Clean and interpret the final table by removing redundancies and improving commentary"""
+    """Clean and interpret financial data table with financial domain expertise"""
     import re
     from collections import defaultdict
+    from financial_ontology import classify_financial_metric, extract_financial_context, detect_currency_and_units
     
     # Group similar fields and values
     field_groups = defaultdict(list)
@@ -154,8 +155,13 @@ def clean_and_interpret_final_table(df_data):
         field = row.get('field', '').lower()
         value = str(row.get('value', '')).strip()
         
-        # Normalize field names for grouping
+        # Enhanced financial field normalization
         normalized_field = re.sub(r'[_\s\d]+', '_', field).strip('_')
+        
+        # Classify financial metric type
+        metric_classification = classify_financial_metric(field + ' ' + value)
+        financial_context = extract_financial_context(row.get('commentary', ''))
+        currency_info = detect_currency_and_units(value)
         
         # Skip exact duplicates
         duplicate_key = f"{normalized_field}_{value}"
@@ -163,7 +169,13 @@ def clean_and_interpret_final_table(df_data):
             continue
         value_seen.add(duplicate_key)
         
-        field_groups[normalized_field].append((i, row))
+        # Add financial metadata to row
+        enhanced_row = row.copy()
+        enhanced_row['metric_type'] = metric_classification['type']
+        enhanced_row['financial_context'] = financial_context
+        enhanced_row['has_financial_data'] = currency_info['has_financial_data']
+        
+        field_groups[normalized_field].append((i, enhanced_row))
     
     # Create cleaned data
     cleaned_data = []
