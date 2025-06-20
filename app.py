@@ -375,16 +375,6 @@ def process_stream():
                         df_data.append(row_data)
                         yield f"data: {json.dumps({'type': 'row', 'data': row_data})}\n\n"
             
-            # Final step: Clean and interpret the final table
-            if df_data:
-                cleaned_data = clean_and_interpret_final_table(df_data)
-                
-                # Stream cleaned results
-                for row in cleaned_data:
-                    yield f"data: {json.dumps({'type': 'cleaned_row', 'data': row})}\n\n"
-                
-                yield f"data: {json.dumps({'type': 'cleanup_complete', 'original_rows': len(df_data), 'cleaned_rows': len(cleaned_data)})}\n\n"
-            
             # Send completion signal
             yield f"data: {json.dumps({'type': 'complete', 'total_rows': len(df_data)})}\n\n"
             

@@ -287,17 +287,10 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (data.type === 'row_update') {
             // Update existing row with commentary
             updateStreamingRow(data.data);
-        } else if (data.type === 'cleaned_row') {
-            // Add cleaned row
-            cleanedRows.push(data.data);
-            displayCleanedRow(data.data);
-        } else if (data.type === 'cleanup_complete') {
-            console.log('Data cleanup complete. Original:', data.original_rows, 'Cleaned:', data.cleaned_rows);
-            showCleanupSummary(data.original_rows, data.cleaned_rows);
         } else if (data.type === 'complete') {
             hideLoading();
             console.log('Streaming complete. Total rows:', data.total_rows);
-            processedData = cleanedRows.length > 0 ? cleanedRows : streamedRows;
+            processedData = streamedRows;
             finalizeStreamingDisplay();
         } else if (data.status === 'error') {
             hideLoading();
@@ -356,51 +349,24 @@ document.addEventListener('DOMContentLoaded', function() {
     function initializeStreamingTable() {
         hideLoading();
         resultsSection.innerHTML = `
-            <div class="row">
-                <div class="col-12">
-                    <h4>Extracted Data with Commentary</h4>
-                    <div class="table-responsive">
-                        <table class="table table-striped table-hover">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>Source</th>
-                                    <th>Type</th>
-                                    <th>Field</th>
-                                    <th>Value</th>
-                                    <th>Page</th>
-                                    <th>Commentary</th>
-                                </tr>
-                            </thead>
-                            <tbody id="streaming-table-body"></tbody>
-                        </table>
-                    </div>
-                </div>
+            <h4>Financial Data Extraction Results</h4>
+            <div class="alert alert-info">
+                <small><strong>Complete Data:</strong> All extracted financial metrics with document commentary • No data filtering or merging applied</small>
             </div>
-            <div id="cleaned-section" style="display: none;">
-                <hr>
-                <div class="row">
-                    <div class="col-12">
-                        <h4>Cleaned & Interpreted Data</h4>
-                        <div class="alert alert-info">
-                            <small>Redundancies removed, similar columns combined, commentary summarized</small>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table table-striped table-hover">
-                                <thead class="table-success">
-                                    <tr>
-                                        <th>Source</th>
-                                        <th>Type</th>
-                                        <th>Field</th>
-                                        <th>Value</th>
-                                        <th>Page</th>
-                                        <th>Commentary</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="cleaned-table-body"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Source</th>
+                            <th>Type</th>
+                            <th>Field</th>
+                            <th>Value</th>
+                            <th>Page</th>
+                            <th>Commentary</th>
+                        </tr>
+                    </thead>
+                    <tbody id="streaming-table-body"></tbody>
+                </table>
             </div>
             <div class="mt-3">
                 <button class="btn btn-outline-primary" id="export-json-btn">Export as JSON</button>
@@ -462,12 +428,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // Add summary
         const summaryDiv = document.createElement('div');
         summaryDiv.className = 'alert alert-success mt-3';
-        const dataSource = cleanedRows.length > 0 ? 'cleaned and interpreted' : 'original extracted';
-        const totalRows = cleanedRows.length > 0 ? cleanedRows.length : streamedRows.length;
         
         summaryDiv.innerHTML = `
-            <h6>Processing Complete</h6>
-            <small>Total ${dataSource} rows: ${totalRows} | Commentary from document text only</small>
+            <h6>Financial Document Analysis Complete</h6>
+            <small>Total extracted financial data points: ${streamedRows.length} | All data preserved without filtering • Commentary from document text only</small>
         `;
         resultsSection.appendChild(summaryDiv);
     }
