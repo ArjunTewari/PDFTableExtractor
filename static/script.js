@@ -289,7 +289,7 @@ document.addEventListener('DOMContentLoaded', function() {
             hideLoading();
             console.log('Streaming complete. Total rows:', data.total_rows);
             processedData = streamedRows;
-            finalizeStreamingDisplay();
+            finalizeStreamingDisplay(data.cost_summary);
         } else if (data.status === 'error') {
             hideLoading();
             showError('Processing failed: ' + data.error);
@@ -373,18 +373,24 @@ document.addEventListener('DOMContentLoaded', function() {
         resultsSection.classList.remove('d-none');
     }
 
-    function finalizeStreamingDisplay() {
+    function finalizeStreamingDisplay(costSummary = null) {
         // Re-attach export event listeners
         document.getElementById('export-json-btn').addEventListener('click', exportJson);
         document.getElementById('export-csv-btn').addEventListener('click', exportCsv);
         document.getElementById('export-pdf-btn').addEventListener('click', exportPdf);
         
-        // Add summary
+        // Add summary with cost information
         const summaryDiv = document.createElement('div');
         summaryDiv.className = 'alert alert-success mt-3';
+        
+        let costInfo = '';
+        if (costSummary && costSummary.total_cost_usd) {
+            costInfo = ` | LLM Cost: $${costSummary.total_cost_usd.toFixed(6)} (${costSummary.total_tokens.toLocaleString()} tokens, ${costSummary.api_calls} API calls)`;
+        }
+        
         summaryDiv.innerHTML = `
             <h6>Processing Complete</h6>
-            <small>Total rows extracted: ${streamedRows.length} | Commentary from document text only</small>
+            <small>Total rows extracted: ${streamedRows.length} | Commentary from document text only${costInfo}</small>
         `;
         resultsSection.appendChild(summaryDiv);
     }

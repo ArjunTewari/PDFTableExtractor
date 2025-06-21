@@ -64,6 +64,15 @@ Instructions:
             temperature=0.2
         )
         
+        # Calculate and log cost for summarization
+        if hasattr(response, 'usage') and response.usage:
+            input_tokens = response.usage.prompt_tokens
+            output_tokens = response.usage.completion_tokens
+            input_cost = (input_tokens / 1_000_000) * 0.150  # GPT-4o-mini input cost
+            output_cost = (output_tokens / 1_000_000) * 0.600  # GPT-4o-mini output cost
+            total_cost = input_cost + output_cost
+            print(f"Commentary summarization cost: ${total_cost:.6f} ({input_tokens} input + {output_tokens} output tokens)")
+        
         return response.choices[0].message.content.strip()
     except Exception as e:
         print(f"Error summarizing commentary: {e}")
@@ -350,8 +359,22 @@ def process_stream():
                         df_data.append(row_data)
                         yield f"data: {json.dumps({'type': 'row', 'data': row_data})}\n\n"
             
+            # Add cost summary if available
+            cost_summary = result.get('cost_summary', {})
+            if cost_summary:
+                cost_data = {
+                    'source': 'Cost Summary',
+                    'type': 'Processing Cost',
+                    'field': 'Total LLM Cost',
+                    'value': f"${cost_summary.get('total_cost_usd', 0):.6f}",
+                    'page': 'N/A',
+                    'commentary': f"Tokens: {cost_summary.get('total_tokens', 0):,} | API Calls: {cost_summary.get('api_calls', 0)}"
+                }
+                df_data.append(cost_data)
+                yield f"data: {json.dumps({'type': 'row', 'data': cost_data})}\n\n"
+            
             # Send completion signal
-            yield f"data: {json.dumps({'type': 'complete', 'total_rows': len(df_data)})}\n\n"
+            yield f"data: {json.dumps({'type': 'complete', 'total_rows': len(df_data), 'cost_summary': cost_summary})}\n\n"
             
         except Exception as e:
             yield f"data: {json.dumps({'status': 'error', 'error': str(e)})}\n\n"

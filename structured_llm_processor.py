@@ -10,6 +10,43 @@ import concurrent.futures
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 openai_client = OpenAI(api_key=OPENAI_API_KEY)
 
+# GPT-4o-mini pricing per 1M tokens (as of 2024)
+GPT_4O_MINI_INPUT_COST = 0.150  # $0.150 per 1M input tokens
+GPT_4O_MINI_OUTPUT_COST = 0.600  # $0.600 per 1M output tokens
+
+class CostTracker:
+    def __init__(self):
+        self.total_input_tokens = 0
+        self.total_output_tokens = 0
+        self.total_cost = 0.0
+        self.api_calls = 0
+    
+    def add_usage(self, input_tokens, output_tokens):
+        self.total_input_tokens += input_tokens
+        self.total_output_tokens += output_tokens
+        self.api_calls += 1
+        
+        input_cost = (input_tokens / 1_000_000) * GPT_4O_MINI_INPUT_COST
+        output_cost = (output_tokens / 1_000_000) * GPT_4O_MINI_OUTPUT_COST
+        call_cost = input_cost + output_cost
+        self.total_cost += call_cost
+        
+        return call_cost
+    
+    def get_summary(self):
+        return {
+            'total_input_tokens': self.total_input_tokens,
+            'total_output_tokens': self.total_output_tokens,
+            'total_tokens': self.total_input_tokens + self.total_output_tokens,
+            'total_cost_usd': round(self.total_cost, 6),
+            'api_calls': self.api_calls,
+            'input_cost_usd': round((self.total_input_tokens / 1_000_000) * GPT_4O_MINI_INPUT_COST, 6),
+            'output_cost_usd': round((self.total_output_tokens / 1_000_000) * GPT_4O_MINI_OUTPUT_COST, 6)
+        }
+
+# Global cost tracker instance
+cost_tracker = CostTracker()
+
 def split_text_section(text_lines, max_lines=25):
     """Split text lines into manageable chunks with sentence boundary preservation"""
     chunks = []
@@ -106,6 +143,14 @@ Return a simple JSON object where each key is a descriptive field name and each 
             )
         )
         
+        # Track usage and cost
+        if hasattr(response, 'usage') and response.usage:
+            call_cost = cost_tracker.add_usage(
+                response.usage.prompt_tokens,
+                response.usage.completion_tokens
+            )
+            print(f"Key-value processing cost: ${call_cost:.6f}")
+        
         content = response.choices[0].message.content
         if content:
             result = json.loads(content)
@@ -171,6 +216,14 @@ Extract comprehensive data - do not limit to just a few items. Return the respon
                 response_format={"type": "json_object"}
             )
         )
+        
+        # Track usage and cost
+        if hasattr(response, 'usage') and response.usage:
+            call_cost = cost_tracker.add_usage(
+                response.usage.prompt_tokens,
+                response.usage.completion_tokens
+            )
+            print(f"Text chunk processing cost: ${call_cost:.6f}")
         
         content = response.choices[0].message.content
         if content:

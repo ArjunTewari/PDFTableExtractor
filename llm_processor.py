@@ -126,6 +126,15 @@ def process_text_with_llm(text):
             temperature=0.1,
             max_tokens=4000,
             response_format={"type": "json_object"})
+        
+        # Calculate and log cost for comprehensive processing
+        if hasattr(response, 'usage') and response.usage:
+            input_tokens = response.usage.prompt_tokens
+            output_tokens = response.usage.completion_tokens
+            input_cost = (input_tokens / 1_000_000) * 0.150  # GPT-4o-mini input cost
+            output_cost = (output_tokens / 1_000_000) * 0.600  # GPT-4o-mini output cost
+            total_cost = input_cost + output_cost
+            print(f"Comprehensive LLM processing cost: ${total_cost:.6f} ({input_tokens} input + {output_tokens} output tokens)")
 
         # Extract JSON from the response
         if response and response.choices and len(response.choices) > 0:
