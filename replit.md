@@ -89,9 +89,16 @@ The deployment uses Nix packaging to ensure all dependencies are properly manage
 
 ### Textract Processing Improvements
 - **Smart Paragraph Assembly**: Lines are now grouped into coherent paragraphs before processing, reducing fragmentation
+- **Intelligent Text Merging**: Smart merging algorithm forms complete sentences while avoiding merging separate data metrics
 - **Commentary Detection**: Paragraphs containing financial metrics and action verbs are automatically flagged as potential commentary
 - **Duplicate Prevention**: Key-value extraction now filters out redundant entries to improve data quality
 - **Enhanced Text Structure**: Document text is organized into meaningful paragraphs rather than individual lines
+
+### Commentary Enhancement Features
+- **Automatic Summarization**: Long commentary is automatically summarized using GPT-3.5-turbo to preserve key insights while maintaining readability
+- **Cost-Effective Processing**: Uses cheaper model for summarization tasks while maintaining quality
+- **Fallback Handling**: Graceful degradation to sentence-boundary truncation if summarization fails
+- **Metric Preservation**: Summarization preserves specific figures, percentages, and dates from original commentary
 
 ## Development Notes
 
