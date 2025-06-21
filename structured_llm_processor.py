@@ -10,12 +10,28 @@ import concurrent.futures
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 openai_client = OpenAI(api_key=OPENAI_API_KEY)
 
-def split_text_section(text_lines, max_lines=20):
-    """Split text lines into manageable chunks"""
+def split_text_section(text_lines, max_lines=25):
+    """Split text lines into manageable chunks with sentence boundary preservation"""
     chunks = []
-    for i in range(0, len(text_lines), max_lines):
-        chunk = text_lines[i:i + max_lines]
-        chunks.append(chunk)
+    current_chunk = []
+    
+    for i, line in enumerate(text_lines):
+        current_chunk.append(line)
+        
+        # Check if we should create a chunk
+        if len(current_chunk) >= max_lines:
+            # Try to end at a sentence boundary
+            if line.strip().endswith(('.', '!', '?', ':')):
+                chunks.append(current_chunk)
+                current_chunk = []
+            elif len(current_chunk) >= max_lines + 5:  # Force split if too long
+                chunks.append(current_chunk)
+                current_chunk = []
+    
+    # Add remaining lines
+    if current_chunk:
+        chunks.append(current_chunk)
+    
     return chunks
 
 async def process_table_data(table_data: Dict[str, Any]) -> Dict[str, Any]:

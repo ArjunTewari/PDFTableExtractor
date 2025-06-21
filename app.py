@@ -47,20 +47,21 @@ def summarize_commentary(text):
         
         client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
         
-        prompt = f"""Summarize this financial document commentary in 1-2 concise sentences, keeping key numbers and facts:
+        prompt = f"""Summarize this financial document commentary in 2-3 complete sentences, preserving all key information:
 
 {text}
 
 Instructions:
-- Keep important financial figures, percentages, and dates
-- Make it concise but informative
-- Focus on the main point related to the data"""
+- Preserve ALL financial figures, percentages, dates, and company names
+- Keep the complete meaning and context
+- Use complete sentences that don't cut off mid-thought
+- Maintain the professional tone and key details"""
 
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[{"role": "user", "content": prompt}],
-            max_tokens=100,
-            temperature=0.3
+            max_tokens=150,
+            temperature=0.2
         )
         
         return response.choices[0].message.content.strip()
@@ -99,26 +100,41 @@ def find_relevant_document_text(row_data, document_text):
         # If we found a good match, include surrounding context
         if score > best_score:
             best_score = score
-            # Get context around the matching line
-            start_idx = max(0, i - 1)
-            end_idx = min(len(document_text), i + 2)
+            # Get extended context around the matching line
+            start_idx = max(0, i - 2)
+            end_idx = min(len(document_text), i + 4)
             context_lines = document_text[start_idx:end_idx]
             
             # Join and clean up the context
             context = ' '.join(context_lines).strip()
-            # Truncate at sentence boundary if possible
-            if len(context) > 400:
-                sentences = context.split('. ')
-                truncated = '. '.join(sentences[:2])
-                if len(truncated) < 400:
-                    best_match = truncated + '.'
+            
+            # Find complete sentences to avoid cutting off mid-sentence
+            if len(context) > 500:
+                # Try to find complete sentences
+                sentences = context.replace('!', '.').replace('?', '.').split('.')
+                complete_text = ""
+                for sentence in sentences:
+                    sentence = sentence.strip()
+                    if sentence and len(complete_text + sentence) < 450:
+                        complete_text += sentence + ". "
+                    else:
+                        break
+                
+                if complete_text:
+                    best_match = complete_text.strip()
                 else:
-                    best_match = context[:400] + '...'
+                    # Fallback: find last complete word
+                    truncated = context[:450]
+                    last_space = truncated.rfind(' ')
+                    if last_space > 300:
+                        best_match = truncated[:last_space] + '...'
+                    else:
+                        best_match = truncated + '...'
             else:
                 best_match = context
     
-    # Summarize if commentary is too long (over 300 characters)
-    if best_match and len(best_match) > 300:
+    # Summarize if commentary is too long (over 400 characters)
+    if best_match and len(best_match) > 400:
         best_match = summarize_commentary(best_match)
     
     return best_match if best_score > 1 else ''
@@ -158,17 +174,28 @@ def get_unmatched_document_text(df_data, document_text):
         if len(paragraph_text) > 50:
             unmatched_paragraphs.append(paragraph_text)
     
-    # Limit and truncate paragraphs for readability
+    # Limit and truncate paragraphs for readability with complete sentences
     final_chunks = []
     for paragraph in unmatched_paragraphs[:3]:  # Limit to 3 substantial chunks
-        if len(paragraph) > 600:
-            # Truncate at sentence boundary
-            sentences = paragraph.split('. ')
-            truncated = '. '.join(sentences[:3])
-            if len(truncated) < 600:
-                final_chunks.append(truncated + '.')
+        if len(paragraph) > 500:
+            # Find complete sentences to avoid cutting off mid-sentence
+            sentences = paragraph.replace('!', '.').replace('?', '.').split('.')
+            complete_paragraph = ""
+            for sentence in sentences:
+                sentence = sentence.strip()
+                if sentence and len(complete_paragraph + sentence) < 450:
+                    complete_paragraph += sentence + ". "
+                else:
+                    break
+            
+            if complete_paragraph and len(complete_paragraph) > 50:
+                final_chunks.append(complete_paragraph.strip())
             else:
-                final_chunks.append(paragraph[:600] + '...')
+                # Fallback: truncate at word boundary
+                truncated = paragraph[:450]
+                last_space = truncated.rfind(' ')
+                if last_space > 300:
+                    final_chunks.append(truncated[:last_space] + '...')
         else:
             final_chunks.append(paragraph)
     
@@ -286,7 +313,7 @@ def process_stream():
                     for idx, text_chunk in enumerate(unmatched_text):
                         # Summarize if text is too long
                         display_text = text_chunk
-                        if len(text_chunk) > 300:
+                        if len(text_chunk) > 400:
                             display_text = summarize_commentary(text_chunk)
                         
                         row_data = {
