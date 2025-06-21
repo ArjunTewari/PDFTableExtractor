@@ -231,17 +231,21 @@ def process_stream():
                             # Stream this row immediately
                             yield f"data: {json.dumps({'type': 'row', 'data': row_data})}\n\n"
             
-            # Process document text facts
+            # Process document text facts including footnotes
             if 'processed_document_text' in result and result['processed_document_text']:
                 for chunk_idx, chunk in enumerate(result['processed_document_text']):
                     if 'extracted_facts' in chunk and not chunk['extracted_facts'].get('error'):
                         facts = chunk['extracted_facts']
                         for key, value in facts.items():
                             if key != 'error' and value:
+                                # Determine if this is footnote content
+                                data_type = 'Footnote' if 'footnote' in key.lower() else 'Financial Data'
+                                field_name = key.replace('_Footnote', ' (Footnote)').replace('Footnote_', 'Footnote: ')
+                                
                                 row_data = {
                                     'source': f'Text Chunk {chunk_idx+1}',
-                                    'type': 'Financial Data',
-                                    'field': key,
+                                    'type': data_type,
+                                    'field': field_name,
                                     'value': str(value),
                                     'page': 'N/A',
                                     'commentary': ''  # Will be filled from document text only
@@ -249,6 +253,20 @@ def process_stream():
                                 df_data.append(row_data)
                                 # Stream this row immediately
                                 yield f"data: {json.dumps({'type': 'row', 'data': row_data})}\n\n"
+            
+            # Process standalone footnotes if available
+            if 'footnotes' in data and data['footnotes']:
+                for footnote in data['footnotes']:
+                    row_data = {
+                        'source': 'Document Footnotes',
+                        'type': 'Footnote',
+                        'field': f"Footnote {footnote.get('marker', 'N/A')}",
+                        'value': footnote.get('content', ''),
+                        'page': 'N/A',
+                        'commentary': f"Line {footnote.get('line_number', 'N/A')}"
+                    }
+                    df_data.append(row_data)
+                    yield f"data: {json.dumps({'type': 'row', 'data': row_data})}\n\n"
             
             # Now add commentary from document text only (no AI-generated comments)
             document_text = data.get('document_text', [])

@@ -95,38 +95,131 @@ class TextractProcessor:
             print(f"Textract extraction failed: {e}")
             raise Exception(f"Failed to extract text using Amazon Textract: {str(e)}")
 
+    def _enhance_footnote_detection(self, document_text):
+        """Enhanced footnote detection and processing"""
+        import re
+        
+        footnotes = []
+        enhanced_text = []
+        footnote_markers = {}
+        
+        # Common footnote patterns
+        footnote_patterns = [
+            r'^\(\d+\)',  # (1), (2) at start of line
+            r'^\[\d+\]',  # [1], [2] at start of line
+            r'^\d+\.',    # 1., 2., 3. at start of line
+            r'^\*+\s',    # *, **, *** at start with space
+            r'^Note\s*\d*:',  # Note: or Note 1:
+            r'^Source:',  # Source:
+            r'^See\s',    # See ...
+        ]
+        
+        for i, line in enumerate(document_text):
+            line_stripped = line.strip()
+            if not line_stripped:
+                continue
+                
+            # Check if this line is a footnote
+            is_footnote = False
+            footnote_marker = None
+            
+            for pattern in footnote_patterns:
+                match = re.match(pattern, line_stripped, re.IGNORECASE)
+                if match:
+                    footnote_marker = match.group()
+                    # Additional checks for footnote characteristics
+                    if (len(line_stripped) > len(footnote_marker) + 5 and  # Has content after marker
+                        (any(word in line_stripped.lower() for word in 
+                             ['note', 'source', 'see', 'reference', 'pursuant', 'accordance', 
+                              'disclaimer', 'based on', 'refers to', 'includes', 'excludes']) or
+                         re.search(r'\b(?:page|section|chapter|exhibit|appendix)\s+\d+', line_stripped.lower()))):
+                        is_footnote = True
+                        break
+            
+            if is_footnote:
+                footnotes.append({
+                    'marker': footnote_marker,
+                    'content': line_stripped,
+                    'line_number': i,
+                    'type': 'footnote'
+                })
+                footnote_markers[footnote_marker] = line_stripped
+            else:
+                # Check for inline footnote references
+                has_refs = bool(re.search(r'[\(\[]\d+[\)\]]|\*+(?=\s|$)', line_stripped))
+                enhanced_text.append({
+                    'content': line_stripped,
+                    'has_footnote_refs': has_refs,
+                    'line_number': i
+                })
+        
+        return {
+            'enhanced_text': enhanced_text,
+            'footnotes': footnotes,
+            'footnote_markers': footnote_markers
+        }
+
     def _parse_textract_blocks(self, blocks: List[Dict[str, Any]], start_time: float) -> Dict[str, Any]:
-        """Parse Textract blocks into the specified JSON format"""
+        """Parse Textract blocks into the specified JSON format with enhanced footnote handling"""
         
         block_map = {block['Id']: block for block in blocks}
         
         # Extract document text (line by line)
-        document_text = []
+        raw_document_text = []
         tables = []
         key_values = []
         
-        # Process blocks
+        # Process blocks by page to maintain order
+        pages_blocks = {}
         for block in blocks:
-            if block['BlockType'] == 'LINE':
-                document_text.append(block.get('Text', ''))
+            page_num = block.get('Page', 1)
+            if page_num not in pages_blocks:
+                pages_blocks[page_num] = []
+            pages_blocks[page_num].append(block)
+        
+        # Process each page in order
+        all_document_text = []
+        for page_num in sorted(pages_blocks.keys()):
+            page_blocks = pages_blocks[page_num]
             
-            elif block['BlockType'] == 'TABLE':
-                table_data = self._extract_table_structure(block, block_map)
-                if table_data:
-                    tables.append(table_data)
+            # Sort blocks by geometry (top to bottom, left to right)
+            line_blocks = [b for b in page_blocks if b['BlockType'] == 'LINE']
+            line_blocks.sort(key=lambda x: (
+                x.get('Geometry', {}).get('BoundingBox', {}).get('Top', 0),
+                x.get('Geometry', {}).get('BoundingBox', {}).get('Left', 0)
+            ))
             
-            elif block['BlockType'] == 'KEY_VALUE_SET':
-                kv_pair = self._extract_key_value_pair(block, block_map)
-                if kv_pair:
-                    key_values.append(kv_pair)
+            for block in line_blocks:
+                text = block.get('Text', '').strip()
+                if text:
+                    all_document_text.append(text)
+            
+            # Process other block types for this page
+            for block in page_blocks:
+                if block['BlockType'] == 'TABLE':
+                    table_data = self._extract_table_structure(block, block_map)
+                    if table_data:
+                        tables.append(table_data)
+                
+                elif block['BlockType'] == 'KEY_VALUE_SET':
+                    kv_pair = self._extract_key_value_pair(block, block_map)
+                    if kv_pair:
+                        key_values.append(kv_pair)
+        
+        # Enhanced footnote processing
+        footnote_analysis = self._enhance_footnote_detection(all_document_text)
         
         processing_time = f"{time.time() - start_time:.1f}s"
         print(f"Textract processing completed in {processing_time}")
+        print(f"Found {len(footnote_analysis['footnotes'])} footnotes")
         
         return {
-            "document_text": document_text,
+            "document_text": all_document_text,
             "tables": tables,
-            "key_values": key_values
+            "key_values": key_values,
+            "footnotes": footnote_analysis['footnotes'],
+            "footnote_markers": footnote_analysis['footnote_markers'],
+            "enhanced_text": footnote_analysis['enhanced_text']
         }
 
     def _extract_table_structure(self, table_block: Dict[str, Any], block_map: Dict[str, Any]) -> Optional[Dict[str, Any]]:
