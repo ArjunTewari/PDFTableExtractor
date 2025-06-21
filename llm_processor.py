@@ -113,11 +113,9 @@ def process_text_with_llm(text):
         CREATE A COMPREHENSIVE MULTI-DIMENSIONAL TABLE with maximum rows and columns.
         """
 
-        # Send the prompt to the model
-        # The newest OpenAI model is "gpt-4o" which was released May 13, 2024.
-        # do not change this unless explicitly requested by the user
+        # Send the prompt to the model using gpt-3.5-turbo for cost efficiency
         response = client.chat.completions.create(
-            model="gpt-4o",
+            model="gpt-3.5-turbo",
             messages=[{
                 "role": "system",
                 "content": system_prompt

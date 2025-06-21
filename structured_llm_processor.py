@@ -199,7 +199,7 @@ OR
         response = await loop.run_in_executor(
             None,
             lambda: openai_client.chat.completions.create(
-                model="gpt-4o",
+                model="gpt-3.5-turbo",
                 messages=[{"role": "user", "content": prompt}],
                 response_format={"type": "json_object"}
             )
