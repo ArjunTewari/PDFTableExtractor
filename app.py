@@ -39,6 +39,38 @@ def extract():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+def summarize_long_commentary(text, max_length=300):
+    """Summarize commentary that exceeds the length threshold using GPT-3.5-turbo"""
+    if len(text) <= max_length:
+        return text
+    
+    try:
+        import openai
+        client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+        
+        prompt = f"""Summarize this financial commentary in 1-2 concise sentences while preserving key numbers and metrics:
+
+{text}
+
+Keep all specific figures, percentages, and dates. Focus on the main business insights."""
+
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",  # Using cheaper model for summarization
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=100,
+            temperature=0.3
+        )
+        
+        summary = response.choices[0].message.content.strip()
+        return summary if summary else text[:max_length] + '...'
+        
+    except Exception as e:
+        print(f"Commentary summarization failed: {e}")
+        # Fallback to truncation
+        sentences = text.split('. ')
+        truncated = '. '.join(sentences[:2])
+        return truncated + '.' if len(truncated) < max_length else text[:max_length] + '...'
+
 def find_relevant_document_text(row_data, document_text):
     """Find relevant text from document that mentions this data point"""
     field = row_data.get('field', '').lower()
@@ -77,16 +109,9 @@ def find_relevant_document_text(row_data, document_text):
             
             # Join and clean up the context
             context = ' '.join(context_lines).strip()
-            # Truncate at sentence boundary if possible
-            if len(context) > 400:
-                sentences = context.split('. ')
-                truncated = '. '.join(sentences[:2])
-                if len(truncated) < 400:
-                    best_match = truncated + '.'
-                else:
-                    best_match = context[:400] + '...'
-            else:
-                best_match = context
+            
+            # Use summarizer for long commentary instead of truncation
+            best_match = summarize_long_commentary(context, max_length=350)
     
     return best_match if best_score > 1 else ''
 
@@ -125,19 +150,12 @@ def get_unmatched_document_text(df_data, document_text):
         if len(paragraph_text) > 50:
             unmatched_paragraphs.append(paragraph_text)
     
-    # Limit and truncate paragraphs for readability
+    # Limit and summarize paragraphs for readability
     final_chunks = []
     for paragraph in unmatched_paragraphs[:3]:  # Limit to 3 substantial chunks
-        if len(paragraph) > 600:
-            # Truncate at sentence boundary
-            sentences = paragraph.split('. ')
-            truncated = '. '.join(sentences[:3])
-            if len(truncated) < 600:
-                final_chunks.append(truncated + '.')
-            else:
-                final_chunks.append(paragraph[:600] + '...')
-        else:
-            final_chunks.append(paragraph)
+        # Use summarizer for long paragraphs instead of truncation
+        processed_paragraph = summarize_long_commentary(paragraph, max_length=400)
+        final_chunks.append(processed_paragraph)
     
     return final_chunks
 
