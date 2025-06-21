@@ -6,8 +6,7 @@ import asyncio
 import aiohttp
 import concurrent.futures
 
-# the newest OpenAI model is "gpt-4o" which was released May 13, 2024.
-# do not change this unless explicitly requested by the user
+# Using gpt-3.5-turbo for cost efficiency as requested by user
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 openai_client = OpenAI(api_key=OPENAI_API_KEY)
 
@@ -20,7 +19,7 @@ def split_text_section(text_lines, max_lines=20):
     return chunks
 
 async def process_table_data(table_data: Dict[str, Any]) -> Dict[str, Any]:
-    """Process table data with GPT-4o asynchronously - simple format"""
+    """Process table data with GPT-3.5-turbo asynchronously - simple format"""
     prompt = f"""Extract key data points from this table as simple field-value pairs.
 
 Table data:
@@ -44,7 +43,7 @@ Return JSON with field-value pairs:
         response = await loop.run_in_executor(
             None,
             lambda: openai_client.chat.completions.create(
-                model="gpt-4o",
+                model="gpt-3.5-turbo",
                 messages=[{"role": "user", "content": prompt}],
                 response_format={"type": "json_object"}
             )
@@ -85,7 +84,7 @@ Return a simple JSON object where each key is a descriptive field name and each 
         response = await loop.run_in_executor(
             None,
             lambda: openai_client.chat.completions.create(
-                model="gpt-4o",
+                model="gpt-3.5-turbo",
                 messages=[{"role": "user", "content": prompt}],
                 response_format={"type": "json_object"}
             )
@@ -149,7 +148,7 @@ Extract comprehensive data - do not limit to just a few items. Return the respon
         response = await loop.run_in_executor(
             None,
             lambda: openai_client.chat.completions.create(
-                model="gpt-4o",
+                model="gpt-3.5-turbo",
                 messages=[{"role": "user", "content": prompt}],
                 response_format={"type": "json_object"}
             )
