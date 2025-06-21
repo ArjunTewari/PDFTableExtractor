@@ -59,7 +59,7 @@ Return JSON with field-value pairs:
         response = await loop.run_in_executor(
             None,
             lambda: openai_client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model="gpt-4o-mini",
                 messages=[{"role": "user", "content": prompt}],
                 response_format={"type": "json_object"}
             )
@@ -100,7 +100,7 @@ Return a simple JSON object where each key is a descriptive field name and each 
         response = await loop.run_in_executor(
             None,
             lambda: openai_client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model="gpt-4o-mini",
                 messages=[{"role": "user", "content": prompt}],
                 response_format={"type": "json_object"}
             )
@@ -164,7 +164,7 @@ Extract comprehensive data - do not limit to just a few items. Return the respon
         response = await loop.run_in_executor(
             None,
             lambda: openai_client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model="gpt-4o-mini",
                 messages=[{"role": "user", "content": prompt}],
                 response_format={"type": "json_object"}
             )
@@ -215,7 +215,7 @@ OR
         response = await loop.run_in_executor(
             None,
             lambda: openai_client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model="gpt-4o-mini",
                 messages=[{"role": "user", "content": prompt}],
                 response_format={"type": "json_object"}
             )
