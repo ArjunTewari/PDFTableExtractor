@@ -100,54 +100,17 @@ class TextractProcessor:
         
         block_map = {block['Id']: block for block in blocks}
         
-        # Group lines into paragraphs using punctuation and spacing heuristics
-        paragraphs = []
-        current_para = ""
-        
-        for block in blocks:
-            if block['BlockType'] == 'LINE':
-                line = block.get('Text', '').strip()
-                
-                if not line:
-                    continue
-                
-                current_para += (" " if current_para else "") + line
-                
-                # If sentence looks complete
-                if line.endswith(('.', '!', '?')) or len(current_para) > 300:
-                    paragraphs.append(current_para.strip())
-                    current_para = ""
-        
-        # Final leftover
-        if current_para:
-            paragraphs.append(current_para.strip())
-        
-        # Perform smart merging before classification
-        merged_paragraphs = self._smart_merge_paragraphs(paragraphs)
-        
-        # Add narrative classification and commentary labels
+        # Extract document text (line by line)
         document_text = []
-        potential_commentary = []
-        
-        # Classification keywords
-        keywords = ["achieved", "reported", "grew", "increased", "rose", "declined", "exceeded"]
-        
-        for para in merged_paragraphs:
-            para_lower = para.lower()
-            
-            # Check if paragraph contains metrics AND action verbs
-            if any(k in para_lower for k in keywords) and any(c in para for c in ["$", "%", "million", "YoY", "Q4"]):
-                potential_commentary.append(para)
-            
-            document_text.append(para)
-        
-        # Process tables and key-values
         tables = []
         key_values = []
-        seen_keys = set()
         
+        # Process blocks
         for block in blocks:
-            if block['BlockType'] == 'TABLE':
+            if block['BlockType'] == 'LINE':
+                document_text.append(block.get('Text', ''))
+            
+            elif block['BlockType'] == 'TABLE':
                 table_data = self._extract_table_structure(block, block_map)
                 if table_data:
                     tables.append(table_data)
@@ -155,11 +118,7 @@ class TextractProcessor:
             elif block['BlockType'] == 'KEY_VALUE_SET':
                 kv_pair = self._extract_key_value_pair(block, block_map)
                 if kv_pair:
-                    key_text = kv_pair.get('key', '').lower()
-                    # Skip empty or obviously repeated keys
-                    if key_text and key_text not in seen_keys:
-                        seen_keys.add(key_text)
-                        key_values.append(kv_pair)
+                    key_values.append(kv_pair)
         
         processing_time = f"{time.time() - start_time:.1f}s"
         print(f"Textract processing completed in {processing_time}")
@@ -167,53 +126,8 @@ class TextractProcessor:
         return {
             "document_text": document_text,
             "tables": tables,
-            "key_values": key_values,
-            "potential_commentary": potential_commentary
+            "key_values": key_values
         }
-    
-    def _smart_merge_paragraphs(self, paragraphs: List[str]) -> List[str]:
-        """Smart merging of paragraphs to form complete sentences"""
-        if not paragraphs:
-            return []
-        
-        merged = []
-        current_text = ""
-        
-        for i, para in enumerate(paragraphs):
-            para = para.strip()
-            if not para:
-                continue
-            
-            # Check if current paragraph contains metrics
-            current_has_metrics = any(indicator in para for indicator in ['%', '$', 'million'])
-            
-            if current_text:
-                # Check if previous text has metrics
-                prev_has_metrics = any(indicator in current_text for indicator in ['%', '$', 'million'])
-                
-                # Don't merge if both contain metrics (likely separate data points)
-                if current_has_metrics and prev_has_metrics:
-                    merged.append(current_text.strip())
-                    current_text = para
-                else:
-                    current_text += " " + para
-            else:
-                current_text = para
-            
-            # Check if we have a complete sentence or reached end
-            ends_with_punctuation = current_text.rstrip().endswith(('.', '!', '?', ':'))
-            is_last_paragraph = i == len(paragraphs) - 1
-            
-            if ends_with_punctuation or is_last_paragraph:
-                if current_text.strip():
-                    merged.append(current_text.strip())
-                current_text = ""
-        
-        # Handle any remaining text
-        if current_text.strip():
-            merged.append(current_text.strip())
-        
-        return merged
 
     def _extract_table_structure(self, table_block: Dict[str, Any], block_map: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """Extract table as rows format"""

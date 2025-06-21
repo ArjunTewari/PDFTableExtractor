@@ -79,26 +79,20 @@ The deployment uses Nix packaging to ensure all dependencies are properly manage
 
 ## Recent Changes
 
-### June 2025 - Enhanced Text Processing and Commentary System
-- **Paragraph Grouping**: Implemented intelligent paragraph grouping using punctuation and spacing heuristics in Textract processing
-- **Narrative Classification**: Added automatic identification of commentary-rich paragraphs containing metrics and action verbs
-- **Reduced Key-Value Redundancy**: Implemented filtering to prevent duplicate key-value pairs from being processed
-- **Context-Aware Commentary Matching**: Enhanced commentary matching with scoring system and surrounding context inclusion
-- **Streaming Results Display**: Real-time streaming of extracted data rows with progressive commentary updates
-- **Simple Table Format**: Restored clean field-value pair format with document-sourced commentary only
+### June 2025 - Enhanced Table Processing and Commentary System
+- **Multi-Column Table Reconstruction**: Enhanced prompts to preserve ALL columns from extracted tables instead of simplifying to 2 columns
+- **Document Text Tabulation**: Added comprehensive tabulation of document text content into structured table format
+- **Commentary Matching System**: Implemented intelligent matching between extracted data and document commentary
+- **Streaming Processing**: Added real-time streaming output for progressive data processing updates
+- **Enhanced Frontend Display**: Reconstructed tables now show original multi-column structure with proper headers and data rows
+- **Dual Table Views**: Both reconstructed original tables and detailed data point tables are displayed
+- **Document Content Tables**: Narrative text is now analyzed and tabulated into structured format alongside extracted tables
 
-### Textract Processing Improvements
-- **Smart Paragraph Assembly**: Lines are now grouped into coherent paragraphs before processing, reducing fragmentation
-- **Intelligent Text Merging**: Smart merging algorithm forms complete sentences while avoiding merging separate data metrics
-- **Commentary Detection**: Paragraphs containing financial metrics and action verbs are automatically flagged as potential commentary
-- **Duplicate Prevention**: Key-value extraction now filters out redundant entries to improve data quality
-- **Enhanced Text Structure**: Document text is organized into meaningful paragraphs rather than individual lines
-
-### Commentary Enhancement Features
-- **Automatic Summarization**: Long commentary is automatically summarized using GPT-3.5-turbo to preserve key insights while maintaining readability
-- **Cost-Effective Processing**: Uses cheaper model for summarization tasks while maintaining quality
-- **Fallback Handling**: Graceful degradation to sentence-boundary truncation if summarization fails
-- **Metric Preservation**: Summarization preserves specific figures, percentages, and dates from original commentary
+### Architecture Improvements
+- **Advanced LLM Processing**: Updated prompts to extract comprehensive data while maintaining table structure integrity
+- **Asynchronous Commentary Matching**: Each data point is matched against document text to find relevant explanations
+- **Enhanced Data Structure**: Extended data model to include table headers, rows, commentary, and metadata
+- **Real-time Progress Updates**: Streaming endpoint provides live processing status updates
 
 ## Development Notes
 
