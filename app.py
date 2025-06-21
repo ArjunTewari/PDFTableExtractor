@@ -91,10 +91,13 @@ def find_relevant_document_text(row_data, document_text):
             if len(word) > 2 and word in line_lower:
                 score += 2
         
+        # Clean line of superscript numbers for better matching
+        line_clean = _clean_superscript_numbers(line_lower)
+        
         # Score based on value matches
-        if value_clean and value_clean in line_lower:
+        if value_clean and value_clean in line_clean:
             score += 5
-        elif value and value in line_lower:
+        elif value and value in line_clean:
             score += 3
         
         # If we found a good match, include surrounding context
@@ -138,6 +141,26 @@ def find_relevant_document_text(row_data, document_text):
         best_match = summarize_commentary(best_match)
     
     return best_match if best_score > 1 else ''
+
+def _clean_superscript_numbers(text):
+    """Remove superscript numbers from text for better matching"""
+    import re
+    
+    # Remove superscript numbers (Unicode superscript characters)
+    superscript_pattern = r'[⁰¹²³⁴⁵⁶⁷⁸⁹]+'
+    text = re.sub(superscript_pattern, '', text)
+    
+    # Remove common footnote reference patterns
+    footnote_patterns = [
+        r'\(\d+\)',    # (1), (2), etc.
+        r'\[\d+\]',    # [1], [2], etc.
+        r'\*+',        # *, **, ***, etc.
+    ]
+    
+    for pattern in footnote_patterns:
+        text = re.sub(pattern, '', text)
+    
+    return ' '.join(text.split())
 
 def get_unmatched_document_text(df_data, document_text):
     """Get document text that doesn't match any extracted data"""

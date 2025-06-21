@@ -159,6 +159,30 @@ class TextractProcessor:
             'footnote_markers': footnote_markers
         }
 
+    def _remove_superscript_numbers(self, text):
+        """Remove superscript numbers and common footnote markers from text"""
+        import re
+        
+        # Remove superscript numbers (Unicode superscript characters)
+        superscript_pattern = r'[⁰¹²³⁴⁵⁶⁷⁸⁹]+'
+        text = re.sub(superscript_pattern, '', text)
+        
+        # Remove common footnote reference patterns
+        footnote_patterns = [
+            r'\(\d+\)',    # (1), (2), etc.
+            r'\[\d+\]',    # [1], [2], etc.
+            r'\*+',        # *, **, ***, etc.
+            r'^\d+$',      # Standalone numbers on their own line
+        ]
+        
+        for pattern in footnote_patterns:
+            text = re.sub(pattern, '', text)
+        
+        # Clean up extra whitespace
+        text = ' '.join(text.split())
+        
+        return text.strip()
+
     def _parse_textract_blocks(self, blocks: List[Dict[str, Any]], start_time: float) -> Dict[str, Any]:
         """Parse Textract blocks into the specified JSON format with enhanced footnote handling"""
         
@@ -192,7 +216,10 @@ class TextractProcessor:
             for block in line_blocks:
                 text = block.get('Text', '').strip()
                 if text:
-                    all_document_text.append(text)
+                    # Remove superscript numbers (common footnote references)
+                    cleaned_text = self._remove_superscript_numbers(text)
+                    if cleaned_text:
+                        all_document_text.append(cleaned_text)
             
             # Process other block types for this page
             for block in page_blocks:

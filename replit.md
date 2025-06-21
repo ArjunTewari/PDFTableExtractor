@@ -89,6 +89,7 @@ The deployment uses Nix packaging to ensure all dependencies are properly manage
 - **Document Content Tables**: Narrative text is now analyzed and tabulated into structured format alongside extracted tables
 - **Model Change**: Switched from GPT-4o to GPT-4o-mini for all AI processing for optimal cost-performance balance
 - **Commentary Summarization**: Added automatic summarization of long commentaries using GPT-4o-mini
+- **Superscript Filtering**: Added filtering to ignore superscript numbers and footnote markers in data extraction
 
 ### Architecture Improvements
 - **Advanced LLM Processing**: Updated prompts to extract comprehensive data while maintaining table structure integrity

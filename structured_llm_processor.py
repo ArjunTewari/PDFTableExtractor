@@ -140,6 +140,8 @@ Requirements:
 3. Structure data into logical rows and columns
 4. Include financial metrics, dates, percentages, company info, etc.
 5. If the text contains narrative information, extract key facts and tabulate them
+6. IGNORE superscript numbers and footnote reference markers (¹²³ or (1)(2)(3) or [1][2][3])
+7. Extract clean data values without footnote symbols
 
 Return JSON with BOTH table structure AND individual facts:
 {{
