@@ -70,7 +70,7 @@ Return JSON with field-value pairs:
         }
 
 async def process_key_value_data(key_value_pairs: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """Process key-value pairs with GPT-4o asynchronously"""
+    """Process key-value pairs with GPT-3.5-turbo asynchronously"""
     prompt = f"""You are a data extraction specialist. Below are key-value pairs extracted from a document.
 
 Extract and organize this information into clear field-value pairs. Focus on extracting actual data values like company names, dates, amounts, percentages, and other factual information.
@@ -109,7 +109,7 @@ Return a simple JSON object where each key is a descriptive field name and each 
         }
 
 async def process_text_chunk(text_chunk: List[str]) -> Dict[str, Any]:
-    """Process a text chunk with GPT-4o asynchronously and tabulate the content"""
+    """Process a text chunk with GPT-3.5-turbo asynchronously and tabulate the content"""
     text_content = '\n'.join(text_chunk)
     
     prompt = f"""You are a financial document analyst. Extract and tabulate ALL meaningful data from this text segment.
