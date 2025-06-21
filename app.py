@@ -40,7 +40,7 @@ def extract():
         return jsonify({'error': str(e)}), 500
 
 def summarize_commentary(text):
-    """Summarize long commentary using GPT-3.5-turbo"""
+    """Summarize long commentary using GPT-4o-mini"""
     try:
         import openai
         import os
@@ -58,7 +58,7 @@ Instructions:
 - Maintain the professional tone and key details"""
 
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}],
             max_tokens=150,
             temperature=0.2

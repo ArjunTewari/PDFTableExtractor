@@ -6,7 +6,7 @@ import asyncio
 import aiohttp
 import concurrent.futures
 
-# Using gpt-3.5-turbo for cost efficiency as requested by user
+# Using gpt-4o-mini for optimal performance and cost efficiency
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 openai_client = OpenAI(api_key=OPENAI_API_KEY)
 
@@ -35,7 +35,7 @@ def split_text_section(text_lines, max_lines=25):
     return chunks
 
 async def process_table_data(table_data: Dict[str, Any]) -> Dict[str, Any]:
-    """Process table data with GPT-3.5-turbo asynchronously - simple format"""
+    """Process table data with GPT-4o-mini asynchronously - simple format"""
     prompt = f"""Extract key data points from this table as simple field-value pairs.
 
 Table data:
@@ -85,7 +85,7 @@ Return JSON with field-value pairs:
         }
 
 async def process_key_value_data(key_value_pairs: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """Process key-value pairs with GPT-3.5-turbo asynchronously"""
+    """Process key-value pairs with GPT-4o-mini asynchronously"""
     prompt = f"""You are a data extraction specialist. Below are key-value pairs extracted from a document.
 
 Extract and organize this information into clear field-value pairs. Focus on extracting actual data values like company names, dates, amounts, percentages, and other factual information.
@@ -124,7 +124,7 @@ Return a simple JSON object where each key is a descriptive field name and each 
         }
 
 async def process_text_chunk(text_chunk: List[str]) -> Dict[str, Any]:
-    """Process a text chunk with GPT-3.5-turbo asynchronously and tabulate the content"""
+    """Process a text chunk with GPT-4o-mini asynchronously and tabulate the content"""
     text_content = '\n'.join(text_chunk)
     
     prompt = f"""You are a financial document analyst. Extract and tabulate ALL meaningful data from this text segment.

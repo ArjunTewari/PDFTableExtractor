@@ -113,9 +113,9 @@ def process_text_with_llm(text):
         CREATE A COMPREHENSIVE MULTI-DIMENSIONAL TABLE with maximum rows and columns.
         """
 
-        # Send the prompt to the model using gpt-3.5-turbo for cost efficiency
+        # Send the prompt to the model using gpt-4o-mini for optimal performance
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4o-mini",
             messages=[{
                 "role": "system",
                 "content": system_prompt

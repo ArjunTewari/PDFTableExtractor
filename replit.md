@@ -87,19 +87,19 @@ The deployment uses Nix packaging to ensure all dependencies are properly manage
 - **Enhanced Frontend Display**: Reconstructed tables now show original multi-column structure with proper headers and data rows
 - **Dual Table Views**: Both reconstructed original tables and detailed data point tables are displayed
 - **Document Content Tables**: Narrative text is now analyzed and tabulated into structured format alongside extracted tables
-- **Model Change**: Switched from GPT-4o to GPT-3.5-turbo for all AI processing for cost efficiency
-- **Commentary Summarization**: Added automatic summarization of long commentaries using GPT-3.5-turbo
+- **Model Change**: Switched from GPT-4o to GPT-4o-mini for all AI processing for optimal cost-performance balance
+- **Commentary Summarization**: Added automatic summarization of long commentaries using GPT-4o-mini
 
 ### Architecture Improvements
 - **Advanced LLM Processing**: Updated prompts to extract comprehensive data while maintaining table structure integrity
 - **Asynchronous Commentary Matching**: Each data point is matched against document text to find relevant explanations
 - **Enhanced Data Structure**: Extended data model to include table headers, rows, commentary, and metadata
 - **Real-time Progress Updates**: Streaming endpoint provides live processing status updates
-- **Cost Optimization**: All OpenAI API calls now use GPT-3.5-turbo instead of GPT-4o
+- **Cost Optimization**: All OpenAI API calls now use GPT-4o-mini for optimal performance and cost
 
 ## Development Notes
 
-1. The application uses GPT-3.5-turbo as the language model for cost efficiency
+1. The application uses GPT-4o-mini as the language model for optimal cost-performance balance
 2. Uses Amazon Textract for advanced PDF text and table extraction
 3. Export functionality supports JSON, CSV, and PDF formats
 4. All processed data is session-based and not persisted between sessions
