@@ -39,6 +39,35 @@ def extract():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+def summarize_commentary(text):
+    """Summarize long commentary using GPT-3.5-turbo"""
+    try:
+        import openai
+        import os
+        
+        client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+        
+        prompt = f"""Summarize this financial document commentary in 1-2 concise sentences, keeping key numbers and facts:
+
+{text}
+
+Instructions:
+- Keep important financial figures, percentages, and dates
+- Make it concise but informative
+- Focus on the main point related to the data"""
+
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=100,
+            temperature=0.3
+        )
+        
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        print(f"Error summarizing commentary: {e}")
+        return text[:200] + '...' if len(text) > 200 else text
+
 def find_relevant_document_text(row_data, document_text):
     """Find relevant text from document that mentions this data point"""
     field = row_data.get('field', '').lower()
@@ -87,6 +116,10 @@ def find_relevant_document_text(row_data, document_text):
                     best_match = context[:400] + '...'
             else:
                 best_match = context
+    
+    # Summarize if commentary is too long (over 300 characters)
+    if best_match and len(best_match) > 300:
+        best_match = summarize_commentary(best_match)
     
     return best_match if best_score > 1 else ''
 
@@ -233,11 +266,16 @@ def process_stream():
                 unmatched_text = get_unmatched_document_text(df_data, document_text)
                 if unmatched_text:
                     for idx, text_chunk in enumerate(unmatched_text):
+                        # Summarize if text is too long
+                        display_text = text_chunk
+                        if len(text_chunk) > 300:
+                            display_text = summarize_commentary(text_chunk)
+                        
                         row_data = {
                             'source': 'Document Text',
                             'type': 'General Commentary',
                             'field': f'Text Segment {idx+1}',
-                            'value': text_chunk[:500] + '...' if len(text_chunk) > 500 else text_chunk,
+                            'value': display_text,
                             'page': 'N/A',
                             'commentary': 'Unmatched document content'
                         }
