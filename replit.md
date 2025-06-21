@@ -90,6 +90,8 @@ The deployment uses Nix packaging to ensure all dependencies are properly manage
 - **Model Change**: Switched from GPT-4o to GPT-4o-mini for all AI processing for optimal cost-performance balance
 - **Commentary Summarization**: Added automatic summarization of long commentaries using GPT-4o-mini
 - **Superscript Filtering**: Added filtering to ignore superscript numbers and footnote markers in data extraction
+- **Cost Calculator**: Implemented comprehensive cost tracking for all LLM calls with detailed token usage and dollar costs
+- **Dependency Cleanup**: Removed unnecessary libraries (crewai, langchain) that were making unauthorized OpenAI API calls
 
 ### Architecture Improvements
 - **Advanced LLM Processing**: Updated prompts to extract comprehensive data while maintaining table structure integrity
@@ -107,3 +109,4 @@ The deployment uses Nix packaging to ensure all dependencies are properly manage
 5. Commentary matching uses intelligent text analysis to relate document content to extracted data
 6. Commentary over 300 characters is automatically summarized to keep output concise
 7. Simple field-value table format for better readability
+8. Comprehensive cost tracking displays individual call costs and total session spend in real-time
