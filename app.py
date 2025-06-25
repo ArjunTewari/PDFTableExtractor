@@ -84,72 +84,76 @@ def find_relevant_document_text(row_data, document_text):
     value = str(row_data.get('value', '')).lower()
     
     # Clean field and value for better matching
-    field_words = field.replace('_', ' ').split()
-    value_clean = value.replace('$', '').replace('%', '').replace(',', '')
+    field_words = [word for word in field.replace('_', ' ').split() if len(word) > 2]
+    value_clean = value.replace('$', '').replace('%', '').replace(',', '').strip()
     
-    best_match = ""
-    best_score = 0
+    # Extract numeric part if value contains numbers
+    import re
+    numeric_part = re.findall(r'\d+\.?\d*', value_clean)
     
-    # Look for the best matching text segment
+    best_matches = []
+    
+    # Look for text segments that mention the value or field
     for i, line in enumerate(document_text):
         line_lower = line.lower()
+        line_clean = _clean_superscript_numbers(line_lower)
         score = 0
         
-        # Score based on field word matches
+        # High priority: exact value match
+        if value_clean and len(value_clean) > 2 and value_clean in line_clean:
+            score += 10
+        
+        # Medium priority: numeric match
+        for num in numeric_part:
+            if len(num) > 1 and num in line_clean:
+                score += 7
+        
+        # Lower priority: field word matches
         for word in field_words:
-            if len(word) > 2 and word in line_lower:
+            if word in line_lower:
                 score += 2
         
-        # Clean line of superscript numbers for better matching
-        line_clean = _clean_superscript_numbers(line_lower)
-        
-        # Score based on value matches
-        if value_clean and value_clean in line_clean:
-            score += 5
-        elif value and value in line_clean:
-            score += 3
-        
-        # If we found a good match, include surrounding context
-        if score > best_score:
-            best_score = score
-            # Get extended context around the matching line
-            start_idx = max(0, i - 2)
-            end_idx = min(len(document_text), i + 4)
+        # If we found a relevant match, store it with context
+        if score >= 7:  # Only include high-confidence matches
+            # Get targeted context around the matching line
+            start_idx = max(0, i - 1)
+            end_idx = min(len(document_text), i + 3)
             context_lines = document_text[start_idx:end_idx]
             
             # Join and clean up the context
             context = ' '.join(context_lines).strip()
+            context = _clean_superscript_numbers(context)
             
-            # Find complete sentences to avoid cutting off mid-sentence
-            if len(context) > 500:
-                # Try to find complete sentences
-                sentences = context.replace('!', '.').replace('?', '.').split('.')
-                complete_text = ""
-                for sentence in sentences:
-                    sentence = sentence.strip()
-                    if sentence and len(complete_text + sentence) < 450:
-                        complete_text += sentence + ". "
-                    else:
-                        break
-                
-                if complete_text:
-                    best_match = complete_text.strip()
+            best_matches.append({
+                'text': context,
+                'score': score,
+                'line_index': i
+            })
+    
+    # Sort by score and return the best match
+    if best_matches:
+        best_matches.sort(key=lambda x: x['score'], reverse=True)
+        best_context = best_matches[0]['text']
+        
+        # Truncate if too long but keep complete sentences
+        if len(best_context) > 400:
+            sentences = best_context.replace('!', '.').replace('?', '.').split('.')
+            complete_text = ""
+            for sentence in sentences:
+                sentence = sentence.strip()
+                if sentence and len(complete_text + sentence) < 350:
+                    complete_text += sentence + ". "
                 else:
-                    # Fallback: find last complete word
-                    truncated = context[:450]
-                    last_space = truncated.rfind(' ')
-                    if last_space > 300:
-                        best_match = truncated[:last_space] + '...'
-                    else:
-                        best_match = truncated + '...'
+                    break
+            
+            if complete_text:
+                return complete_text.strip()
             else:
-                best_match = context
+                return best_context[:400] + '...'
+        else:
+            return best_context
     
-    # Summarize if commentary is too long (over 400 characters)
-    if best_match and len(best_match) > 400:
-        best_match = summarize_commentary(best_match)
-    
-    return best_match if best_score > 1 else ''
+    return ''  # No relevant matches found
 
 def _clean_superscript_numbers(text):
     """Remove superscript numbers from text for better matching"""

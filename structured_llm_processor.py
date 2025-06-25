@@ -248,22 +248,26 @@ async def match_commentary_to_data(row_data: str, text_chunks: List[str]) -> Dic
     """Match document text commentary to table row data"""
     text_content = '\n'.join(text_chunks)
     
-    prompt = f"""You are analyzing a document to find commentary that explains or relates to specific data.
+    prompt = f"""You are analyzing document text to find commentary that directly explains or relates to a specific data point.
 
-Given this table row data: {row_data}
+DATA POINT: {row_data}
 
-Check if any part of this text commentary explains or relates to the row data:
+DOCUMENT TEXT TO ANALYZE:
 {text_content}
 
-Task:
-1. If you find text that explains, provides context, or relates to the row data, summarize how it relates
-2. If no relevant commentary is found, return null
-3. Focus on finding explanations, trends, analysis, or context about the data
+STRICT REQUIREMENTS:
+1. Only return commentary if the text DIRECTLY mentions, explains, or provides context about this specific data point
+2. The commentary must contain clear references to the field name, value, or related concepts
+3. Ignore text that talks about general topics not related to this specific data
+4. Do not return commentary that starts mid-sentence or lacks context
+5. If no relevant text is found, return null
 
-Return a JSON object with:
-{{"commentary": "brief summary of how the text relates to the data", "relevant": true}}
-OR
-{{"commentary": null, "relevant": false}}"""
+Return JSON:
+{{"commentary": "relevant explanation that directly relates to the data point", "relevant": true}}
+OR  
+{{"commentary": null, "relevant": false}}
+
+Be very strict - only return commentary that clearly and directly relates to the specific data point provided."""
 
     try:
         loop = asyncio.get_event_loop()
